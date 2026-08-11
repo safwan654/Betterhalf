@@ -16,7 +16,7 @@ import Link from "next/link";
 export default function Dashboard() {
   const { 
     relationshipMode, activeUser, husbandName, wifeName,
-    prayers, tasks, bills
+    prayers, tasks, bills, currency
   } = useGlobal();
   
   const [hugsCount, setHugsCount] = useState(0);
@@ -297,7 +297,7 @@ export default function Dashboard() {
                     <span className="text-[9px] text-slate-400 dark:text-zinc-500">{bill.due}</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="font-extrabold text-slate-800 dark:text-zinc-100">${bill.amount.toFixed(2)}</span>
+                    <span className="font-extrabold text-slate-800 dark:text-zinc-100">{currency}{bill.amount.toFixed(2)}</span>
                   </div>
                 </div>
               ))}

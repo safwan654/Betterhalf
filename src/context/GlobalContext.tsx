@@ -37,6 +37,9 @@ interface GlobalContextType {
   pendingAnimation: "HUG" | "KISS" | null;
   setPendingAnimation: (anim: "HUG" | "KISS" | null) => void;
   
+  currency: string;
+  setCurrency: (currency: string) => void;
+  
   householdPin: string | null;
 
   // App Data
@@ -73,6 +76,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
   const [husbandPhoto, setHusbandPhotoState] = useState<string | null>(null);
   const [wifePhoto, setWifePhotoState] = useState<string | null>(null);
   const [pendingAnimation, setPendingAnimationState] = useState<"HUG" | "KISS" | null>(null);
+  const [currency, setCurrencyState] = useState<string>("$");
   const [prayers, setPrayersState] = useState<Prayer[]>(initialPrayers);
   const [tasks, setTasksState] = useState<Task[]>([]);
   const [bills, setBillsState] = useState<Bill[]>([]);
@@ -107,6 +111,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
         if (data.husbandPhoto !== undefined) setHusbandPhotoState(data.husbandPhoto);
         if (data.wifePhoto !== undefined) setWifePhotoState(data.wifePhoto);
         if (data.pendingAnimation !== undefined) setPendingAnimationState(data.pendingAnimation);
+        if (data.currency) setCurrencyState(data.currency);
         
         if (data.prayers) setPrayersState(data.prayers);
         if (data.tasks) setTasksState(data.tasks);
@@ -122,6 +127,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
           husbandPhoto: null,
           wifePhoto: null,
           pendingAnimation: null,
+          currency: "$",
           prayers: initialPrayers,
           tasks: [],
           bills: []
@@ -214,6 +220,11 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     updateFirebase({ pendingAnimation: anim });
   };
 
+  const setCurrency = (c: string) => {
+    setCurrencyState(c);
+    updateFirebase({ currency: c });
+  };
+
   const setPrayers = (p: Prayer[]) => {
     setPrayersState(p);
     updateFirebase({ prayers: p });
@@ -243,6 +254,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
       husbandPhoto, setHusbandPhoto,
       wifePhoto, setWifePhoto,
       pendingAnimation, setPendingAnimation,
+      currency, setCurrency,
       householdPin,
       prayers, setPrayers,
       tasks, setTasks,

@@ -1,0 +1,16 @@
+{
+  "name": "BetterHalf OS",
+  "short_name": "BetterHalf",
+  "description": "The ultimate OS for couples.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#f43f5e",
+  "icons": [
+    {
+      "src": "/icon.jpg",
+      "sizes": "1024x1024",
+      "type": "image/jpeg"
+    }
+  ]
+}

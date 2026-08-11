@@ -3,9 +3,21 @@ import { GlobalProvider } from "@/context/GlobalContext";
 import EntryAnimation from "@/components/animations/EntryAnimation";
 import AuthGuard from "@/components/layout/auth-guard";
 
-export const metadata = {
-  title: "BetterHalf - Home OS",
+import type { Metadata, Viewport } from 'next';
+
+export const metadata: Metadata = {
+  title: "BetterHalf OS",
   description: "Shared Command Center for Couples",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "BetterHalf",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#f43f5e",
 };
 
 export default function RootLayout({

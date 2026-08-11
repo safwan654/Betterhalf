@@ -14,7 +14,8 @@ export default function Settings() {
     husbandName, setHusbandName,
     wifeName, setWifeName,
     husbandPhoto, setHusbandPhoto,
-    wifePhoto, setWifePhoto
+    wifePhoto, setWifePhoto,
+    currency, setCurrency
   } = useGlobal();
   
   const router = useRouter();
@@ -198,6 +199,27 @@ export default function Settings() {
                   </select>
                 </div>
               </div>
+            </div>
+            
+            <div className="flex flex-col gap-2 mt-2 pt-4 border-t border-slate-100 dark:border-zinc-800">
+              <label className="text-xs font-bold text-slate-700 dark:text-zinc-200 flex items-center gap-1.5">
+                Household Currency
+              </label>
+              <p className="text-[9px] text-slate-400 dark:text-zinc-500 mb-1">
+                Select the primary currency for your shared finance tracker.
+              </p>
+              <select 
+                value={currency}
+                onChange={(e) => setCurrency(e.target.value)}
+                className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs rounded-xl px-2.5 py-2 font-medium focus:outline-none focus:border-emerald-500/50"
+              >
+                <option value="$">USD ($)</option>
+                <option value="€">EUR (€)</option>
+                <option value="£">GBP (£)</option>
+                <option value="₹">INR (₹)</option>
+                <option value="د.إ">AED (د.إ)</option>
+                <option value="R$">BRL (R$)</option>
+              </select>
             </div>
             
           </div>

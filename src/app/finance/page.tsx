@@ -7,7 +7,7 @@ import { Wallet, Plus, ArrowUpRight, ArrowDownRight, Target, X, Clock } from "lu
 import { useGlobal, Bill } from "@/context/GlobalContext";
 
 export default function Finance() {
-  const { bills, setBills } = useGlobal();
+  const { bills, setBills, currency } = useGlobal();
   const [showAddModal, setShowAddModal] = useState(false);
   const [newBill, setNewBill] = useState<Partial<Bill>>({});
 
@@ -56,7 +56,7 @@ export default function Finance() {
           
           <div className="relative z-10 flex flex-col gap-1">
             <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-100">Pending Bills Total</span>
-            <h3 className="text-3xl font-black tracking-tight">${totalBillsAmount.toFixed(2)}</h3>
+            <h3 className="text-3xl font-black tracking-tight">{currency}{totalBillsAmount.toFixed(2)}</h3>
           </div>
 
           <div className="relative z-10 grid grid-cols-2 gap-3">
@@ -64,14 +64,14 @@ export default function Finance() {
               <div className="p-1.5 bg-white/20 rounded-md"><ArrowDownRight className="h-3 w-3" /></div>
               <div className="flex flex-col">
                 <span className="text-[9px] font-semibold text-emerald-100 uppercase">Limit</span>
-                <span className="text-xs font-bold">$2,500</span>
+                <span className="text-xs font-bold">{currency}2,500</span>
               </div>
             </div>
             <div className="flex items-center gap-2 bg-black/10 backdrop-blur-sm rounded-xl p-2.5 border border-white/10">
               <div className="p-1.5 bg-white/20 rounded-md"><ArrowUpRight className="h-3 w-3" /></div>
               <div className="flex flex-col">
                 <span className="text-[9px] font-semibold text-emerald-100 uppercase">Spent</span>
-                <span className="text-xs font-bold">$1,420</span>
+                <span className="text-xs font-bold">{currency}1,420</span>
               </div>
             </div>
           </div>
@@ -97,7 +97,7 @@ export default function Finance() {
                     </span>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="font-black text-slate-800 dark:text-zinc-100">${bill.amount.toFixed(2)}</span>
+                    <span className="font-black text-slate-800 dark:text-zinc-100">{currency}{bill.amount.toFixed(2)}</span>
                     <button 
                       onClick={() => payBill(bill.id)}
                       className="text-[10px] font-bold bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-500 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 px-3 py-1.5 rounded-lg transition-colors"
@@ -135,7 +135,7 @@ export default function Finance() {
                   <div className="flex flex-col gap-1.5">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Amount</span>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 font-black text-slate-400">$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 font-black text-slate-400">{currency}</span>
                       <input 
                         type="number" 
                         placeholder="0.00"
