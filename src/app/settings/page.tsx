@@ -2,7 +2,7 @@
 
 import { useGlobal } from "@/context/GlobalContext";
 import { useRouter } from "next/navigation";
-import { LogOut, Globe, HeartHandshake, Camera, Save } from "lucide-react";
+import { LogOut, Globe, HeartHandshake, Camera, Save, Check } from "lucide-react";
 import { useMemo, useEffect, useState, useRef } from "react";
 
 export default function Settings() {
@@ -22,6 +22,7 @@ export default function Settings() {
   const [localWifeTimezone, setLocalWifeTimezone] = useState("");
   const [localCurrency, setLocalCurrency] = useState("$");
   const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
     // Initialize local state from global context once mounted
@@ -75,6 +76,8 @@ export default function Settings() {
     
     setTimeout(() => {
       setIsSaving(false);
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 2000);
     }, 600); // Tiny visual delay for UX
   };
 
@@ -281,11 +284,19 @@ export default function Settings() {
         {/* Save Button */}
         <button 
           onClick={handleSave}
-          disabled={isSaving}
-          className="w-full mt-2 flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-zinc-900 font-bold text-sm py-4 rounded-2xl transition-all shadow-lg shadow-slate-900/20 active:scale-95"
+          disabled={isSaving || isSaved}
+          className={`w-full mt-2 flex items-center justify-center gap-2 font-bold text-sm py-4 rounded-2xl transition-all shadow-lg active:scale-95 ${
+            isSaved 
+              ? "bg-emerald-500 text-white shadow-emerald-500/20" 
+              : "bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-zinc-900 shadow-slate-900/20"
+          }`}
         >
           {isSaving ? (
             <span className="animate-pulse">Saving Changes...</span>
+          ) : isSaved ? (
+            <>
+              <Check className="h-4 w-4" /> Saved!
+            </>
           ) : (
             <>
               <Save className="h-4 w-4" /> Save Preferences
