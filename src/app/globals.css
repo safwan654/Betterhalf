@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 36 33% 98%;
+    --foreground: 20 14% 4%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 20 14% 4%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 14% 4%;
+
+    --primary: 350 89% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 35 92% 50%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 20 10% 95%;
+    --muted-foreground: 20 10% 45%;
+
+    --accent: 350 89% 96%;
+    --accent-foreground: 350 89% 40%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 20 10% 90%;
+    --input: 20 10% 90%;
+    --ring: 350 89% 60%;
+
+    --radius: 1rem;
+  }
+
+  .dark {
+    --background: 20 20% 8%;
+    --foreground: 20 10% 95%;
+
+    --card: 20 20% 11%;
+    --card-foreground: 20 10% 95%;
+
+    --popover: 20 20% 11%;
+    --popover-foreground: 20 10% 95%;
+
+    --primary: 350 89% 65%;
+    --primary-foreground: 20 20% 8%;
+
+    --secondary: 35 92% 55%;
+    --secondary-foreground: 20 20% 8%;
+
+    --muted: 20 15% 18%;
+    --muted-foreground: 20 10% 65%;
+
+    --accent: 350 40% 18%;
+    --accent-foreground: 350 89% 80%;
+
+    --border: 20 15% 18%;
+    --input: 20 15% 18%;
+    --ring: 350 89% 65%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased selection:bg-rose-100 dark:selection:bg-rose-900/30;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Custom Scrollbars for horizontal timeline */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Smooth transitions */
+.transition-all-custom {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Glassmorphism utility */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dark .glass-panel {
+  background: rgba(28, 25, 23, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}

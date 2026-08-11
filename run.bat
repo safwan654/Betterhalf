@@ -1,0 +1,3 @@
+@echo off
+echo Starting BetterHalf Home OS...
+npm run dev
