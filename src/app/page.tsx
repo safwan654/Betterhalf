@@ -45,7 +45,7 @@ export default function Dashboard() {
   const familyOutreach: any[] = [];
   const vaultIndex: any[] = [];
 
-  const totalSaved = bills.reduce((acc, curr) => acc + curr.amount, 0); // mockup metric
+  const totalSaved = (bills || []).reduce((acc, curr) => acc + curr.amount, 0); // mockup metric
 
   return (
     <div className="min-h-screen bg-background pb-24 text-slate-800 dark:text-zinc-100 transition-colors duration-300">

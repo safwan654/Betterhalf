@@ -12,6 +12,7 @@
     "@prisma/client": "^5.0.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
+    "firebase": "^12.17.1",
     "lucide-react": "^0.395.0",
     "next": "^14.2.3",
     "next-auth": "^4.24.7",
