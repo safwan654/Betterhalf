@@ -6,6 +6,7 @@ import Header from "@/components/layout/header";
 import BottomNavigation from "@/components/layout/bottom-navigation";
 import WeeklyTimeline from "@/components/dashboard/weekly-timeline";
 import QuickActions from "@/components/dashboard/quick-actions";
+import EntryAnimation from "@/components/animations/EntryAnimation";
 import { 
   Heart, Sparkles, CheckSquare, Wallet, Dumbbell, 
   ShoppingCart, PhoneCall, ShieldAlert, Utensils, Flame,
@@ -16,7 +17,7 @@ import Link from "next/link";
 export default function Dashboard() {
   const { 
     relationshipMode, activeUser, husbandName, wifeName,
-    prayers, tasks, bills, currency
+    prayers, tasks, bills, currency, sendInteraction
   } = useGlobal();
   
   const [hugsCount, setHugsCount] = useState(0);
@@ -28,12 +29,14 @@ export default function Dashboard() {
   const handleSendHug = () => {
     setHugsCount(hugsCount + 1);
     setHugSentLocal(true);
+    sendInteraction("HUG");
     setTimeout(() => setHugSentLocal(false), 2000);
   };
 
   const handleSendKiss = () => {
     setKissesCount(kissesCount + 1);
     setKissSentLocal(true);
+    sendInteraction("KISS");
     setTimeout(() => setKissSentLocal(false), 2000);
   };
 
@@ -309,6 +312,7 @@ export default function Dashboard() {
 
       <QuickActions />
       <BottomNavigation />
+      <EntryAnimation />
     </div>
   );
 }

@@ -35,7 +35,7 @@ interface GlobalContextType {
   setWifePhoto: (photoBase64: string | null) => void;
 
   pendingAnimation: "HUG" | "KISS" | null;
-  setPendingAnimation: (anim: "HUG" | "KISS" | null) => void;
+  sendInteraction: (type: "HUG" | "KISS") => void;
   
   currency: string;
   setCurrency: (currency: string) => void;
@@ -76,6 +76,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
   const [husbandPhoto, setHusbandPhotoState] = useState<string | null>(null);
   const [wifePhoto, setWifePhotoState] = useState<string | null>(null);
   const [pendingAnimation, setPendingAnimationState] = useState<"HUG" | "KISS" | null>(null);
+  const [lastInteractionTimestamp, setLastInteractionTimestamp] = useState<number>(0);
   const [currency, setCurrencyState] = useState<string>("$");
   const [prayers, setPrayersState] = useState<Prayer[]>(initialPrayers);
   const [tasks, setTasksState] = useState<Task[]>([]);
@@ -119,8 +120,20 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
         if (data.wifeName) setWifeNameState(data.wifeName);
         if (data.husbandPhoto !== undefined) setHusbandPhotoState(data.husbandPhoto);
         if (data.wifePhoto !== undefined) setWifePhotoState(data.wifePhoto);
-        if (data.pendingAnimation !== undefined) setPendingAnimationState(data.pendingAnimation);
         if (data.currency) setCurrencyState(data.currency);
+        
+        // Handle incoming interactions
+        if (data.lastInteraction) {
+          const { type, sender, timestamp } = data.lastInteraction;
+          if (timestamp > lastInteractionTimestamp) {
+            setLastInteractionTimestamp(timestamp);
+            // Only trigger if it was sent by the partner
+            if (sender !== activeUserRef.current && activeUserRef.current) {
+              setPendingAnimationState(type);
+              setTimeout(() => setPendingAnimationState(null), 4000);
+            }
+          }
+        }
         
         if (data.prayers) setPrayersState(data.prayers);
         if (data.tasks) setTasksState(data.tasks);
@@ -224,9 +237,15 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     updateFirebase({ wifePhoto: photo });
   };
 
-  const setPendingAnimation = (anim: "HUG" | "KISS" | null) => {
-    setPendingAnimationState(anim);
-    updateFirebase({ pendingAnimation: anim });
+  const sendInteraction = (type: "HUG" | "KISS") => {
+    // Show a small local animation/toast for the sender in the component itself
+    updateFirebase({ 
+      lastInteraction: {
+        type,
+        sender: activeUser,
+        timestamp: Date.now()
+      }
+    });
   };
 
   const setCurrency = (c: string) => {
@@ -265,7 +284,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
       wifeName, setWifeName,
       husbandPhoto, setHusbandPhoto,
       wifePhoto, setWifePhoto,
-      pendingAnimation, setPendingAnimation,
+      pendingAnimation, sendInteraction,
       currency, setCurrency,
       householdPin,
       prayers, setPrayers,

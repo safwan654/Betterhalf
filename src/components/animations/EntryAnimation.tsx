@@ -4,20 +4,19 @@ import { useEffect, useState } from "react";
 import { useGlobal } from "@/context/GlobalContext";
 
 export default function EntryAnimation() {
-  const { pendingAnimation, setPendingAnimation } = useGlobal();
+  const { pendingAnimation } = useGlobal();
   const [show, setShow] = useState(false);
 
   useEffect(() => {
     if (pendingAnimation) {
       setShow(true);
-      // Hide after 3 seconds and clear from global state
-      const timer = setTimeout(() => {
-        setShow(false);
-        setTimeout(() => setPendingAnimation(null), 500); // Wait for fade out transition
-      }, 3000);
+      // Wait slightly less than the 4s global context timeout to fade out
+      const timer = setTimeout(() => setShow(false), 3500);
       return () => clearTimeout(timer);
+    } else {
+      setShow(false);
     }
-  }, [pendingAnimation, setPendingAnimation]);
+  }, [pendingAnimation]);
 
   if (!pendingAnimation) return null;
 
