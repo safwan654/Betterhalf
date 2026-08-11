@@ -81,17 +81,38 @@ export default function Settings() {
   const timezones = useMemo(() => {
     try {
       if (typeof Intl !== 'undefined' && Intl.supportedValuesOf) {
-        return Intl.supportedValuesOf('timeZone').map(tz => {
+        const list = Intl.supportedValuesOf('timeZone').map(tz => {
           const date = new Date();
           const formatter = new Intl.DateTimeFormat('en', { timeZone: tz, timeZoneName: 'shortOffset' });
           const parts = formatter.formatToParts(date);
-          const offset = parts.find(p => p.type === 'timeZoneName')?.value || 'GMT';
+          let offsetStr = parts.find(p => p.type === 'timeZoneName')?.value || 'GMT';
+          
+          if (offsetStr === 'GMT') offsetStr = 'GMT+0';
+          
+          let offsetVal = 0;
+          if (offsetStr !== 'GMT') {
+            const sign = offsetStr.includes('-') ? -1 : 1;
+            const nums = offsetStr.replace('GMT', '').replace('+', '').replace('-', '').split(':');
+            const hours = parseInt(nums[0] || '0', 10);
+            const mins = parseInt(nums[1] || '0', 10);
+            offsetVal = sign * (hours * 60 + mins);
+          }
           
           const timeFormatter = new Intl.DateTimeFormat('en', { timeZone: tz, hour: 'numeric', minute: '2-digit' });
           const time = timeFormatter.format(date);
           
-          return { id: tz, label: `(${offset}) ${time} - ${tz.replace(/_/g, ' ')}` };
+          const simpleName = tz.split('/').pop()?.replace(/_/g, ' ') || tz;
+          
+          return { 
+            id: tz, 
+            label: `(${offsetStr}) ${simpleName}`, 
+            offsetVal 
+          };
         });
+
+        // Remove duplicates with same label (e.g. America/New_York and America/Detroit often have same offset, but names are different. So keep all, just sort)
+        list.sort((a, b) => a.offsetVal - b.offsetVal || a.label.localeCompare(b.label));
+        return list;
       }
     } catch (e) {
       console.error(e);
