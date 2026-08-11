@@ -2,32 +2,46 @@
 
 import { useGlobal } from "@/context/GlobalContext";
 import { useRouter } from "next/navigation";
-import { LogOut, Globe, HeartHandshake, Camera, Upload } from "lucide-react";
+import { LogOut, Globe, HeartHandshake, Camera, Save } from "lucide-react";
 import { useMemo, useEffect, useState, useRef } from "react";
 
 export default function Settings() {
-  const { 
-    logout, activeUser, 
-    husbandTimezone, setHusbandTimezone, 
-    wifeTimezone, setWifeTimezone,
-    relationshipMode, setRelationshipMode,
-    husbandName, setHusbandName,
-    wifeName, setWifeName,
-    husbandPhoto, setHusbandPhoto,
-    wifePhoto, setWifePhoto,
-    currency, setCurrency
-  } = useGlobal();
-  
+  const globalContext = useGlobal();
   const router = useRouter();
+  
   const [mounted, setMounted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Local state for the form
+  const [localHusbandName, setLocalHusbandName] = useState("");
+  const [localWifeName, setLocalWifeName] = useState("");
+  const [localHusbandPhoto, setLocalHusbandPhoto] = useState<string | null>(null);
+  const [localWifePhoto, setLocalWifePhoto] = useState<string | null>(null);
+  const [localRelationshipMode, setLocalRelationshipMode] = useState<"TOGETHER" | "DISTANCE">("TOGETHER");
+  const [localHusbandTimezone, setLocalHusbandTimezone] = useState("");
+  const [localWifeTimezone, setLocalWifeTimezone] = useState("");
+  const [localCurrency, setLocalCurrency] = useState("$");
+  const [isSaving, setIsSaving] = useState(false);
+
   useEffect(() => {
+    // Initialize local state from global context once mounted
+    setLocalHusbandName(globalContext.husbandName);
+    setLocalWifeName(globalContext.wifeName);
+    setLocalHusbandPhoto(globalContext.husbandPhoto);
+    setLocalWifePhoto(globalContext.wifePhoto);
+    setLocalRelationshipMode(globalContext.relationshipMode);
+    setLocalHusbandTimezone(globalContext.husbandTimezone);
+    setLocalWifeTimezone(globalContext.wifeTimezone);
+    setLocalCurrency(globalContext.currency || "$");
     setMounted(true);
-  }, []);
+  }, [
+    globalContext.husbandName, globalContext.wifeName, globalContext.husbandPhoto, 
+    globalContext.wifePhoto, globalContext.relationshipMode, globalContext.husbandTimezone, 
+    globalContext.wifeTimezone, globalContext.currency
+  ]);
 
   const handleLogout = () => {
-    logout();
+    globalContext.logout();
     router.replace("/login");
   };
 
@@ -38,15 +52,30 @@ export default function Settings() {
     const reader = new FileReader();
     reader.onloadend = () => {
       const base64String = reader.result as string;
-      if (activeUser === "HUSBAND") {
-        setHusbandPhoto(base64String);
+      if (globalContext.activeUser === "HUSBAND") {
+        setLocalHusbandPhoto(base64String);
       } else {
-        setWifePhoto(base64String);
+        setLocalWifePhoto(base64String);
       }
     };
-    // Resize image slightly conceptually, but for now just read as data URL
-    // since localStorage handles up to 5MB easily for small profile avatars
     reader.readAsDataURL(file);
+  };
+
+  const handleSave = () => {
+    setIsSaving(true);
+    // Push local state to global context (which saves to Firebase/LocalStorage)
+    globalContext.setHusbandName(localHusbandName);
+    globalContext.setWifeName(localWifeName);
+    globalContext.setHusbandPhoto(localHusbandPhoto);
+    globalContext.setWifePhoto(localWifePhoto);
+    globalContext.setRelationshipMode(localRelationshipMode);
+    globalContext.setHusbandTimezone(localHusbandTimezone);
+    globalContext.setWifeTimezone(localWifeTimezone);
+    globalContext.setCurrency(localCurrency);
+    
+    setTimeout(() => {
+      setIsSaving(false);
+    }, 600); // Tiny visual delay for UX
   };
 
   const timezones = useMemo(() => {
@@ -75,12 +104,12 @@ export default function Settings() {
 
   if (!mounted) return null;
 
-  const currentName = activeUser === "HUSBAND" ? husbandName : wifeName;
-  const currentPhoto = activeUser === "HUSBAND" ? husbandPhoto : wifePhoto;
+  const currentName = globalContext.activeUser === "HUSBAND" ? localHusbandName : localWifeName;
+  const currentPhoto = globalContext.activeUser === "HUSBAND" ? localHusbandPhoto : localWifePhoto;
   
   const handleNameChange = (val: string) => {
-    if (activeUser === "HUSBAND") setHusbandName(val);
-    else setWifeName(val);
+    if (globalContext.activeUser === "HUSBAND") setLocalHusbandName(val);
+    else setLocalWifeName(val);
   };
 
   return (
@@ -124,7 +153,7 @@ export default function Settings() {
             </div>
             
             <div className="flex flex-col flex-1 gap-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Editing {activeUser}</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Editing {globalContext.activeUser}</span>
               <input 
                 type="text" 
                 value={currentName}
@@ -148,21 +177,21 @@ export default function Settings() {
               </label>
               <div className="grid grid-cols-2 gap-2 bg-slate-50 dark:bg-zinc-900 p-1 rounded-xl border border-slate-100 dark:border-zinc-800">
                 <button
-                  onClick={() => setRelationshipMode("TOGETHER")}
+                  onClick={() => setLocalRelationshipMode("TOGETHER")}
                   className={`py-2 text-xs font-bold rounded-lg transition-all ${
-                    relationshipMode === "TOGETHER" 
+                    localRelationshipMode === "TOGETHER" 
                       ? "bg-white dark:bg-zinc-800 shadow-sm text-slate-800 dark:text-zinc-100" 
-                      : "text-slate-400 dark:text-zinc-500"
+                      : "text-slate-400 dark:text-zinc-500 hover:text-slate-600"
                   }`}
                 >
                   🏠 Together
                 </button>
                 <button
-                  onClick={() => setRelationshipMode("DISTANCE")}
+                  onClick={() => setLocalRelationshipMode("DISTANCE")}
                   className={`py-2 text-xs font-bold rounded-lg transition-all ${
-                    relationshipMode === "DISTANCE" 
+                    localRelationshipMode === "DISTANCE" 
                       ? "bg-white dark:bg-zinc-800 shadow-sm text-slate-800 dark:text-zinc-100" 
-                      : "text-slate-400 dark:text-zinc-500"
+                      : "text-slate-400 dark:text-zinc-500 hover:text-slate-600"
                   }`}
                 >
                   ✈️ LDR
@@ -170,36 +199,39 @@ export default function Settings() {
               </div>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold text-slate-700 dark:text-zinc-200 flex items-center gap-1.5">
-                <Globe className="h-4 w-4 text-amber-500" /> Timezone Setup
-              </label>
-              <p className="text-[9px] text-slate-400 dark:text-zinc-500 mb-1">
-                Select your respective global timezones. When LDR mode is active, the dashboard clocks will sync to these locations automatically.
-              </p>
-              <div className="flex flex-col gap-3">
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{husbandName}'s Location</span>
-                  <select 
-                    value={husbandTimezone}
-                    onChange={(e) => setHusbandTimezone(e.target.value)}
-                    className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs rounded-xl px-2.5 py-2 font-medium focus:outline-none focus:border-amber-500/50"
-                  >
-                    {timezones.map(tz => <option key={tz.id} value={tz.id}>{tz.label}</option>)}
-                  </select>
-                </div>
-                <div className="flex flex-col gap-1.5 mt-1">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{wifeName}'s Location</span>
-                  <select 
-                    value={wifeTimezone}
-                    onChange={(e) => setWifeTimezone(e.target.value)}
-                    className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs rounded-xl px-2.5 py-2 font-medium focus:outline-none focus:border-rose-500/50"
-                  >
-                    {timezones.map(tz => <option key={tz.id} value={tz.id}>{tz.label}</option>)}
-                  </select>
+            {/* Timezone Setup - ONLY SHOW IF LDR */}
+            {localRelationshipMode === "DISTANCE" && (
+              <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-top-2">
+                <label className="text-xs font-bold text-slate-700 dark:text-zinc-200 flex items-center gap-1.5">
+                  <Globe className="h-4 w-4 text-amber-500" /> Timezone Setup
+                </label>
+                <p className="text-[9px] text-slate-400 dark:text-zinc-500 mb-1">
+                  Select your respective global timezones. When LDR mode is active, the dashboard clocks will sync to these locations automatically.
+                </p>
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{localHusbandName || "Husband"}'s Location</span>
+                    <select 
+                      value={localHusbandTimezone}
+                      onChange={(e) => setLocalHusbandTimezone(e.target.value)}
+                      className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs rounded-xl px-2.5 py-2 font-medium focus:outline-none focus:border-amber-500/50"
+                    >
+                      {timezones.map(tz => <option key={tz.id} value={tz.id}>{tz.label}</option>)}
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1.5 mt-1">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{localWifeName || "Wife"}'s Location</span>
+                    <select 
+                      value={localWifeTimezone}
+                      onChange={(e) => setLocalWifeTimezone(e.target.value)}
+                      className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs rounded-xl px-2.5 py-2 font-medium focus:outline-none focus:border-rose-500/50"
+                    >
+                      {timezones.map(tz => <option key={tz.id} value={tz.id}>{tz.label}</option>)}
+                    </select>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
             
             <div className="flex flex-col gap-2 mt-2 pt-4 border-t border-slate-100 dark:border-zinc-800">
               <label className="text-xs font-bold text-slate-700 dark:text-zinc-200 flex items-center gap-1.5">
@@ -209,8 +241,8 @@ export default function Settings() {
                 Select the primary currency for your shared finance tracker.
               </p>
               <select 
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
+                value={localCurrency}
+                onChange={(e) => setLocalCurrency(e.target.value)}
                 className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs rounded-xl px-2.5 py-2 font-medium focus:outline-none focus:border-emerald-500/50"
               >
                 <option value="$">USD ($)</option>
@@ -224,6 +256,21 @@ export default function Settings() {
             
           </div>
         </section>
+
+        {/* Save Button */}
+        <button 
+          onClick={handleSave}
+          disabled={isSaving}
+          className="w-full mt-2 flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-zinc-900 font-bold text-sm py-4 rounded-2xl transition-all shadow-lg shadow-slate-900/20 active:scale-95"
+        >
+          {isSaving ? (
+            <span className="animate-pulse">Saving Changes...</span>
+          ) : (
+            <>
+              <Save className="h-4 w-4" /> Save Preferences
+            </>
+          )}
+        </button>
 
         {/* Danger Zone */}
         <section className="flex flex-col gap-3 mt-4">
