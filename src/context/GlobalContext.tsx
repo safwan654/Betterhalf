@@ -91,6 +91,15 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     if (auth) setIsAuthenticated(true);
     if (pin) setHouseholdPin(pin);
     if (user) setActiveUserState(user);
+
+    // Fallback load from localStorage for instant UI before Firebase syncs
+    const savedPrayers = localStorage.getItem("bh_prayers");
+    const savedTasks = localStorage.getItem("bh_tasks");
+    const savedBills = localStorage.getItem("bh_bills");
+    
+    if (savedPrayers) setPrayersState(JSON.parse(savedPrayers));
+    if (savedTasks) setTasksState(JSON.parse(savedTasks));
+    if (savedBills) setBillsState(JSON.parse(savedBills));
   }, []);
 
   // 2. Firebase Sync - Subscribe to Household Document
@@ -227,16 +236,19 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
 
   const setPrayers = (p: Prayer[]) => {
     setPrayersState(p);
+    localStorage.setItem("bh_prayers", JSON.stringify(p));
     updateFirebase({ prayers: p });
   };
   
   const setTasks = (t: Task[]) => {
     setTasksState(t);
+    localStorage.setItem("bh_tasks", JSON.stringify(t));
     updateFirebase({ tasks: t });
   };
   
   const setBills = (b: Bill[]) => {
     setBillsState(b);
+    localStorage.setItem("bh_bills", JSON.stringify(b));
     updateFirebase({ bills: b });
   };
 
