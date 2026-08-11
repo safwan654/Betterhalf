@@ -34,8 +34,9 @@ interface GlobalContextType {
   wifePhoto: string | null;
   setWifePhoto: (photoBase64: string | null) => void;
 
-  pendingAnimation: "HUG" | "KISS" | null;
-  sendInteraction: (type: "HUG" | "KISS") => void;
+  pendingAnimation: "HUG" | "KISS" | "TASK_ALERT" | null;
+  interactionPayload: string | null;
+  sendInteraction: (type: "HUG" | "KISS" | "TASK_ALERT", payload?: string) => void;
   
   currency: string;
   setCurrency: (currency: string) => void;
@@ -75,7 +76,8 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
   const [wifeName, setWifeNameState] = useState("Wife");
   const [husbandPhoto, setHusbandPhotoState] = useState<string | null>(null);
   const [wifePhoto, setWifePhotoState] = useState<string | null>(null);
-  const [pendingAnimation, setPendingAnimationState] = useState<"HUG" | "KISS" | null>(null);
+  const [pendingAnimation, setPendingAnimationState] = useState<"HUG" | "KISS" | "TASK_ALERT" | null>(null);
+  const [interactionPayload, setInteractionPayload] = useState<string | null>(null);
   const [lastInteractionTimestamp, setLastInteractionTimestamp] = useState<number>(0);
   const [currency, setCurrencyState] = useState<string>("$");
   const [prayers, setPrayersState] = useState<Prayer[]>(initialPrayers);
@@ -124,11 +126,12 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
         
         // Handle incoming interactions
         if (data.lastInteraction) {
-          const { type, sender, timestamp } = data.lastInteraction;
+          const { type, sender, timestamp, payload } = data.lastInteraction;
           if (timestamp > lastInteractionTimestamp) {
             setLastInteractionTimestamp(timestamp);
             // Only trigger if it was sent by the partner
             if (sender !== activeUserRef.current && activeUserRef.current) {
+              setInteractionPayload(payload || null);
               setPendingAnimationState(type);
               setTimeout(() => setPendingAnimationState(null), 4000);
             }
@@ -237,13 +240,13 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     updateFirebase({ wifePhoto: photo });
   };
 
-  const sendInteraction = (type: "HUG" | "KISS") => {
-    // Show a small local animation/toast for the sender in the component itself
+  const sendInteraction = (type: "HUG" | "KISS" | "TASK_ALERT", payload?: string) => {
     updateFirebase({ 
       lastInteraction: {
         type,
         sender: activeUser,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        payload: payload || null
       }
     });
   };
@@ -284,7 +287,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
       wifeName, setWifeName,
       husbandPhoto, setHusbandPhoto,
       wifePhoto, setWifePhoto,
-      pendingAnimation, sendInteraction,
+      pendingAnimation, interactionPayload, sendInteraction,
       currency, setCurrency,
       householdPin,
       prayers, setPrayers,

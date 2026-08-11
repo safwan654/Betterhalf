@@ -1,6 +1,7 @@
 import "./globals.css";
 import { GlobalProvider } from "@/context/GlobalContext";
 import EntryAnimation from "@/components/animations/EntryAnimation";
+import TaskAlert from "@/components/animations/TaskAlert";
 import AuthGuard from "@/components/layout/auth-guard";
 
 import type { Metadata, Viewport } from 'next';
@@ -32,6 +33,7 @@ export default function RootLayout({
           <AuthGuard>
             {children}
             <EntryAnimation />
+            <TaskAlert />
           </AuthGuard>
         </GlobalProvider>
       </body>
