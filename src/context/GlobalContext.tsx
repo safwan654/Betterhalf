@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { db } from "@/lib/firebase";
 import { doc, onSnapshot, setDoc, getDoc } from "firebase/firestore";
 
@@ -67,7 +67,12 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [householdPin, setHouseholdPin] = useState<string | null>(null);
   const [activeUser, setActiveUserState] = useState<"HUSBAND" | "WIFE">("HUSBAND");
-  
+  const activeUserRef = useRef<"HUSBAND" | "WIFE">(activeUser);
+
+  useEffect(() => {
+    activeUserRef.current = activeUser;
+  }, [activeUser]);
+
   // Shared state default values
   const [relationshipMode, setRelationshipModeState] = useState<"TOGETHER" | "DISTANCE">("TOGETHER");
   const [husbandTimezone, setHusbandTimezoneState] = useState("America/New_York");
