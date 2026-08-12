@@ -31,30 +31,65 @@ export default function Finance() {
   const totalSpent = spentTransactions.reduce((acc, t) => acc + t.amount, 0);
   const totalLiquid = liquidBalances.husband + liquidBalances.wife;
 
+  const deductBalance = (amount: number, allocation: "HUSBAND" | "WIFE" | "SHARED") => {
+    if (allocation === "HUSBAND") {
+      setLiquidBalances({ ...liquidBalances, husband: liquidBalances.husband - amount });
+    } else if (allocation === "WIFE") {
+      setLiquidBalances({ ...liquidBalances, wife: liquidBalances.wife - amount });
+    } else {
+      setLiquidBalances({ husband: liquidBalances.husband - (amount / 2), wife: liquidBalances.wife - (amount / 2) });
+    }
+  };
+
+  const addBalance = (amount: number, allocation: "HUSBAND" | "WIFE" | "SHARED") => {
+    if (allocation === "HUSBAND") {
+      setLiquidBalances({ ...liquidBalances, husband: liquidBalances.husband + amount });
+    } else if (allocation === "WIFE") {
+      setLiquidBalances({ ...liquidBalances, wife: liquidBalances.wife + amount });
+    } else {
+      setLiquidBalances({ husband: liquidBalances.husband + (amount / 2), wife: liquidBalances.wife + (amount / 2) });
+    }
+  };
+
   const handleAddTransaction = () => {
     if (!newTxName || !newTxAmount) return;
+    const amount = Number(newTxAmount);
     const tx: FinanceTransaction = {
       id: Date.now().toString(),
       name: newTxName,
-      amount: Number(newTxAmount),
+      amount: amount,
       date: newTxType === "PENDING" ? newTxDate : format(new Date(), "yyyy-MM-dd"), // pending uses due date, spent uses today
       type: newTxType,
       allocation: newTxAllocation
     };
     
     setFinanceTransactions([...financeTransactions, tx].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+    
+    if (newTxType === "SPENT") {
+      deductBalance(amount, newTxAllocation);
+    }
+
     setNewTxName("");
     setNewTxAmount("");
     setShowAddModal(false);
   };
 
   const markAsPaid = (id: string) => {
+    const tx = financeTransactions.find(t => t.id === id);
+    if (!tx) return;
+    
+    deductBalance(tx.amount, tx.allocation);
+    
     setFinanceTransactions(financeTransactions.map(t => 
       t.id === id ? { ...t, type: "SPENT", date: format(new Date(), "yyyy-MM-dd") } : t
     ));
   };
 
   const deleteTransaction = (id: string) => {
+    const tx = financeTransactions.find(t => t.id === id);
+    if (tx && tx.type === "SPENT") {
+      addBalance(tx.amount, tx.allocation);
+    }
     setFinanceTransactions(financeTransactions.filter(t => t.id !== id));
   };
 
@@ -297,7 +332,7 @@ export default function Finance() {
                 <h3 className="text-lg font-black text-slate-800 dark:text-zinc-100">Update Balances</h3>
                 <button onClick={() => setShowBalanceModal(false)} className="p-2 bg-slate-100 dark:bg-zinc-800 rounded-full text-slate-500 hover:bg-slate-200"><X className="h-4 w-4" /></button>
               </div>
-              <p className="text-xs text-slate-500">Update your current liquid account balances manually here. We do not auto-deduct expenses to prevent sync issues with your real bank.</p>
+              <p className="text-xs text-slate-500">Update your current liquid account balances manually here. We will auto-deduct logged expenses from these totals.</p>
 
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1.5">
