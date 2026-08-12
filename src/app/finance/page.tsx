@@ -12,6 +12,7 @@ export default function Finance() {
   const { financeTransactions, setFinanceTransactions, liquidBalances, setLiquidBalances, currency } = useGlobal();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showBalanceModal, setShowBalanceModal] = useState(false);
+  const [editingTxId, setEditingTxId] = useState<string | null>(null);
   
   // Transaction Form State
   const [newTxName, setNewTxName] = useState("");
@@ -54,24 +55,61 @@ export default function Finance() {
   const handleAddTransaction = () => {
     if (!newTxName || !newTxAmount) return;
     const amount = Number(newTxAmount);
+    
+    let husbandChange = 0;
+    let wifeChange = 0;
+
+    if (editingTxId) {
+      const oldTx = financeTransactions.find(t => t.id === editingTxId);
+      if (oldTx && oldTx.type === "SPENT") {
+        if (oldTx.allocation === "HUSBAND") husbandChange += oldTx.amount;
+        else if (oldTx.allocation === "WIFE") wifeChange += oldTx.amount;
+        else { husbandChange += oldTx.amount / 2; wifeChange += oldTx.amount / 2; }
+      }
+    }
+
+    if (newTxType === "SPENT") {
+      if (newTxAllocation === "HUSBAND") husbandChange -= amount;
+      else if (newTxAllocation === "WIFE") wifeChange -= amount;
+      else { husbandChange -= amount / 2; wifeChange -= amount / 2; }
+    }
+
+    if (husbandChange !== 0 || wifeChange !== 0) {
+      setLiquidBalances({
+        husband: liquidBalances.husband + husbandChange,
+        wife: liquidBalances.wife + wifeChange
+      });
+    }
+
     const tx: FinanceTransaction = {
-      id: Date.now().toString(),
+      id: editingTxId || Date.now().toString(),
       name: newTxName,
       amount: amount,
-      date: newTxType === "PENDING" ? newTxDate : format(new Date(), "yyyy-MM-dd"), // pending uses due date, spent uses today
+      date: editingTxId && newTxType === "SPENT" ? financeTransactions.find(t => t.id === editingTxId)?.date || format(new Date(), "yyyy-MM-dd") : (newTxType === "PENDING" ? newTxDate : format(new Date(), "yyyy-MM-dd")),
       type: newTxType,
       allocation: newTxAllocation
     };
     
-    setFinanceTransactions([...financeTransactions, tx].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-    
-    if (newTxType === "SPENT") {
-      deductBalance(amount, newTxAllocation);
+    if (editingTxId) {
+      setFinanceTransactions(financeTransactions.map(t => t.id === editingTxId ? tx : t).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+    } else {
+      setFinanceTransactions([...financeTransactions, tx].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     }
 
     setNewTxName("");
     setNewTxAmount("");
+    setEditingTxId(null);
     setShowAddModal(false);
+  };
+
+  const openEditModal = (tx: FinanceTransaction) => {
+    setEditingTxId(tx.id);
+    setNewTxName(tx.name);
+    setNewTxAmount(tx.amount.toString());
+    setNewTxDate(tx.date);
+    setNewTxType(tx.type);
+    setNewTxAllocation(tx.allocation);
+    setShowAddModal(true);
   };
 
   const markAsPaid = (id: string) => {
@@ -181,7 +219,7 @@ export default function Finance() {
             <div className="glass-panel rounded-3xl p-3 shadow-sm border border-slate-100/50 dark:border-zinc-850 flex flex-col gap-1">
               {pendingBills.map((bill) => (
                 <div key={bill.id} className="flex items-center justify-between p-2 border-b border-slate-50 dark:border-zinc-800/50 last:border-0 hover:bg-slate-50/50 dark:hover:bg-zinc-900/30 rounded-xl transition-colors">
-                  <div className="flex flex-col flex-1">
+                  <div className="flex flex-col flex-1 cursor-pointer" onClick={() => openEditModal(bill)}>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-slate-700 dark:text-zinc-200">{bill.name}</span>
                       <span className={cn("text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider", bill.allocation === "SHARED" ? "bg-purple-100 text-purple-600 dark:bg-purple-500/20" : bill.allocation === "HUSBAND" ? "bg-blue-100 text-blue-600 dark:bg-blue-500/20" : "bg-rose-100 text-rose-600 dark:bg-rose-500/20")}>
@@ -217,7 +255,7 @@ export default function Finance() {
             <div className="glass-panel rounded-3xl p-3 shadow-sm border border-slate-100/50 dark:border-zinc-850 flex flex-col gap-1">
               {spentTransactions.slice(0, 10).map((tx) => (
                 <div key={tx.id} className="flex items-center justify-between p-2 border-b border-slate-50 dark:border-zinc-800/50 last:border-0 hover:bg-slate-50/50 dark:hover:bg-zinc-900/30 rounded-xl transition-colors">
-                  <div className="flex flex-col flex-1">
+                  <div className="flex flex-col flex-1 cursor-pointer" onClick={() => openEditModal(tx)}>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-slate-700 dark:text-zinc-200">{tx.name}</span>
                       <span className={cn("text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider", tx.allocation === "SHARED" ? "bg-purple-100 text-purple-600 dark:bg-purple-500/20" : tx.allocation === "HUSBAND" ? "bg-blue-100 text-blue-600 dark:bg-blue-500/20" : "bg-rose-100 text-rose-600 dark:bg-rose-500/20")}>
@@ -244,8 +282,8 @@ export default function Finance() {
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm">
             <div className="bg-white dark:bg-zinc-900 w-full sm:max-w-sm rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200 flex flex-col gap-5 max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-black text-slate-800 dark:text-zinc-100">Add Entry</h3>
-                <button onClick={() => setShowAddModal(false)} className="p-2 bg-slate-100 dark:bg-zinc-800 rounded-full text-slate-500 hover:bg-slate-200"><X className="h-4 w-4" /></button>
+                <h3 className="text-lg font-black text-slate-800 dark:text-zinc-100">{editingTxId ? "Edit Entry" : "Add Entry"}</h3>
+                <button onClick={() => { setShowAddModal(false); setEditingTxId(null); setNewTxName(""); setNewTxAmount(""); }} className="p-2 bg-slate-100 dark:bg-zinc-800 rounded-full text-slate-500 hover:bg-slate-200"><X className="h-4 w-4" /></button>
               </div>
 
               <div className="flex flex-col gap-4">
@@ -272,7 +310,7 @@ export default function Finance() {
                     placeholder={newTxType === "PENDING" ? "e.g. Electricity Bill" : "e.g. Groceries"}
                     value={newTxName}
                     onChange={(e) => setNewTxName(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-zinc-950 border-2 border-slate-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-slate-50 dark:bg-zinc-950 border-2 border-slate-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-base font-bold focus:outline-none focus:border-emerald-500/50"
                   />
                 </div>
                 
@@ -286,7 +324,7 @@ export default function Finance() {
                         placeholder="0.00"
                         value={newTxAmount}
                         onChange={(e) => setNewTxAmount(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-zinc-950 border-2 border-slate-100 dark:border-zinc-800 rounded-xl pl-7 pr-3 py-3 text-sm font-bold focus:outline-none focus:border-emerald-500/50"
+                        className="w-full bg-slate-50 dark:bg-zinc-950 border-2 border-slate-100 dark:border-zinc-800 rounded-xl pl-7 pr-3 py-3 text-base font-bold focus:outline-none focus:border-emerald-500/50"
                       />
                     </div>
                   </div>
@@ -298,7 +336,7 @@ export default function Finance() {
                         type="date"
                         value={newTxDate}
                         onChange={(e) => setNewTxDate(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-zinc-950 border-2 border-slate-100 dark:border-zinc-800 rounded-xl px-3 py-3 text-sm font-bold focus:outline-none focus:border-emerald-500/50"
+                        className="w-full bg-slate-50 dark:bg-zinc-950 border-2 border-slate-100 dark:border-zinc-800 rounded-xl px-3 py-3 text-base font-bold focus:outline-none focus:border-emerald-500/50"
                       />
                     </div>
                   )}
@@ -317,7 +355,7 @@ export default function Finance() {
                   onClick={handleAddTransaction}
                   className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95 mt-2"
                 >
-                  {newTxType === "PENDING" ? "Add to Pending Bills" : "Log Expense"}
+                  {editingTxId ? "Save Changes" : (newTxType === "PENDING" ? "Add to Pending Bills" : "Log Expense")}
                 </button>
               </div>
             </div>
@@ -343,7 +381,7 @@ export default function Finance() {
                       type="number" 
                       value={editHusbandBalance}
                       onChange={(e) => setEditHusbandBalance(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-zinc-950 border-2 border-slate-100 dark:border-zinc-800 rounded-xl pl-7 pr-3 py-3 text-sm font-bold focus:outline-none focus:border-blue-500/50"
+                      className="w-full bg-slate-50 dark:bg-zinc-950 border-2 border-slate-100 dark:border-zinc-800 rounded-xl pl-7 pr-3 py-3 text-base font-bold focus:outline-none focus:border-blue-500/50"
                     />
                   </div>
                 </div>
@@ -355,7 +393,7 @@ export default function Finance() {
                       type="number" 
                       value={editWifeBalance}
                       onChange={(e) => setEditWifeBalance(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-zinc-950 border-2 border-slate-100 dark:border-zinc-800 rounded-xl pl-7 pr-3 py-3 text-sm font-bold focus:outline-none focus:border-rose-500/50"
+                      className="w-full bg-slate-50 dark:bg-zinc-950 border-2 border-slate-100 dark:border-zinc-800 rounded-xl pl-7 pr-3 py-3 text-base font-bold focus:outline-none focus:border-rose-500/50"
                     />
                   </div>
                 </div>

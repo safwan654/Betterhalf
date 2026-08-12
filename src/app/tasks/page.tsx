@@ -139,7 +139,7 @@ export default function TasksEngine() {
                   placeholder="Task title..."
                   value={newTask.title || ""}
                   onChange={(e) => setNewTask({...newTask, title: e.target.value})}
-                  className="w-full bg-slate-50 dark:bg-zinc-950 border-2 border-slate-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-amber-500/50"
+                  className="w-full bg-slate-50 dark:bg-zinc-950 border-2 border-slate-100 dark:border-zinc-800 rounded-xl px-4 py-3 text-base font-bold focus:outline-none focus:border-amber-500/50"
                   autoFocus
                 />
                 
@@ -170,7 +170,7 @@ export default function TasksEngine() {
                       placeholder="e.g. Home"
                       value={newTask.category || ""}
                       onChange={(e) => setNewTask({...newTask, category: e.target.value})}
-                      className="w-full bg-slate-50 dark:bg-zinc-950 border-2 border-slate-100 dark:border-zinc-800 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-amber-500/50"
+                      className="w-full bg-slate-50 dark:bg-zinc-950 border-2 border-slate-100 dark:border-zinc-800 rounded-xl px-3 py-2 text-base font-semibold focus:outline-none focus:border-amber-500/50"
                     />
                   </div>
                   <div className="flex flex-col gap-1.5">
@@ -179,7 +179,7 @@ export default function TasksEngine() {
                       type="date" 
                       value={newTask.due || ""}
                       onChange={(e) => setNewTask({...newTask, due: e.target.value})}
-                      className="w-full bg-slate-50 dark:bg-zinc-950 border-2 border-slate-100 dark:border-zinc-800 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-amber-500/50 appearance-none min-h-[36px]"
+                      className="w-full bg-slate-50 dark:bg-zinc-950 border-2 border-slate-100 dark:border-zinc-800 rounded-xl px-3 py-2 text-base font-semibold focus:outline-none focus:border-amber-500/50 appearance-none min-h-[36px]"
                     />
                   </div>
                 </div>
