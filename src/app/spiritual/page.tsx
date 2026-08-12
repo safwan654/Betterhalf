@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Header from "@/components/layout/header";
 import BottomNavigation from "@/components/layout/bottom-navigation";
-import { Flame, CheckCircle2, History, Share2, Clock, AlertCircle, X, RotateCcw } from "lucide-react";
+import { Flame, CheckCircle2, History, Share2, Clock, AlertCircle, X } from "lucide-react";
 import { useGlobal, PrayerStatus, initialPrayers } from "@/context/GlobalContext";
 import { format, isSameDay, parseISO } from "date-fns";
 
@@ -16,6 +16,10 @@ export default function SpiritualTracker() {
   const [loggingPrayer, setLoggingPrayer] = useState<{ id: string, person: "husband" | "wife", name: string } | null>(null);
 
   const handleLogClick = (id: string, name: string, person: "husband" | "wife", currentStatus: PrayerStatus) => {
+    if (person.toUpperCase() !== activeUser) {
+      alert(`You can only log prayers for yourself! You are currently using the app as ${activeUser === "HUSBAND" ? "Husband" : "Wife"}.`);
+      return;
+    }
     setLoggingPrayer({ id, name, person });
   };
 
@@ -33,15 +37,6 @@ export default function SpiritualTracker() {
       [globalSelectedDate]: updatedPrayers
     });
     setLoggingPrayer(null);
-  };
-
-  const resetDay = () => {
-    if (confirm("Are you sure you want to reset all prayer logs for this date?")) {
-      setPrayersByDate({
-        ...prayersByDate,
-        [globalSelectedDate]: initialPrayers
-      });
-    }
   };
 
   const handleWhatsAppShare = () => {
@@ -144,12 +139,9 @@ export default function SpiritualTracker() {
         <section className="glass-panel rounded-3xl p-4 shadow-sm border border-slate-100/50 dark:border-zinc-850 flex flex-col">
           <div className="flex items-center justify-between mb-4 px-1">
             <h3 className="text-sm font-extrabold text-slate-800 dark:text-zinc-100">Daily Checklist</h3>
-            <button 
-              onClick={resetDay}
-              className="text-[10px] font-bold text-slate-400 hover:text-rose-500 dark:text-zinc-500 dark:hover:text-rose-400 flex items-center gap-1 transition-colors"
-            >
-              <RotateCcw className="h-3 w-3" /> Reset Day
-            </button>
+            <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 flex items-center gap-1">
+              <History className="h-3 w-3" /> Auto-resets at Midnight
+            </span>
           </div>
 
           <div className="flex flex-col gap-0">
