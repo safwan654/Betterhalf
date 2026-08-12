@@ -17,6 +17,9 @@ export interface NutritionDay { husband: DailyNutrition; wife: DailyNutrition; }
 export interface CallLog { id: number; name: string; relation: string; lastContacted: string; frequency: number; due: string; status: string; }
 export interface VaultRecord { id: number; name: string; location: string; reference: string; notes: string; }
 
+export interface HealthProfile { height: string; weight: string; bloodType: string; allergies: string; notes: string; }
+export interface DoctorVisit { id: number; date: string; doctorName: string; patient: string; reason: string; notes: string; }
+
 interface GlobalContextType {
   isAuthenticated: boolean;
   login: (pin: string, user: "HUSBAND" | "WIFE") => boolean;
@@ -72,6 +75,10 @@ interface GlobalContextType {
   setCallsByDate: (calls: Record<string, CallLog[]>) => void;
   vaultRecords: VaultRecord[];
   setVaultRecords: (records: VaultRecord[]) => void;
+  healthProfiles: { husband: HealthProfile; wife: HealthProfile };
+  setHealthProfiles: (profiles: { husband: HealthProfile; wife: HealthProfile }) => void;
+  doctorVisits: DoctorVisit[];
+  setDoctorVisits: (visits: DoctorVisit[]) => void;
 }
 
 const GlobalContext = createContext<GlobalContextType | undefined>(undefined);
@@ -119,6 +126,11 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
   const [nutritionByDate, setNutritionByDateState] = useState<Record<string, NutritionDay>>({});
   const [callsByDate, setCallsByDateState] = useState<Record<string, CallLog[]>>({});
   const [vaultRecords, setVaultRecordsState] = useState<VaultRecord[]>([]);
+  const [healthProfiles, setHealthProfilesState] = useState<{ husband: HealthProfile; wife: HealthProfile }>({
+    husband: { height: "", weight: "", bloodType: "", allergies: "", notes: "" },
+    wife: { height: "", weight: "", bloodType: "", allergies: "", notes: "" }
+  });
+  const [doctorVisits, setDoctorVisitsState] = useState<DoctorVisit[]>([]);
 
   // 1. Initial Load of Auth from LocalStorage
   useEffect(() => {
@@ -192,6 +204,8 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
         if (data.nutritionByDate) setNutritionByDateState(data.nutritionByDate);
         if (data.callsByDate) setCallsByDateState(data.callsByDate);
         if (data.vaultRecords) setVaultRecordsState(data.vaultRecords);
+        if (data.healthProfiles) setHealthProfilesState(data.healthProfiles);
+        if (data.doctorVisits) setDoctorVisitsState(data.doctorVisits);
       } else {
         // First time this household is created on Firebase, initialize it
         await setDoc(docRef, {
@@ -211,7 +225,12 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
           workoutsByDate: {},
           nutritionByDate: {},
           callsByDate: {},
-          vaultRecords: []
+          vaultRecords: [],
+          healthProfiles: {
+            husband: { height: "", weight: "", bloodType: "", allergies: "", notes: "" },
+            wife: { height: "", weight: "", bloodType: "", allergies: "", notes: "" }
+          },
+          doctorVisits: []
         }, { merge: true });
       }
     });
@@ -355,6 +374,16 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     updateFirebase({ vaultRecords: records });
   };
 
+  const setHealthProfiles = (profiles: { husband: HealthProfile; wife: HealthProfile }) => {
+    setHealthProfilesState(profiles);
+    updateFirebase({ healthProfiles: profiles });
+  };
+
+  const setDoctorVisits = (visits: DoctorVisit[]) => {
+    setDoctorVisitsState(visits);
+    updateFirebase({ doctorVisits: visits });
+  };
+
   if (!isMounted) return null;
 
   return (
@@ -379,7 +408,9 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
       workoutsByDate, setWorkoutsByDate,
       nutritionByDate, setNutritionByDate,
       callsByDate, setCallsByDate,
-      vaultRecords, setVaultRecords
+      vaultRecords, setVaultRecords,
+      healthProfiles, setHealthProfiles,
+      doctorVisits, setDoctorVisits
     }}>
       {children}
     </GlobalContext.Provider>
