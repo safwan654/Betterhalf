@@ -8,7 +8,8 @@ import { doc, onSnapshot, setDoc, getDoc } from "firebase/firestore";
 export type PrayerStatus = "ON_TIME" | "LATE" | "QADA" | null;
 export interface Prayer { id: string; name: string; time: string; husband: PrayerStatus; wife: PrayerStatus; }
 export interface Task { id: string; title: string; urgency: "HIGH"|"MEDIUM"|"LOW"; category: string; due: string; }
-export interface Bill { id: string; name: string; amount: number; due: string; }
+export interface FinanceTransaction { id: string; name: string; amount: number; date: string; type: "PENDING" | "SPENT"; allocation: "HUSBAND" | "WIFE" | "SHARED"; }
+export interface LiquidBalances { husband: number; wife: number; }
 
 export interface PantryItem { id: number; name: string; quantity: string; category: string; checked: boolean; }
 export interface Workout { id: number; activity: string; duration: number; notes: string; spender: string; }
@@ -61,8 +62,6 @@ interface GlobalContextType {
   setPrayersByDate: (prayers: Record<string, Prayer[]>) => void;
   tasks: Task[];
   setTasks: (tasks: Task[]) => void;
-  bills: Bill[];
-  setBills: (bills: Bill[]) => void;
 
   // New Modules
   pantryItems: PantryItem[];
@@ -79,6 +78,10 @@ interface GlobalContextType {
   setHealthProfiles: (profiles: { husband: HealthProfile; wife: HealthProfile }) => void;
   doctorVisits: DoctorVisit[];
   setDoctorVisits: (visits: DoctorVisit[]) => void;
+  financeTransactions: FinanceTransaction[];
+  setFinanceTransactions: (transactions: FinanceTransaction[]) => void;
+  liquidBalances: LiquidBalances;
+  setLiquidBalances: (balances: LiquidBalances) => void;
 }
 
 const GlobalContext = createContext<GlobalContextType | undefined>(undefined);
@@ -118,7 +121,6 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
   const [globalSelectedDate, setGlobalSelectedDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
   const [prayersByDate, setPrayersByDateState] = useState<Record<string, Prayer[]>>({});
   const [tasks, setTasksState] = useState<Task[]>([]);
-  const [bills, setBillsState] = useState<Bill[]>([]);
 
   // New modules state
   const [pantryItems, setPantryItemsState] = useState<PantryItem[]>([]);
@@ -131,6 +133,8 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     wife: { height: "", weight: "", bloodType: "", allergies: "", notes: "" }
   });
   const [doctorVisits, setDoctorVisitsState] = useState<DoctorVisit[]>([]);
+  const [financeTransactions, setFinanceTransactionsState] = useState<FinanceTransaction[]>([]);
+  const [liquidBalances, setLiquidBalancesState] = useState<LiquidBalances>({ husband: 0, wife: 0 });
 
   // 1. Initial Load of Auth from LocalStorage
   useEffect(() => {
@@ -146,11 +150,9 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     // Fallback load from localStorage for instant UI before Firebase syncs
     const savedPrayers = localStorage.getItem("bh_prayers_by_date");
     const savedTasks = localStorage.getItem("bh_tasks");
-    const savedBills = localStorage.getItem("bh_bills");
     
     if (savedPrayers) setPrayersByDateState(JSON.parse(savedPrayers));
     if (savedTasks) setTasksState(JSON.parse(savedTasks));
-    if (savedBills) setBillsState(JSON.parse(savedBills));
   }, []);
 
   // 2. Firebase Sync - Subscribe to Household Document
@@ -197,7 +199,6 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (data.tasks) setTasksState(data.tasks);
-        if (data.bills) setBillsState(data.bills);
 
         if (data.pantryItems) setPantryItemsState(data.pantryItems);
         if (data.workoutsByDate) setWorkoutsByDateState(data.workoutsByDate);
@@ -206,6 +207,8 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
         if (data.vaultRecords) setVaultRecordsState(data.vaultRecords);
         if (data.healthProfiles) setHealthProfilesState(data.healthProfiles);
         if (data.doctorVisits) setDoctorVisitsState(data.doctorVisits);
+        if (data.financeTransactions) setFinanceTransactionsState(data.financeTransactions);
+        if (data.liquidBalances) setLiquidBalancesState(data.liquidBalances);
       } else {
         // First time this household is created on Firebase, initialize it
         await setDoc(docRef, {
@@ -220,7 +223,6 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
           currency: "$",
           prayersByDate: {},
           tasks: [],
-          bills: [],
           pantryItems: [],
           workoutsByDate: {},
           nutritionByDate: {},
@@ -230,7 +232,9 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
             husband: { height: "", weight: "", bloodType: "", allergies: "", notes: "" },
             wife: { height: "", weight: "", bloodType: "", allergies: "", notes: "" }
           },
-          doctorVisits: []
+          doctorVisits: [],
+          financeTransactions: [],
+          liquidBalances: { husband: 0, wife: 0 }
         }, { merge: true });
       }
     });
@@ -262,7 +266,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
       const docRef = doc(db, "households", pin);
       getDoc(docRef).then(snap => {
         if (!snap.exists()) {
-          setDoc(docRef, { prayersByDate: {}, tasks: [], bills: [] }, { merge: true });
+          setDoc(docRef, { prayersByDate: {}, tasks: [] }, { merge: true });
         }
       });
       return true;
@@ -343,12 +347,6 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     updateFirebase({ tasks: t });
   };
   
-  const setBills = (b: Bill[]) => {
-    setBillsState(b);
-    localStorage.setItem("bh_bills", JSON.stringify(b));
-    updateFirebase({ bills: b });
-  };
-
   const setPantryItems = (items: PantryItem[]) => {
     setPantryItemsState(items);
     updateFirebase({ pantryItems: items });
@@ -384,6 +382,16 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     updateFirebase({ doctorVisits: visits });
   };
 
+  const setFinanceTransactions = (transactions: FinanceTransaction[]) => {
+    setFinanceTransactionsState(transactions);
+    updateFirebase({ financeTransactions: transactions });
+  };
+
+  const setLiquidBalances = (balances: LiquidBalances) => {
+    setLiquidBalancesState(balances);
+    updateFirebase({ liquidBalances: balances });
+  };
+
   if (!isMounted) return null;
 
   return (
@@ -403,14 +411,15 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
       globalSelectedDate, setGlobalSelectedDate,
       prayersByDate, setPrayersByDate,
       tasks, setTasks,
-      bills, setBills,
       pantryItems, setPantryItems,
       workoutsByDate, setWorkoutsByDate,
       nutritionByDate, setNutritionByDate,
       callsByDate, setCallsByDate,
       vaultRecords, setVaultRecords,
       healthProfiles, setHealthProfiles,
-      doctorVisits, setDoctorVisits
+      doctorVisits, setDoctorVisits,
+      financeTransactions, setFinanceTransactions,
+      liquidBalances, setLiquidBalances
     }}>
       {children}
     </GlobalContext.Provider>

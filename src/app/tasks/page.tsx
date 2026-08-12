@@ -127,7 +127,7 @@ export default function TasksEngine() {
 
         {showAddModal && (
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div className="bg-white dark:bg-zinc-900 w-full sm:max-w-sm rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200 flex flex-col gap-5">
+            <div className="bg-white dark:bg-zinc-900 w-full sm:max-w-sm rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200 flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-zinc-800">
                 <h3 className="text-lg font-black">{editingTaskId ? "Edit Task" : "Add New Task"}</h3>
                 <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-600 bg-slate-100 dark:bg-zinc-800 p-1.5 rounded-full"><X className="h-4 w-4" /></button>

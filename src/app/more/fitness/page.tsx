@@ -406,7 +406,7 @@ export default function FitnessPage() {
       {/* Health Profile Edit Modal */}
       {showHealthModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-3xl p-5 shadow-2xl border border-slate-100 dark:border-zinc-800">
+          <div className="bg-white dark:bg-zinc-900 w-full max-w-sm rounded-3xl p-5 shadow-2xl border border-slate-100 dark:border-zinc-800 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-black text-slate-800 dark:text-zinc-100">
                 Edit {healthEditPerson === "husband" ? "Husband's" : "Wife's"} Profile

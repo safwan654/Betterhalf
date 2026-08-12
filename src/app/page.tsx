@@ -18,7 +18,7 @@ import { initialPrayers } from "@/context/GlobalContext";
 export default function Dashboard() {
   const { 
     relationshipMode, activeUser, husbandName, wifeName,
-    prayersByDate, tasks, bills, currency, sendInteraction, globalSelectedDate
+    prayersByDate, tasks, financeTransactions, liquidBalances, currency, sendInteraction, globalSelectedDate
   } = useGlobal();
   
   const [hugsCount, setHugsCount] = useState(0);
@@ -52,7 +52,8 @@ export default function Dashboard() {
   const familyOutreach: any[] = [];
   const vaultIndex: any[] = [];
 
-  const totalSaved = (bills || []).reduce((acc, curr) => acc + curr.amount, 0); // mockup metric
+  const pendingBills = financeTransactions.filter(t => t.type === "PENDING");
+  const totalLiquid = liquidBalances.husband + liquidBalances.wife;
 
   return (
     <div className="min-h-screen bg-background pb-24 text-slate-800 dark:text-zinc-100 transition-colors duration-300">
@@ -137,6 +138,10 @@ export default function Dashboard() {
             <h2 className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
               Today's Overview
             </h2>
+            <div className="glass-panel p-3 rounded-xl border border-slate-100/50 flex flex-col items-center justify-center gap-1 shadow-sm">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Liquid Wealth</span>
+              <span className="text-xl font-black text-slate-800 dark:text-zinc-100 tracking-tight">{currency}{totalLiquid.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}</span>
+            </div>
             <span className="text-[10px] font-bold text-rose-500 dark:text-rose-400 flex items-center gap-1">
               <Sparkles className="h-3 w-3" /> Household Active
             </span>
@@ -286,7 +291,7 @@ export default function Dashboard() {
             </Link>
           </div>
 
-          {bills.length === 0 ? (
+          {pendingBills.length === 0 ? (
              <div className="flex flex-col items-center justify-center py-4 text-slate-400 dark:text-zinc-500">
                <Wallet className="h-6 w-6 mb-2 opacity-30" />
                <span className="text-xs font-medium">No pending bills</span>
@@ -297,15 +302,13 @@ export default function Dashboard() {
           ) : (
             <div className="flex flex-col gap-2">
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-zinc-500 mt-1">Pending Bills</span>
-              {bills.map((bill) => (
-                <div key={bill.name} className="flex items-center justify-between py-1 text-xs border-b border-slate-50 dark:border-zinc-800 last:border-0">
+              {pendingBills.map((bill) => (
+                <div key={bill.id} className="flex items-center justify-between py-1 text-xs border-b border-slate-50 dark:border-zinc-800 last:border-0">
                   <div className="flex flex-col">
                     <span className="font-semibold text-slate-700 dark:text-zinc-300">{bill.name}</span>
-                    <span className="text-[9px] text-slate-400 dark:text-zinc-500">{bill.due}</span>
+                    <span className="text-[9px] text-slate-400 dark:text-zinc-500 mt-0.5">{bill.date}</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="font-extrabold text-slate-800 dark:text-zinc-100">{currency}{bill.amount.toFixed(2)}</span>
-                  </div>
+                  <span className="font-black text-slate-800 dark:text-zinc-100">{currency}{bill.amount}</span>
                 </div>
               ))}
             </div>
