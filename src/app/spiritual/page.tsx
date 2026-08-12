@@ -4,11 +4,13 @@ import { useState } from "react";
 import Header from "@/components/layout/header";
 import BottomNavigation from "@/components/layout/bottom-navigation";
 import { Flame, CheckCircle2, History, Share2, Clock, AlertCircle, X } from "lucide-react";
-import { useGlobal, PrayerStatus } from "@/context/GlobalContext";
+import { useGlobal, PrayerStatus, initialPrayers } from "@/context/GlobalContext";
+import { format, isSameDay, parseISO } from "date-fns";
 
 export default function SpiritualTracker() {
-  const { activeUser, prayers, setPrayers } = useGlobal();
-  const [activeTab, setActiveTab] = useState<"TODAY" | "YESTERDAY">("TODAY");
+  const { activeUser, prayersByDate, setPrayersByDate, globalSelectedDate } = useGlobal();
+
+  const currentPrayers = prayersByDate[globalSelectedDate] || initialPrayers;
 
   // State for Prayer Selection Modal
   const [loggingPrayer, setLoggingPrayer] = useState<{ id: string, person: "husband" | "wife", name: string } | null>(null);
@@ -19,12 +21,17 @@ export default function SpiritualTracker() {
 
   const submitLog = (status: PrayerStatus) => {
     if (!loggingPrayer) return;
-    setPrayers(prayers.map(p => {
+    const updatedPrayers = currentPrayers.map(p => {
       if (p.id === loggingPrayer.id) {
         return { ...p, [loggingPrayer.person]: status };
       }
       return p;
-    }));
+    });
+    
+    setPrayersByDate({
+      ...prayersByDate,
+      [globalSelectedDate]: updatedPrayers
+    });
     setLoggingPrayer(null);
   };
 
@@ -34,11 +41,11 @@ export default function SpiritualTracker() {
     window.open(whatsappUrl, "_blank");
   };
 
-  const husbandCompleted = prayers.filter(p => p.husband).length;
-  const wifeCompleted = prayers.filter(p => p.wife).length;
+  const husbandCompleted = currentPrayers.filter(p => p.husband).length;
+  const wifeCompleted = currentPrayers.filter(p => p.wife).length;
   
-  const isStreakActiveToday = husbandCompleted >= 3 && wifeCompleted >= 3;
-  const currentStreak = isStreakActiveToday ? 6 : 5; 
+  const isStreakActive = husbandCompleted >= 3 && wifeCompleted >= 3;
+  const currentStreak = isStreakActive ? 6 : 5; 
 
   const renderStatusIcon = (status: PrayerStatus) => {
     if (status === "ON_TIME") return <CheckCircle2 className="h-4 w-4" />;
@@ -60,29 +67,13 @@ export default function SpiritualTracker() {
       <Header />
       
       <main className="mx-auto max-w-md px-4 pt-6 flex flex-col gap-6 relative">
-        
-        {/* Yesterday / Today Toggle */}
-        <div className="flex bg-slate-100/80 dark:bg-zinc-900/80 rounded-xl p-1 shadow-inner border border-slate-200/50 dark:border-zinc-800">
-          <button 
-            onClick={() => setActiveTab("YESTERDAY")}
-            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
-              activeTab === "YESTERDAY" 
-                ? "bg-white dark:bg-zinc-800 shadow-sm text-slate-800 dark:text-zinc-100" 
-                : "text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300"
-            }`}
-          >
-            Yesterday
-          </button>
-          <button 
-            onClick={() => setActiveTab("TODAY")}
-            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
-              activeTab === "TODAY" 
-                ? "bg-white dark:bg-zinc-800 shadow-sm text-slate-800 dark:text-zinc-100" 
-                : "text-slate-400 dark:text-zinc-500 hover:text-slate-600 dark:hover:text-zinc-300"
-            }`}
-          >
-            Today
-          </button>
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col">
+            <h2 className="text-xl font-black tracking-tight">Spiritual Log</h2>
+            <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
+              {isSameDay(parseISO(globalSelectedDate), new Date()) ? "Today" : format(parseISO(globalSelectedDate), "MMM d, yyyy")}
+            </span>
+          </div>
         </div>
 
         {/* Motivational Summary Card */}
@@ -125,9 +116,9 @@ export default function SpiritualTracker() {
             </div>
           </div>
           
-          {isStreakActiveToday && (
+          {isStreakActive && (
             <div className="relative z-10 mt-1 flex items-center gap-1.5 text-[9px] font-bold text-amber-100 bg-black/10 self-start px-2 py-1 rounded-full border border-white/10">
-              <CheckCircle2 className="h-3 w-3" /> Streak Secured for Today!
+              <CheckCircle2 className="h-3 w-3" /> Streak Secured!
             </div>
           )}
         </section>
@@ -159,7 +150,7 @@ export default function SpiritualTracker() {
             </div>
 
             {/* Table Rows */}
-            {prayers.map((prayer) => {
+            {currentPrayers.map((prayer) => {
               const bothLogged = prayer.husband && prayer.wife;
               const partComplete = prayer.husband || prayer.wife;
 

@@ -5,19 +5,21 @@ import Header from "@/components/layout/header";
 import BottomNavigation from "@/components/layout/bottom-navigation";
 import { CheckSquare, Plus, Clock, MoreVertical, X, Calendar as CalendarIcon, Tag } from "lucide-react";
 import { useGlobal, Task } from "@/context/GlobalContext";
+import { format, parseISO, isSameDay } from "date-fns";
 
 export default function TasksEngine() {
-  const { tasks, setTasks, sendInteraction, activeUser, husbandName, wifeName } = useGlobal();
+  const { tasks, setTasks, sendInteraction, activeUser, husbandName, wifeName, globalSelectedDate } = useGlobal();
   const [showAddModal, setShowAddModal] = useState(false);
   const [newTask, setNewTask] = useState<Partial<Task>>({ urgency: "MEDIUM" });
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [alertPartner, setAlertPartner] = useState(false);
 
   const partnerName = activeUser === "HUSBAND" ? wifeName : husbandName;
+  const currentTasks = tasks.filter(t => t.due === globalSelectedDate);
 
   const openAddModal = () => {
     setEditingTaskId(null);
-    setNewTask({ urgency: "MEDIUM", category: "General", due: "Today" });
+    setNewTask({ urgency: "MEDIUM", category: "General", due: globalSelectedDate });
     setAlertPartner(false);
     setShowAddModal(true);
   };
@@ -67,7 +69,9 @@ export default function TasksEngine() {
         <div className="flex items-center justify-between">
           <div className="flex flex-col">
             <h2 className="text-xl font-black tracking-tight">Shared To-Dos</h2>
-            <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">{tasks.length} Active Tasks</span>
+            <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
+              {currentTasks.length} Tasks for {isSameDay(parseISO(globalSelectedDate), new Date()) ? "Today" : format(parseISO(globalSelectedDate), "MMM d")}
+            </span>
           </div>
           <button 
             onClick={openAddModal}
@@ -77,7 +81,7 @@ export default function TasksEngine() {
           </button>
         </div>
 
-        {tasks.length === 0 ? (
+        {currentTasks.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-zinc-500">
             <CheckSquare className="h-12 w-12 mb-4 opacity-20" />
             <span className="text-sm font-semibold">No active tasks</span>
@@ -85,7 +89,7 @@ export default function TasksEngine() {
           </div>
         ) : (
           <section className="flex flex-col gap-3">
-            {tasks.map((task) => (
+            {currentTasks.map((task) => (
               <div key={task.id} className="glass-panel rounded-2xl p-4 shadow-sm border border-slate-100/50 dark:border-zinc-850 flex items-start gap-3 transition-all hover:border-slate-300 dark:hover:border-zinc-700">
                 <button 
                   onClick={() => completeTask(task.id)}
@@ -172,11 +176,10 @@ export default function TasksEngine() {
                   <div className="flex flex-col gap-1.5">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Due</span>
                     <input 
-                      type="text" 
-                      placeholder="e.g. Tomorrow"
+                      type="date" 
                       value={newTask.due || ""}
                       onChange={(e) => setNewTask({...newTask, due: e.target.value})}
-                      className="w-full bg-slate-50 dark:bg-zinc-950 border-2 border-slate-100 dark:border-zinc-800 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-amber-500/50"
+                      className="w-full bg-slate-50 dark:bg-zinc-950 border-2 border-slate-100 dark:border-zinc-800 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:border-amber-500/50 appearance-none min-h-[36px]"
                     />
                   </div>
                 </div>

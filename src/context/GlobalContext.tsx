@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useRef } from "react";
+import { format } from "date-fns";
 import { db } from "@/lib/firebase";
 import { doc, onSnapshot, setDoc, getDoc } from "firebase/firestore";
 
@@ -44,8 +45,10 @@ interface GlobalContextType {
   householdPin: string | null;
 
   // App Data
-  prayers: Prayer[];
-  setPrayers: (prayers: Prayer[]) => void;
+  globalSelectedDate: string;
+  setGlobalSelectedDate: (date: string) => void;
+  prayersByDate: Record<string, Prayer[]>;
+  setPrayersByDate: (prayers: Record<string, Prayer[]>) => void;
   tasks: Task[];
   setTasks: (tasks: Task[]) => void;
   bills: Bill[];
@@ -54,7 +57,7 @@ interface GlobalContextType {
 
 const GlobalContext = createContext<GlobalContextType | undefined>(undefined);
 
-const initialPrayers: Prayer[] = [
+export const initialPrayers: Prayer[] = [
   { id: "fajr", name: "Fajr", time: "5:00 AM", husband: null, wife: null },
   { id: "dhuhr", name: "Dhuhr", time: "1:00 PM", husband: null, wife: null },
   { id: "asr", name: "Asr", time: "4:30 PM", husband: null, wife: null },
@@ -76,7 +79,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
   // Shared state default values
   const [relationshipMode, setRelationshipModeState] = useState<"TOGETHER" | "DISTANCE">("TOGETHER");
   const [husbandTimezone, setHusbandTimezoneState] = useState("America/New_York");
-  const [wifeTimezone, setWifeTimezoneState] = useState("Asia/Dubai");
+  const [wifeTimezone, setWifeTimezoneState] = useState("America/Los_Angeles");
   const [husbandName, setHusbandNameState] = useState("Husband");
   const [wifeName, setWifeNameState] = useState("Wife");
   const [husbandPhoto, setHusbandPhotoState] = useState<string | null>(null);
@@ -85,7 +88,9 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
   const [interactionPayload, setInteractionPayload] = useState<string | null>(null);
   const [lastInteractionTimestamp, setLastInteractionTimestamp] = useState<number>(0);
   const [currency, setCurrencyState] = useState<string>("$");
-  const [prayers, setPrayersState] = useState<Prayer[]>(initialPrayers);
+  
+  const [globalSelectedDate, setGlobalSelectedDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
+  const [prayersByDate, setPrayersByDateState] = useState<Record<string, Prayer[]>>({});
   const [tasks, setTasksState] = useState<Task[]>([]);
   const [bills, setBillsState] = useState<Bill[]>([]);
 
@@ -94,18 +99,18 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     setIsMounted(true);
     const auth = localStorage.getItem("bh_auth") === "true";
     const pin = localStorage.getItem("bh_household_pin");
-    const user = localStorage.getItem("bh_user") as "HUSBAND" | "WIFE";
+    const user = localStorage.getItem("bh_user") as "HUSBAND" | "WIFE" | null;
 
     if (auth) setIsAuthenticated(true);
     if (pin) setHouseholdPin(pin);
     if (user) setActiveUserState(user);
 
     // Fallback load from localStorage for instant UI before Firebase syncs
-    const savedPrayers = localStorage.getItem("bh_prayers");
+    const savedPrayers = localStorage.getItem("bh_prayers_by_date");
     const savedTasks = localStorage.getItem("bh_tasks");
     const savedBills = localStorage.getItem("bh_bills");
     
-    if (savedPrayers) setPrayersState(JSON.parse(savedPrayers));
+    if (savedPrayers) setPrayersByDateState(JSON.parse(savedPrayers));
     if (savedTasks) setTasksState(JSON.parse(savedTasks));
     if (savedBills) setBillsState(JSON.parse(savedBills));
   }, []);
@@ -143,7 +148,16 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
           }
         }
         
-        if (data.prayers) setPrayersState(data.prayers);
+        // Handle legacy flat prayers array migration to object
+        if (data.prayersByDate) {
+          setPrayersByDateState(data.prayersByDate);
+        } else if (data.prayers && Array.isArray(data.prayers)) {
+          // Migrate old data
+          const todayStr = format(new Date(), "yyyy-MM-dd");
+          const migrated = { [todayStr]: data.prayers };
+          setPrayersByDateState(migrated);
+        }
+
         if (data.tasks) setTasksState(data.tasks);
         if (data.bills) setBillsState(data.bills);
       } else {
@@ -151,14 +165,14 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
         await setDoc(docRef, {
           relationshipMode: "TOGETHER",
           husbandTimezone: "America/New_York",
-          wifeTimezone: "Asia/Dubai",
+          wifeTimezone: "America/Los_Angeles",
           husbandName: "Husband",
           wifeName: "Wife",
           husbandPhoto: null,
           wifePhoto: null,
           pendingAnimation: null,
           currency: "$",
-          prayers: initialPrayers,
+          prayersByDate: {},
           tasks: [],
           bills: []
         }, { merge: true });
@@ -192,7 +206,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
       const docRef = doc(db, "households", pin);
       getDoc(docRef).then(snap => {
         if (!snap.exists()) {
-          setDoc(docRef, { prayers: initialPrayers, tasks: [], bills: [] }, { merge: true });
+          setDoc(docRef, { prayersByDate: {}, tasks: [], bills: [] }, { merge: true });
         }
       });
       return true;
@@ -261,10 +275,10 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     updateFirebase({ currency: c });
   };
 
-  const setPrayers = (p: Prayer[]) => {
-    setPrayersState(p);
-    localStorage.setItem("bh_prayers", JSON.stringify(p));
-    updateFirebase({ prayers: p });
+  const setPrayersByDate = (p: Record<string, Prayer[]>) => {
+    setPrayersByDateState(p);
+    localStorage.setItem("bh_prayers_by_date", JSON.stringify(p));
+    updateFirebase({ prayersByDate: p });
   };
   
   const setTasks = (t: Task[]) => {
@@ -295,7 +309,8 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
       pendingAnimation, interactionPayload, sendInteraction,
       currency, setCurrency,
       householdPin,
-      prayers, setPrayers,
+      globalSelectedDate, setGlobalSelectedDate,
+      prayersByDate, setPrayersByDate,
       tasks, setTasks,
       bills, setBills
     }}>

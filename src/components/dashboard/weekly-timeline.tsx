@@ -1,23 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { format, addDays, startOfWeek, isSameDay } from "date-fns";
+import { format, addDays, startOfWeek, isSameDay, parseISO } from "date-fns";
+import { useGlobal } from "@/context/GlobalContext";
 
 export default function WeeklyTimeline() {
+  const { globalSelectedDate, setGlobalSelectedDate, tasks } = useGlobal();
   const [currentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date>(currentDate);
+  
+  const parsedSelectedDate = parseISO(globalSelectedDate);
   
   // Generate 7 days starting from Monday of the current week (or just 7 days from -2 days to +4 days)
   const startDate = startOfWeek(currentDate, { weekStartsOn: 1 });
   
   const weekDays = Array.from({ length: 7 }).map((_, i) => {
-    const date = addDays(startDate, i);
-    // Mocking some days having pending items for the dot indicator
-    const hasPendingItems = i === 1 || i === 3 || i === 4; 
+    const dayDate = addDays(startDate, i);
+    const dayDateString = format(dayDate, "yyyy-MM-dd");
     return {
-      date,
-      hasPendingItems,
-      isToday: isSameDay(date, currentDate)
+      date: dayDate,
+      dateString: dayDateString,
+      isToday: isSameDay(dayDate, currentDate),
+      hasPendingItems: tasks.some(t => t.due === dayDateString) // Basic indicator based on tasks
     };
   });
 
@@ -25,18 +28,18 @@ export default function WeeklyTimeline() {
     <div className="flex flex-col gap-2 w-full overflow-hidden">
       <div className="flex items-center justify-between px-1">
         <h2 className="text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
-          {isSameDay(selectedDate, currentDate) ? "This Week" : format(selectedDate, "EEEE, MMM d")}
+          {isSameDay(parsedSelectedDate, currentDate) ? "This Week" : format(parsedSelectedDate, "EEEE, MMM d")}
         </h2>
         <span className="text-[10px] font-bold text-amber-500">{format(currentDate, "MMMM yyyy")}</span>
       </div>
       
       <div className="flex items-center justify-between gap-1 overflow-x-auto pb-1 scrollbar-hide">
         {weekDays.map((day, idx) => {
-          const isSelected = isSameDay(day.date, selectedDate);
+          const isSelected = day.dateString === globalSelectedDate;
           return (
           <button 
             key={idx}
-            onClick={() => setSelectedDate(day.date)}
+            onClick={() => setGlobalSelectedDate(day.dateString)}
             className={`flex flex-col items-center justify-center min-w-[3rem] h-[4.5rem] rounded-[18px] transition-all relative ${
               isSelected 
                 ? "bg-gradient-to-b from-rose-500 to-amber-500 text-white shadow-md shadow-rose-500/20 scale-105" 

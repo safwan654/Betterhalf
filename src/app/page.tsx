@@ -13,11 +13,12 @@ import {
   Clock, HeartHandshake, CalendarClock, Check, Inbox
 } from "lucide-react";
 import Link from "next/link";
+import { initialPrayers } from "@/context/GlobalContext";
 
 export default function Dashboard() {
   const { 
     relationshipMode, activeUser, husbandName, wifeName,
-    prayers, tasks, bills, currency, sendInteraction
+    prayersByDate, tasks, bills, currency, sendInteraction, globalSelectedDate
   } = useGlobal();
   
   const [hugsCount, setHugsCount] = useState(0);
@@ -25,6 +26,9 @@ export default function Dashboard() {
 
   const [hugSentLocal, setHugSentLocal] = useState(false);
   const [kissSentLocal, setKissSentLocal] = useState(false);
+
+  const currentTasks = tasks.filter(t => t.due === globalSelectedDate);
+  const currentPrayers = prayersByDate[globalSelectedDate] || initialPrayers;
 
   const handleSendHug = () => {
     setHugsCount(hugsCount + 1);
@@ -183,7 +187,7 @@ export default function Dashboard() {
               <div>Her</div>
               <div className="col-span-2 text-right">Status</div>
             </div>
-            {prayers.map((prayer) => (
+            {currentPrayers.map((prayer) => (
               <div key={prayer.name} className="grid grid-cols-7 gap-1 items-center py-0.5 text-xs">
                 <span className="col-span-3 font-semibold text-slate-600 dark:text-zinc-400">{prayer.name}</span>
                 <div className="flex justify-center">
@@ -232,17 +236,17 @@ export default function Dashboard() {
             </Link>
           </div>
 
-          {tasks.length === 0 ? (
+          {currentTasks.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-4 text-slate-400 dark:text-zinc-500">
               <CheckSquare className="h-6 w-6 mb-2 opacity-30" />
-              <span className="text-xs font-medium">0 Active Tasks</span>
+              <span className="text-xs font-medium">0 Tasks</span>
               <Link href="/tasks" className="mt-2 text-[10px] font-bold bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-500 border border-amber-200 dark:border-amber-500/20 px-3 py-1.5 rounded-full hover:bg-amber-100 transition-colors">
                 + Add a Task
               </Link>
             </div>
           ) : (
             <div className="flex flex-col gap-2">
-              {tasks.map((task) => (
+              {currentTasks.map((task) => (
                 <div key={task.title} className="flex items-start justify-between p-2 rounded-xl bg-slate-50/80 dark:bg-zinc-900/50 border border-slate-100/10">
                   <div className="flex flex-col gap-0.5 max-w-[70%]">
                     <span className="text-xs font-bold text-slate-700 dark:text-zinc-200 line-clamp-1">{task.title}</span>
