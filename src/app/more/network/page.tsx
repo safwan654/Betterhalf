@@ -6,13 +6,13 @@ import Header from "@/components/layout/header";
 import BottomNavigation from "@/components/layout/bottom-navigation";
 import { PhoneCall, Calendar, Plus, Trash2, ArrowLeft, Heart, Sparkles, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useGlobal } from "@/context/GlobalContext";
+import { format, parseISO, isSameDay } from "date-fns";
 
 export default function NetworkPage() {
-  const [outreaches, setOutreaches] = useState([
-    { id: 1, name: "Call Parents (Husband)", relation: "Husband Parents", lastContacted: "4 days ago", frequency: 7, due: "Jul 18", status: "Active" },
-    { id: 2, name: "Call Parents (Wife)", relation: "Wife Parents", lastContacted: "7 days ago", frequency: 7, due: "Today", status: "Due" },
-    { id: 3, name: "Call Grandparents", relation: "Extended Family", lastContacted: "28 days ago", frequency: 30, due: "Jul 17", status: "Active" }
-  ]);
+  const { callsByDate, setCallsByDate, globalSelectedDate } = useGlobal();
+
+  const outreaches = callsByDate[globalSelectedDate] || [];
 
   const [newName, setNewName] = useState("");
   const [newRelation, setNewRelation] = useState("Husband Parents");
@@ -32,26 +32,28 @@ export default function NetworkPage() {
       status: "Due"
     };
 
-    setOutreaches([newLog, ...outreaches]);
+    setCallsByDate({
+      ...callsByDate,
+      [globalSelectedDate]: [...outreaches, newLog]
+    });
+    
     setNewName("");
   };
 
   const deleteOutreach = (id: number) => {
-    setOutreaches(outreaches.filter(o => o.id !== id));
+    setCallsByDate({
+      ...callsByDate,
+      [globalSelectedDate]: outreaches.filter(o => o.id !== id)
+    });
   };
 
   const markContacted = (id: number) => {
-    setOutreaches(outreaches.map(o => {
-      if (o.id === id) {
-        return {
-          ...o,
-          lastContacted: "Just now",
-          status: "Active",
-          due: `In ${o.frequency} days`
-        };
-      }
-      return o;
-    }));
+    setCallsByDate({
+      ...callsByDate,
+      [globalSelectedDate]: outreaches.map(o => 
+        o.id === id ? { ...o, lastContacted: "Just now", due: "Next week", status: "Active" } : o
+      )
+    });
   };
 
   return (
@@ -61,11 +63,16 @@ export default function NetworkPage() {
       <main className="mx-auto max-w-md px-4 pt-4 flex flex-col gap-6">
         
         {/* Back Link */}
-        <div className="flex items-center gap-2">
-          <Link href="/more" className="p-1.5 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg text-slate-500 transition-colors">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-          <span className="text-sm font-black text-slate-700 dark:text-zinc-200">Family & Network Log</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Link href="/more" className="p-1.5 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg text-slate-500 transition-colors">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+            <span className="text-sm font-black text-slate-700 dark:text-zinc-200">Family & Network Log</span>
+          </div>
+          <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
+            {isSameDay(parseISO(globalSelectedDate), new Date()) ? "Today" : format(parseISO(globalSelectedDate), "MMM d, yyyy")}
+          </span>
         </div>
 
         {/* Motivation outreach call */}

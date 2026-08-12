@@ -6,14 +6,10 @@ import Header from "@/components/layout/header";
 import BottomNavigation from "@/components/layout/bottom-navigation";
 import { ShieldAlert, Plus, Trash2, ArrowLeft, Search, Eye, Key } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useGlobal } from "@/context/GlobalContext";
 
 export default function VaultPage() {
-  const [documents, setDocuments] = useState([
-    { id: 1, name: "Marriage Certificate", location: "Safe Box 1 (Master Bedroom)", reference: "MC-2022-9012", notes: "Original physical copy" },
-    { id: 2, name: "Apartment Title Deed", location: "Blue Binder, Shelf 3", reference: "TD-APT-104B", notes: "Under Husband name" },
-    { id: 3, name: "Car Warranty Book", location: "Glove Compartment", reference: "WARR-CAR-2024", notes: "Expires in 2029" },
-    { id: 4, name: "Health Insurance Policies", location: "Green cabinet drawer 2", reference: "INS-MED-88123", notes: "Both profiles registered" }
-  ]);
+  const { vaultRecords, setVaultRecords } = useGlobal();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [newName, setNewName] = useState("");
@@ -33,7 +29,8 @@ export default function VaultPage() {
       notes: newNotes
     };
 
-    setDocuments([newDoc, ...documents]);
+    setVaultRecords([newDoc, ...vaultRecords]);
+    
     setNewName("");
     setNewLocation("");
     setNewRef("");
@@ -41,10 +38,10 @@ export default function VaultPage() {
   };
 
   const deleteDocument = (id: number) => {
-    setDocuments(documents.filter(doc => doc.id !== id));
+    setVaultRecords(vaultRecords.filter(d => d.id !== id));
   };
 
-  const filteredDocuments = documents.filter(doc =>
+  const filteredDocuments = vaultRecords.filter(doc => 
     doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     doc.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
     doc.reference.toLowerCase().includes(searchTerm.toLowerCase())

@@ -4,16 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import Header from "@/components/layout/header";
 import BottomNavigation from "@/components/layout/bottom-navigation";
-import { ShoppingCart, Plus, Trash2, ArrowLeft, GripVertical } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useGlobal } from "@/context/GlobalContext";
 
 export default function PantryPage() {
-  const [items, setItems] = useState([
-    { id: 1, name: "Greek Yogurt", quantity: "2x", category: "Dairy", checked: false },
-    { id: 2, name: "Avocados", quantity: "4x", category: "Produce", checked: true },
-    { id: 3, name: "Almond Milk", quantity: "1L", category: "Dairy", checked: false },
-    { id: 4, name: "Whole wheat pasta", quantity: "1 pack", category: "Pantry", checked: false }
-  ]);
+  const { pantryItems, setPantryItems } = useGlobal();
 
   const [newItemName, setNewItemName] = useState("");
   const [newItemQty, setNewItemQty] = useState("");
@@ -31,21 +27,21 @@ export default function PantryPage() {
       checked: false
     };
 
-    setItems([newItem, ...items]);
+    setPantryItems([newItem, ...pantryItems]);
     setNewItemName("");
     setNewItemQty("");
   };
 
   const toggleItemChecked = (id: number) => {
-    setItems(items.map(item => item.id === id ? { ...item, checked: !item.checked } : item));
+    setPantryItems(pantryItems.map(item => item.id === id ? { ...item, checked: !item.checked } : item));
   };
 
   const deleteItem = (id: number) => {
-    setItems(items.filter(item => item.id !== id));
+    setPantryItems(pantryItems.filter(item => item.id !== id));
   };
 
-  const uncheckedItems = items.filter(item => !item.checked);
-  const checkedItems = items.filter(item => item.checked);
+  const uncheckedItems = pantryItems.filter(item => !item.checked);
+  const checkedItems = pantryItems.filter(item => item.checked);
 
   return (
     <div className="min-h-screen bg-background pb-24 text-slate-800 dark:text-zinc-100 transition-colors duration-300">

@@ -2,16 +2,32 @@
 
 import Header from "@/components/layout/header";
 import BottomNavigation from "@/components/layout/bottom-navigation";
-import { ChevronRight, ShoppingCart, Dumbbell, PhoneCall, ShieldAlert } from "lucide-react";
+import { ShoppingCart, Dumbbell, ShieldAlert, PhoneCall, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { useGlobal } from "@/context/GlobalContext";
 
 export default function MoreIndex() {
+  const { pantryItems, workoutsByDate, nutritionByDate, callsByDate, vaultRecords, globalSelectedDate } = useGlobal();
+
+  const currentWorkouts = workoutsByDate[globalSelectedDate] || [];
+  const currentNutrition = nutritionByDate[globalSelectedDate] || { husband: { protein: 0, proteinGoal: 150 }, wife: { protein: 0, proteinGoal: 100 } };
+  
+  const hPercent = (currentNutrition.husband.protein / currentNutrition.husband.proteinGoal) * 100;
+  const wPercent = (currentNutrition.wife.protein / currentNutrition.wife.proteinGoal) * 100;
+  const avgFitness = Math.round((hPercent + wPercent) / 2) || 0;
+  
+  const currentCalls = callsByDate[globalSelectedDate] || [];
+  const dueCalls = currentCalls.filter(c => c.status === "Due").length;
+  const activeCalls = currentCalls.length;
+  
+  const uncheckedPantry = pantryItems.filter(i => !i.checked).length;
+
   const modules = [
     {
       id: "pantry",
       title: "Pantry & Grocery Sync",
       desc: "Syncs a shared shopping list.",
-      status: "3 items left",
+      status: `${uncheckedPantry} items left`,
       icon: ShoppingCart,
       color: "text-amber-500",
       bg: "bg-amber-500/10",
@@ -22,7 +38,7 @@ export default function MoreIndex() {
       id: "fitness",
       title: "Fitness & Health Hub",
       desc: "Track shared/individual workouts, protein targets.",
-      status: "80% completed",
+      status: `${currentWorkouts.length} workouts, ${avgFitness}% protein`,
       icon: Dumbbell,
       color: "text-rose-500",
       bg: "bg-rose-500/10",
@@ -33,7 +49,7 @@ export default function MoreIndex() {
       id: "network",
       title: "Family & Network Log",
       desc: "Reminder calendar for important parent outreach.",
-      status: "1 call due",
+      status: dueCalls > 0 ? `${dueCalls} calls due` : `${activeCalls} scheduled`,
       icon: PhoneCall,
       color: "text-blue-500",
       bg: "bg-blue-500/10",
@@ -44,7 +60,7 @@ export default function MoreIndex() {
       id: "vault",
       title: "Secure Vault Index",
       desc: "Lookup cabinet locations for physical contracts/IDs.",
-      status: "9 records indexed",
+      status: `${vaultRecords.length} records indexed`,
       icon: ShieldAlert,
       color: "text-slate-700 dark:text-slate-300",
       bg: "bg-slate-800/10 dark:bg-slate-700/20",

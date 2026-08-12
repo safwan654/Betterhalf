@@ -6,17 +6,17 @@ import Header from "@/components/layout/header";
 import BottomNavigation from "@/components/layout/bottom-navigation";
 import { Dumbbell, Plus, Trash2, ArrowLeft, Award, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useGlobal } from "@/context/GlobalContext";
+import { format, parseISO, isSameDay } from "date-fns";
 
 export default function FitnessPage() {
-  const [workouts, setWorkouts] = useState([
-    { id: 1, activity: "Gym (Push Day)", duration: 60, spender: "Husband", notes: "Felt strong on bench press" },
-    { id: 2, activity: "Yoga & Planks", duration: 30, spender: "Wife", notes: "Did 3 min continuous plank" }
-  ]);
+  const { workoutsByDate, setWorkoutsByDate, nutritionByDate, setNutritionByDate, globalSelectedDate } = useGlobal();
 
-  const [nutrition, setNutrition] = useState({
-    husband: { protein: 110, proteinGoal: 140, calories: 1900, calorieGoal: 2400 },
-    wife: { protein: 85, proteinGoal: 95, calories: 1450, calorieGoal: 1800 }
-  });
+  const workouts = workoutsByDate[globalSelectedDate] || [];
+  const nutrition = nutritionByDate[globalSelectedDate] || {
+    husband: { protein: 0, proteinGoal: 150 },
+    wife: { protein: 0, proteinGoal: 100 }
+  };
 
   const [newActivity, setNewActivity] = useState("Gym");
   const [newDuration, setNewDuration] = useState("");
@@ -38,8 +38,12 @@ export default function FitnessPage() {
       notes: newNotes
     };
 
-    setWorkouts([newWorkout, ...workouts]);
-    setNewActivity("Gym");
+    setWorkoutsByDate({
+      ...workoutsByDate,
+      [globalSelectedDate]: [...workouts, newWorkout]
+    });
+    
+    setNewActivity("");
     setNewDuration("");
     setNewNotes("");
   };
@@ -47,25 +51,29 @@ export default function FitnessPage() {
   const handleAddProtein = (e: React.FormEvent) => {
     e.preventDefault();
     if (!proteinInput) return;
-    const amount = parseInt(proteinInput);
 
-    if (proteinSpender === "Husband") {
-      setNutrition({
+    const amount = parseInt(proteinInput);
+    const isHusband = proteinSpender === "Husband";
+
+    setNutritionByDate({
+      ...nutritionByDate,
+      [globalSelectedDate]: {
         ...nutrition,
-        husband: { ...nutrition.husband, protein: Math.min(300, nutrition.husband.protein + amount) }
-      });
-    } else {
-      setNutrition({
-        ...nutrition,
-        wife: { ...nutrition.wife, protein: Math.min(300, nutrition.wife.protein + amount) }
-      });
-    }
+        [isHusband ? "husband" : "wife"]: {
+          ...nutrition[isHusband ? "husband" : "wife"],
+          protein: nutrition[isHusband ? "husband" : "wife"].protein + amount
+        }
+      }
+    });
 
     setProteinInput("");
   };
 
   const deleteWorkout = (id: number) => {
-    setWorkouts(workouts.filter(w => w.id !== id));
+    setWorkoutsByDate({
+      ...workoutsByDate,
+      [globalSelectedDate]: workouts.filter(w => w.id !== id)
+    });
   };
 
   const husbandPercent = (nutrition.husband.protein / nutrition.husband.proteinGoal) * 100;
@@ -78,11 +86,16 @@ export default function FitnessPage() {
       <main className="mx-auto max-w-md px-4 pt-4 flex flex-col gap-6">
         
         {/* Back Link */}
-        <div className="flex items-center gap-2">
-          <Link href="/more" className="p-1.5 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg text-slate-500 transition-colors">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-          <span className="text-sm font-black text-slate-700 dark:text-zinc-200">Fitness & Health Hub</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Link href="/more" className="p-1.5 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg text-slate-500 transition-colors">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+            <span className="text-sm font-black text-slate-700 dark:text-zinc-200">Fitness & Health Hub</span>
+          </div>
+          <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
+            {isSameDay(parseISO(globalSelectedDate), new Date()) ? "Today" : format(parseISO(globalSelectedDate), "MMM d, yyyy")}
+          </span>
         </div>
 
         {/* Nutrition Target Progress */}

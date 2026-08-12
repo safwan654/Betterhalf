@@ -10,6 +10,13 @@ export interface Prayer { id: string; name: string; time: string; husband: Praye
 export interface Task { id: string; title: string; urgency: "HIGH"|"MEDIUM"|"LOW"; category: string; due: string; }
 export interface Bill { id: string; name: string; amount: number; due: string; }
 
+export interface PantryItem { id: number; name: string; quantity: string; category: string; checked: boolean; }
+export interface Workout { id: number; activity: string; duration: number; notes: string; spender: string; }
+export interface DailyNutrition { protein: number; proteinGoal: number; }
+export interface NutritionDay { husband: DailyNutrition; wife: DailyNutrition; }
+export interface CallLog { id: number; name: string; relation: string; lastContacted: string; frequency: number; due: string; status: string; }
+export interface VaultRecord { id: number; name: string; location: string; reference: string; notes: string; }
+
 interface GlobalContextType {
   isAuthenticated: boolean;
   login: (pin: string, user: "HUSBAND" | "WIFE") => boolean;
@@ -53,6 +60,18 @@ interface GlobalContextType {
   setTasks: (tasks: Task[]) => void;
   bills: Bill[];
   setBills: (bills: Bill[]) => void;
+
+  // New Modules
+  pantryItems: PantryItem[];
+  setPantryItems: (items: PantryItem[]) => void;
+  workoutsByDate: Record<string, Workout[]>;
+  setWorkoutsByDate: (workouts: Record<string, Workout[]>) => void;
+  nutritionByDate: Record<string, NutritionDay>;
+  setNutritionByDate: (nutrition: Record<string, NutritionDay>) => void;
+  callsByDate: Record<string, CallLog[]>;
+  setCallsByDate: (calls: Record<string, CallLog[]>) => void;
+  vaultRecords: VaultRecord[];
+  setVaultRecords: (records: VaultRecord[]) => void;
 }
 
 const GlobalContext = createContext<GlobalContextType | undefined>(undefined);
@@ -93,6 +112,13 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
   const [prayersByDate, setPrayersByDateState] = useState<Record<string, Prayer[]>>({});
   const [tasks, setTasksState] = useState<Task[]>([]);
   const [bills, setBillsState] = useState<Bill[]>([]);
+
+  // New modules state
+  const [pantryItems, setPantryItemsState] = useState<PantryItem[]>([]);
+  const [workoutsByDate, setWorkoutsByDateState] = useState<Record<string, Workout[]>>({});
+  const [nutritionByDate, setNutritionByDateState] = useState<Record<string, NutritionDay>>({});
+  const [callsByDate, setCallsByDateState] = useState<Record<string, CallLog[]>>({});
+  const [vaultRecords, setVaultRecordsState] = useState<VaultRecord[]>([]);
 
   // 1. Initial Load of Auth from LocalStorage
   useEffect(() => {
@@ -160,6 +186,12 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
 
         if (data.tasks) setTasksState(data.tasks);
         if (data.bills) setBillsState(data.bills);
+
+        if (data.pantryItems) setPantryItemsState(data.pantryItems);
+        if (data.workoutsByDate) setWorkoutsByDateState(data.workoutsByDate);
+        if (data.nutritionByDate) setNutritionByDateState(data.nutritionByDate);
+        if (data.callsByDate) setCallsByDateState(data.callsByDate);
+        if (data.vaultRecords) setVaultRecordsState(data.vaultRecords);
       } else {
         // First time this household is created on Firebase, initialize it
         await setDoc(docRef, {
@@ -174,7 +206,12 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
           currency: "$",
           prayersByDate: {},
           tasks: [],
-          bills: []
+          bills: [],
+          pantryItems: [],
+          workoutsByDate: {},
+          nutritionByDate: {},
+          callsByDate: {},
+          vaultRecords: []
         }, { merge: true });
       }
     });
@@ -293,6 +330,31 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     updateFirebase({ bills: b });
   };
 
+  const setPantryItems = (items: PantryItem[]) => {
+    setPantryItemsState(items);
+    updateFirebase({ pantryItems: items });
+  };
+
+  const setWorkoutsByDate = (workouts: Record<string, Workout[]>) => {
+    setWorkoutsByDateState(workouts);
+    updateFirebase({ workoutsByDate: workouts });
+  };
+
+  const setNutritionByDate = (nutrition: Record<string, NutritionDay>) => {
+    setNutritionByDateState(nutrition);
+    updateFirebase({ nutritionByDate: nutrition });
+  };
+
+  const setCallsByDate = (calls: Record<string, CallLog[]>) => {
+    setCallsByDateState(calls);
+    updateFirebase({ callsByDate: calls });
+  };
+
+  const setVaultRecords = (records: VaultRecord[]) => {
+    setVaultRecordsState(records);
+    updateFirebase({ vaultRecords: records });
+  };
+
   if (!isMounted) return null;
 
   return (
@@ -312,7 +374,12 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
       globalSelectedDate, setGlobalSelectedDate,
       prayersByDate, setPrayersByDate,
       tasks, setTasks,
-      bills, setBills
+      bills, setBills,
+      pantryItems, setPantryItems,
+      workoutsByDate, setWorkoutsByDate,
+      nutritionByDate, setNutritionByDate,
+      callsByDate, setCallsByDate,
+      vaultRecords, setVaultRecords
     }}>
       {children}
     </GlobalContext.Provider>
