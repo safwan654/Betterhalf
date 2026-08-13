@@ -49,6 +49,7 @@ interface GlobalContextType {
   pendingAnimation: "HUG" | "KISS" | "TASK_ALERT" | null;
   interactionPayload: string | null;
   sendInteraction: (type: "HUG" | "KISS" | "TASK_ALERT", payload?: string) => void;
+  clearPendingAnimation: () => void;
   
   currency: string;
   setCurrency: (currency: string) => void;
@@ -319,6 +320,10 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     updateFirebase({ wifePhoto: photo });
   };
 
+  const clearPendingAnimation = () => {
+    setPendingAnimationState(null);
+  };
+
   const sendInteraction = (type: "HUG" | "KISS" | "TASK_ALERT", payload?: string) => {
     updateFirebase({ 
       lastInteraction: {
@@ -405,7 +410,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
       wifeName, setWifeName,
       husbandPhoto, setHusbandPhoto,
       wifePhoto, setWifePhoto,
-      pendingAnimation, interactionPayload, sendInteraction,
+      pendingAnimation, interactionPayload, sendInteraction, clearPendingAnimation,
       currency, setCurrency,
       householdPin,
       globalSelectedDate, setGlobalSelectedDate,

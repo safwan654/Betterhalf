@@ -5,7 +5,7 @@ import { useGlobal } from "@/context/GlobalContext";
 import { CheckSquare } from "lucide-react";
 
 export default function TaskAlert() {
-  const { pendingAnimation, interactionPayload, activeUser, husbandName, wifeName } = useGlobal();
+  const { pendingAnimation, interactionPayload, activeUser, husbandName, wifeName, clearPendingAnimation } = useGlobal();
   const [show, setShow] = useState(false);
   const [taskTitle, setTaskTitle] = useState("");
 
@@ -26,7 +26,8 @@ export default function TaskAlert() {
 
   return (
     <div 
-      className={`fixed top-4 left-4 right-4 z-[100] flex justify-center pointer-events-none transition-all duration-500 transform ${
+      onClick={clearPendingAnimation}
+      className={`fixed top-4 left-4 right-4 z-[100] flex justify-center cursor-pointer transition-all duration-500 transform ${
         show ? "translate-y-0 opacity-100" : "-translate-y-12 opacity-0"
       }`}
     >

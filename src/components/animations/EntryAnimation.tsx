@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useGlobal } from "@/context/GlobalContext";
 
 export default function EntryAnimation() {
-  const { pendingAnimation } = useGlobal();
+  const { pendingAnimation, clearPendingAnimation } = useGlobal();
   const [show, setShow] = useState(false);
 
   useEffect(() => {
@@ -22,7 +22,8 @@ export default function EntryAnimation() {
 
   return (
     <div 
-      className={`fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-500 pointer-events-none ${
+      onClick={clearPendingAnimation}
+      className={`fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-500 cursor-pointer ${
         show ? "opacity-100" : "opacity-0"
       }`}
     >
