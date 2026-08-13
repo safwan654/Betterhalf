@@ -10,7 +10,7 @@ import EntryAnimation from "@/components/animations/EntryAnimation";
 import { 
   Heart, Sparkles, CheckSquare, Wallet, Dumbbell, 
   ShoppingCart, PhoneCall, ShieldAlert, Utensils, Flame,
-  Clock, HeartHandshake, CalendarClock, Check, Inbox
+  Clock, HeartHandshake, CalendarClock, Check, Inbox, Gamepad2
 } from "lucide-react";
 import Link from "next/link";
 import { initialPrayers } from "@/context/GlobalContext";
@@ -148,24 +148,39 @@ export default function Dashboard() {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            {/* Meal Widget - Empty State */}
-            <div className="col-span-2 glass-panel rounded-2xl p-4 border border-slate-100/50 shadow-sm flex flex-col gap-2">
+            {/* LDR Games & Dates Widget */}
+            <div className="col-span-2 glass-panel rounded-2xl p-4 border border-slate-100/50 shadow-sm flex flex-col gap-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-orange-500/10 text-orange-500">
-                    <Utensils className="h-4 w-4" />
+                  <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-500">
+                    <Gamepad2 className="h-4 w-4" />
                   </div>
                   <span className="text-xs font-bold text-slate-700 dark:text-zinc-300">
-                    Today's Meals
+                    LDR Virtual Dates
                   </span>
                 </div>
               </div>
-              <div className="flex flex-col items-center justify-center py-4 text-slate-400 dark:text-zinc-500">
-                <Inbox className="h-6 w-6 mb-2 opacity-50" />
-                <span className="text-xs font-medium">No meals planned for today</span>
-                <button className="mt-2 text-[10px] font-bold bg-slate-100 dark:bg-zinc-800 px-3 py-1.5 rounded-full hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors">
-                  Plan a Meal
-                </button>
+              
+              <div className="grid grid-cols-2 gap-2 mt-1">
+                <a href="https://skribbl.io" target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-all active:scale-95 group">
+                  <div className="text-xl mb-1 group-hover:scale-110 transition-transform">🎨</div>
+                  <span className="text-[10px] font-bold text-slate-600 dark:text-zinc-400 group-hover:text-indigo-500">Skribbl.io</span>
+                </a>
+                
+                <a href="https://www.chess.com/play/online/friends" target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-all active:scale-95 group">
+                  <div className="text-xl mb-1 group-hover:scale-110 transition-transform">♟️</div>
+                  <span className="text-[10px] font-bold text-slate-600 dark:text-zinc-400 group-hover:text-indigo-500">Chess.com</span>
+                </a>
+
+                <a href="https://playingcards.io/" target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-all active:scale-95 group">
+                  <div className="text-xl mb-1 group-hover:scale-110 transition-transform">🃏</div>
+                  <span className="text-[10px] font-bold text-slate-600 dark:text-zinc-400 group-hover:text-indigo-500">Card Games</span>
+                </a>
+
+                <a href="https://codenames.game/" target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-3 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 hover:border-indigo-200 dark:hover:border-indigo-500/30 transition-all active:scale-95 group">
+                  <div className="text-xl mb-1 group-hover:scale-110 transition-transform">🕵️</div>
+                  <span className="text-[10px] font-bold text-slate-600 dark:text-zinc-400 group-hover:text-indigo-500">Codenames</span>
+                </a>
               </div>
             </div>
           </div>
