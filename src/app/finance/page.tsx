@@ -280,7 +280,7 @@ export default function Finance() {
         {/* Add Transaction Modal */}
         {showAddModal && (
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div className="bg-white dark:bg-zinc-900 w-full sm:max-w-sm rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200 flex flex-col gap-5 max-h-[90vh] overflow-y-auto">
+            <div className="bg-white dark:bg-zinc-900 w-full sm:max-w-sm rounded-t-3xl sm:rounded-3xl p-6 pb-40 sm:pb-6 shadow-2xl animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200 flex flex-col gap-5 max-h-[85dvh] overflow-y-auto">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-black text-slate-800 dark:text-zinc-100">{editingTxId ? "Edit Entry" : "Add Entry"}</h3>
                 <button onClick={() => { setShowAddModal(false); setEditingTxId(null); setNewTxName(""); setNewTxAmount(""); }} className="p-2 bg-slate-100 dark:bg-zinc-800 rounded-full text-slate-500 hover:bg-slate-200"><X className="h-4 w-4" /></button>
@@ -365,7 +365,7 @@ export default function Finance() {
         {/* Edit Balances Modal */}
         {showBalanceModal && (
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div className="bg-white dark:bg-zinc-900 w-full sm:max-w-sm rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200 flex flex-col gap-5 max-h-[90vh] overflow-y-auto">
+            <div className="bg-white dark:bg-zinc-900 w-full sm:max-w-sm rounded-t-3xl sm:rounded-3xl p-6 pb-40 sm:pb-6 shadow-2xl animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200 flex flex-col gap-5 max-h-[85dvh] overflow-y-auto">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-black text-slate-800 dark:text-zinc-100">Update Balances</h3>
                 <button onClick={() => setShowBalanceModal(false)} className="p-2 bg-slate-100 dark:bg-zinc-800 rounded-full text-slate-500 hover:bg-slate-200"><X className="h-4 w-4" /></button>
