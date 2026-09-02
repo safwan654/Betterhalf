@@ -179,11 +179,12 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
         // Handle incoming interactions
         if (data.lastInteraction) {
           const { type, sender, timestamp, payload } = data.lastInteraction;
+          const isRecent = Date.now() - timestamp < 10000; // Sent within the last 10 seconds
           if (timestamp > lastInteractionTimestampRef.current) {
             lastInteractionTimestampRef.current = timestamp;
             setLastInteractionTimestamp(timestamp);
-            // Only trigger if it was sent by the partner
-            if (sender !== activeUserRef.current && activeUserRef.current) {
+            // Only trigger if it was sent by the partner AND is recent (not a stale reload/update)
+            if (isRecent && sender !== activeUserRef.current && activeUserRef.current) {
               setInteractionPayload(payload || null);
               setPendingAnimationState(type);
               setTimeout(() => setPendingAnimationState(null), 4000);
