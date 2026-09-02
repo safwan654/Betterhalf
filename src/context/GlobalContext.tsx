@@ -46,9 +46,9 @@ interface GlobalContextType {
   wifePhoto: string | null;
   setWifePhoto: (photoBase64: string | null) => void;
 
-  pendingAnimation: "HUG" | "KISS" | "TASK_ALERT" | null;
+  pendingAnimation: "HUG" | "KISS" | "TASK_ALERT" | "PRAYER_ALERT" | null;
   interactionPayload: string | null;
-  sendInteraction: (type: "HUG" | "KISS" | "TASK_ALERT", payload?: string) => void;
+  sendInteraction: (type: "HUG" | "KISS" | "TASK_ALERT" | "PRAYER_ALERT", payload?: string) => void;
   clearPendingAnimation: () => void;
   
   currency: string;
@@ -114,7 +114,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
   const [wifeName, setWifeNameState] = useState("Wife");
   const [husbandPhoto, setHusbandPhotoState] = useState<string | null>(null);
   const [wifePhoto, setWifePhotoState] = useState<string | null>(null);
-  const [pendingAnimation, setPendingAnimationState] = useState<"HUG" | "KISS" | "TASK_ALERT" | null>(null);
+  const [pendingAnimation, setPendingAnimationState] = useState<"HUG" | "KISS" | "TASK_ALERT" | "PRAYER_ALERT" | null>(null);
   const [interactionPayload, setInteractionPayload] = useState<string | null>(null);
   const [lastInteractionTimestamp, setLastInteractionTimestamp] = useState<number>(0);
   const [currency, setCurrencyState] = useState<string>("$");
@@ -324,7 +324,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     setPendingAnimationState(null);
   };
 
-  const sendInteraction = (type: "HUG" | "KISS" | "TASK_ALERT", payload?: string) => {
+  const sendInteraction = (type: "HUG" | "KISS" | "TASK_ALERT" | "PRAYER_ALERT", payload?: string) => {
     updateFirebase({ 
       lastInteraction: {
         type,

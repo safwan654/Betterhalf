@@ -8,7 +8,7 @@ import { useGlobal, PrayerStatus, initialPrayers } from "@/context/GlobalContext
 import { format, isSameDay, parseISO } from "date-fns";
 
 export default function SpiritualTracker() {
-  const { activeUser, prayersByDate, setPrayersByDate, globalSelectedDate } = useGlobal();
+  const { activeUser, prayersByDate, setPrayersByDate, globalSelectedDate, sendInteraction } = useGlobal();
 
   const currentPrayers = prayersByDate[globalSelectedDate] || initialPrayers;
 
@@ -25,6 +25,17 @@ export default function SpiritualTracker() {
 
   const submitLog = (status: PrayerStatus) => {
     if (!loggingPrayer) return;
+    
+    // Check if we should send an alert
+    const targetPrayer = currentPrayers.find(p => p.id === loggingPrayer.id);
+    if (targetPrayer && status && status !== null) {
+      const partnerPerson = loggingPrayer.person === "husband" ? "wife" : "husband";
+      if (!targetPrayer[partnerPerson]) {
+        // Partner hasn't logged it yet, send an alert
+        sendInteraction("PRAYER_ALERT", targetPrayer.name);
+      }
+    }
+
     const updatedPrayers = currentPrayers.map(p => {
       if (p.id === loggingPrayer.id) {
         return { ...p, [loggingPrayer.person]: status };

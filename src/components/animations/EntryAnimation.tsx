@@ -18,7 +18,7 @@ export default function EntryAnimation() {
     }
   }, [pendingAnimation]);
 
-  if (!pendingAnimation) return null;
+  if (pendingAnimation !== "HUG" && pendingAnimation !== "KISS") return null;
 
   return (
     <div 
