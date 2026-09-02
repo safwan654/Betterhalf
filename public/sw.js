@@ -6,11 +6,13 @@ self.addEventListener('push', function(event) {
     const title = data.title || 'BetterHalf Alert';
     const options = {
       body: data.body || 'You have a new update in BetterHalf',
-      icon: data.icon || '/icon-192.png',
-      badge: '/badge-72.png',
+      icon: data.icon || '/icon.jpg',
+      badge: '/icon.jpg',
       data: { url: data.url || '/' },
-      vibrate: [100, 50, 100],
-      tag: 'betterhalf-notification'
+      vibrate: [200, 100, 200],
+      tag: data.tag || 'betterhalf-notification',
+      renotify: true,
+      timestamp: Date.now()
     };
 
     event.waitUntil(

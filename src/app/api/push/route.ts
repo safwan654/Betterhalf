@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     const payload = JSON.stringify({
       title: title || "BetterHalf",
       body: body || "You have a new update",
-      icon: icon || "/icon-192.png",
+      icon: icon || "/icon.jpg",
       url: url || "/"
     });
 
