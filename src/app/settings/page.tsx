@@ -328,6 +328,23 @@ export default function Settings() {
               <p className="text-[10px] text-slate-400 dark:text-zinc-500">
                 Receive system notifications on your phone's lock screen when your partner sends a hug, kiss, prayer update, or task assignment.
               </p>
+
+              {/* Household Device Status Box */}
+              <div className="grid grid-cols-2 gap-2 my-1 p-3 bg-slate-50 dark:bg-zinc-900 rounded-xl border border-slate-100 dark:border-zinc-800">
+                <div className="flex items-center gap-2">
+                  <div className={`h-2.5 w-2.5 rounded-full ${globalContext.hasHusbandPush ? "bg-emerald-500 animate-pulse" : "bg-slate-300 dark:bg-zinc-700"}`} />
+                  <span className="text-[10px] font-bold text-slate-700 dark:text-zinc-300 truncate">
+                    {globalContext.husbandName}: {globalContext.hasHusbandPush ? "Active ✅" : "Disabled ❌"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className={`h-2.5 w-2.5 rounded-full ${globalContext.hasWifePush ? "bg-emerald-500 animate-pulse" : "bg-slate-300 dark:bg-zinc-700"}`} />
+                  <span className="text-[10px] font-bold text-slate-700 dark:text-zinc-300 truncate">
+                    {globalContext.wifeName}: {globalContext.hasWifePush ? "Active ✅" : "Disabled ❌"}
+                  </span>
+                </div>
+              </div>
+
               <div className="flex flex-col gap-2 mt-1">
                 <button
                   type="button"

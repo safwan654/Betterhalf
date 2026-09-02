@@ -50,6 +50,8 @@ interface GlobalContextType {
   interactionPayload: string | null;
   sendInteraction: (type: "HUG" | "KISS" | "TASK_ALERT" | "PRAYER_ALERT", payload?: string) => void;
   clearPendingAnimation: () => void;
+  hasHusbandPush: boolean;
+  hasWifePush: boolean;
   
   currency: string;
   setCurrency: (currency: string) => void;
@@ -118,6 +120,8 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
   const [interactionPayload, setInteractionPayload] = useState<string | null>(null);
   const [lastInteractionTimestamp, setLastInteractionTimestamp] = useState<number>(0);
   const lastInteractionTimestampRef = useRef<number>(0);
+  const [hasHusbandPush, setHasHusbandPush] = useState<boolean>(false);
+  const [hasWifePush, setHasWifePush] = useState<boolean>(false);
   const [currency, setCurrencyState] = useState<string>("$");
   
   const [globalSelectedDate, setGlobalSelectedDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
@@ -175,6 +179,8 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
         if (data.husbandPhoto !== undefined) setHusbandPhotoState(data.husbandPhoto);
         if (data.wifePhoto !== undefined) setWifePhotoState(data.wifePhoto);
         if (data.currency) setCurrencyState(data.currency);
+        setHasHusbandPush(!!data.husbandPushSubscription);
+        setHasWifePush(!!data.wifePushSubscription);
         
         // Handle incoming interactions
         if (data.lastInteraction) {
@@ -447,6 +453,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
       husbandPhoto, setHusbandPhoto,
       wifePhoto, setWifePhoto,
       pendingAnimation, interactionPayload, sendInteraction, clearPendingAnimation,
+      hasHusbandPush, hasWifePush,
       currency, setCurrency,
       householdPin,
       globalSelectedDate, setGlobalSelectedDate,
