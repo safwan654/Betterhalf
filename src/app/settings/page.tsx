@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { LogOut, Globe, HeartHandshake, Camera, Save, Check, Bell, Clock } from "lucide-react";
 import { useMemo, useEffect, useState, useRef } from "react";
 import { subscribeUserToPush } from "@/lib/push";
+import { CITY_PRESETS, UserLocation } from "@/lib/prayer-times";
 
 export default function Settings() {
   const globalContext = useGlobal();
@@ -21,6 +22,8 @@ export default function Settings() {
   const [localRelationshipMode, setLocalRelationshipMode] = useState<"TOGETHER" | "DISTANCE">("TOGETHER");
   const [localHusbandTimezone, setLocalHusbandTimezone] = useState("");
   const [localWifeTimezone, setLocalWifeTimezone] = useState("");
+  const [localHusbandLocation, setLocalHusbandLocation] = useState<UserLocation>(CITY_PRESETS["Dubai, UAE"]);
+  const [localWifeLocation, setLocalWifeLocation] = useState<UserLocation>(CITY_PRESETS["Mumbai, India"]);
   const [localCurrency, setLocalCurrency] = useState("$");
   const [localReminderTone, setLocalReminderTone] = useState<"GENTLE" | "DIRECT" | "PLAYFUL">("GENTLE");
   const [localMadhhab, setLocalMadhhab] = useState<"STANDARD" | "HANAFI">("STANDARD");
@@ -77,11 +80,14 @@ export default function Settings() {
     setLocalCurrency(globalContext.currency || "$");
     setLocalReminderTone(globalContext.reminderTone || "GENTLE");
     setLocalMadhhab(globalContext.madhhab || "STANDARD");
+    if (globalContext.husbandLocation) setLocalHusbandLocation(globalContext.husbandLocation);
+    if (globalContext.wifeLocation) setLocalWifeLocation(globalContext.wifeLocation);
     setMounted(true);
   }, [
     globalContext.husbandName, globalContext.wifeName, globalContext.husbandPhoto, 
     globalContext.wifePhoto, globalContext.relationshipMode, globalContext.husbandTimezone, 
-    globalContext.wifeTimezone, globalContext.currency, globalContext.reminderTone, globalContext.madhhab
+    globalContext.wifeTimezone, globalContext.currency, globalContext.reminderTone, globalContext.madhhab,
+    globalContext.husbandLocation, globalContext.wifeLocation
   ]);
 
   const handleLogout = () => {
@@ -115,6 +121,8 @@ export default function Settings() {
     globalContext.setRelationshipMode(localRelationshipMode);
     globalContext.setHusbandTimezone(localHusbandTimezone);
     globalContext.setWifeTimezone(localWifeTimezone);
+    globalContext.setHusbandLocation(localHusbandLocation);
+    globalContext.setWifeLocation(localWifeLocation);
     globalContext.setCurrency(localCurrency);
     globalContext.setReminderTone(localReminderTone);
     globalContext.setMadhhab(localMadhhab);
@@ -467,6 +475,68 @@ export default function Settings() {
                 >
                   Hanafi (Later Asr)
                 </button>
+              </div>
+            </div>
+
+            {/* Independent Prayer Locations */}
+            <div className="flex flex-col gap-3 pt-3 border-t border-slate-100 dark:border-zinc-800">
+              <label className="text-xs font-bold text-slate-700 dark:text-zinc-200 flex items-center gap-1.5">
+                <Globe className="h-4 w-4 text-blue-500" /> Independent Prayer Locations
+              </label>
+              <p className="text-[10px] text-slate-400 dark:text-zinc-500">
+                Prayer times & reminders are calculated independently for each partner using their local city coordinates and calculation method.
+              </p>
+
+              {/* Husband Location Selector */}
+              <div className="flex flex-col gap-1.5 p-3 rounded-2xl bg-slate-50 dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                  {localHusbandName || "Husband"}'s City
+                </span>
+                <select
+                  value={`${localHusbandLocation.city}, ${localHusbandLocation.country}`}
+                  onChange={(e) => {
+                    const preset = CITY_PRESETS[e.target.value];
+                    if (preset) {
+                      setLocalHusbandLocation(preset);
+                      setLocalHusbandTimezone(preset.timezone);
+                    }
+                  }}
+                  className="bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-xs rounded-xl px-2.5 py-2 font-bold focus:outline-none focus:border-amber-500/50"
+                >
+                  {Object.keys(CITY_PRESETS).map(cityName => (
+                    <option key={cityName} value={cityName}>{cityName}</option>
+                  ))}
+                </select>
+                <div className="flex items-center justify-between text-[10px] text-slate-400 mt-1">
+                  <span>TZ: {localHusbandLocation.timezone}</span>
+                  <span>Method: {localHusbandLocation.method}</span>
+                </div>
+              </div>
+
+              {/* Wife Location Selector */}
+              <div className="flex flex-col gap-1.5 p-3 rounded-2xl bg-slate-50 dark:bg-zinc-900 border border-slate-200/60 dark:border-zinc-800">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                  {localWifeName || "Wife"}'s City
+                </span>
+                <select
+                  value={`${localWifeLocation.city}, ${localWifeLocation.country}`}
+                  onChange={(e) => {
+                    const preset = CITY_PRESETS[e.target.value];
+                    if (preset) {
+                      setLocalWifeLocation(preset);
+                      setLocalWifeTimezone(preset.timezone);
+                    }
+                  }}
+                  className="bg-white dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-xs rounded-xl px-2.5 py-2 font-bold focus:outline-none focus:border-rose-500/50"
+                >
+                  {Object.keys(CITY_PRESETS).map(cityName => (
+                    <option key={cityName} value={cityName}>{cityName}</option>
+                  ))}
+                </select>
+                <div className="flex items-center justify-between text-[10px] text-slate-400 mt-1">
+                  <span>TZ: {localWifeLocation.timezone}</span>
+                  <span>Method: {localWifeLocation.method}</span>
+                </div>
               </div>
             </div>
           </div>

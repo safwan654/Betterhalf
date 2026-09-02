@@ -4,8 +4,9 @@ import React, { createContext, useContext, useState, useEffect, useRef } from "r
 import { format } from "date-fns";
 import { db } from "@/lib/firebase";
 import { doc, onSnapshot, setDoc, getDoc } from "firebase/firestore";
+import { UserLocation, CITY_PRESETS } from "@/lib/prayer-times";
 
-export type PrayerStatus = "ON_TIME" | "LATE" | "QADA" | null;
+export type PrayerStatus = "ON_TIME" | "LATE" | "QADA" | "EXEMPT" | "MISSED" | null;
 export interface Prayer { id: string; name: string; time: string; husband: PrayerStatus; wife: PrayerStatus; }
 export interface Task { id: string; title: string; urgency: "HIGH"|"MEDIUM"|"LOW"; category: string; due: string; }
 export interface FinanceTransaction { id: string; name: string; amount: number; date: string; type: "PENDING" | "SPENT"; allocation: "HUSBAND" | "WIFE" | "SHARED"; }
@@ -21,6 +22,13 @@ export interface VaultRecord { id: number; name: string; location: string; refer
 export interface HealthProfile { height: string; weight: string; bloodType: string; allergies: string; notes: string; }
 export interface DoctorVisit { id: number; date: string; doctorName: string; patient: string; reason: string; notes: string; }
 
+export interface PeriodCycle {
+  id: string;
+  startDate: string;
+  endDate?: string;
+  durationDays?: number;
+}
+
 interface GlobalContextType {
   isAuthenticated: boolean;
   login: (pin: string, user: "HUSBAND" | "WIFE") => boolean;
@@ -35,6 +43,11 @@ interface GlobalContextType {
   setHusbandTimezone: (tz: string) => void;
   wifeTimezone: string;
   setWifeTimezone: (tz: string) => void;
+
+  husbandLocation: UserLocation;
+  setHusbandLocation: (loc: UserLocation) => void;
+  wifeLocation: UserLocation;
+  setWifeLocation: (loc: UserLocation) => void;
   
   husbandName: string;
   setHusbandName: (name: string) => void;
@@ -46,9 +59,9 @@ interface GlobalContextType {
   wifePhoto: string | null;
   setWifePhoto: (photoBase64: string | null) => void;
 
-  pendingAnimation: "HUG" | "KISS" | "TASK_ALERT" | "PRAYER_ALERT" | "PRAYER_COMPLETE" | "PRAYER_CELEBRATION" | null;
+  pendingAnimation: "HUG" | "KISS" | "TASK_ALERT" | "PRAYER_ALERT" | "PRAYER_COMPLETE" | "PRAYER_CELEBRATION" | "CARE_NOTE" | "PERIOD_START" | "PERIOD_END" | null;
   interactionPayload: string | null;
-  sendInteraction: (type: "HUG" | "KISS" | "TASK_ALERT" | "PRAYER_ALERT" | "PRAYER_COMPLETE" | "PRAYER_CELEBRATION", payload?: string, target?: "PARTNER" | "BOTH") => void;
+  sendInteraction: (type: "HUG" | "KISS" | "TASK_ALERT" | "PRAYER_ALERT" | "PRAYER_COMPLETE" | "PRAYER_CELEBRATION" | "CARE_NOTE" | "PERIOD_START" | "PERIOD_END", payload?: string, target?: "PARTNER" | "BOTH") => void;
   clearPendingAnimation: () => void;
   hasHusbandPush: boolean;
   hasWifePush: boolean;
@@ -57,6 +70,17 @@ interface GlobalContextType {
   setReminderTone: (tone: "GENTLE" | "DIRECT" | "PLAYFUL") => void;
   madhhab: "STANDARD" | "HANAFI";
   setMadhhab: (m: "STANDARD" | "HANAFI") => void;
+
+  // Menstrual Cycle & Care Mode (Wife)
+  periodActive: boolean;
+  periodStartDate: string | null;
+  periodEndDate: string | null;
+  periodCycles: PeriodCycle[];
+  sharePeriodStatus: boolean;
+  markPeriodStart: () => void;
+  markPeriodEnd: () => void;
+  setSharePeriodStatus: (share: boolean) => void;
+  sendCareNote: (message: string) => void;
 
   currency: string;
   setCurrency: (currency: string) => void;
@@ -121,7 +145,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
   const [wifeName, setWifeNameState] = useState("Wife");
   const [husbandPhoto, setHusbandPhotoState] = useState<string | null>(null);
   const [wifePhoto, setWifePhotoState] = useState<string | null>(null);
-  const [pendingAnimation, setPendingAnimationState] = useState<"HUG" | "KISS" | "TASK_ALERT" | "PRAYER_ALERT" | null>(null);
+  const [pendingAnimation, setPendingAnimationState] = useState<"HUG" | "KISS" | "TASK_ALERT" | "PRAYER_ALERT" | "PRAYER_COMPLETE" | "PRAYER_CELEBRATION" | "CARE_NOTE" | "PERIOD_START" | "PERIOD_END" | null>(null);
   const [interactionPayload, setInteractionPayload] = useState<string | null>(null);
   const [lastInteractionTimestamp, setLastInteractionTimestamp] = useState<number>(0);
   const lastInteractionTimestampRef = useRef<number>(0);
@@ -130,6 +154,17 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
   const [reminderTone, setReminderToneState] = useState<"GENTLE" | "DIRECT" | "PLAYFUL">("GENTLE");
   const [madhhab, setMadhhabState] = useState<"STANDARD" | "HANAFI">("STANDARD");
   const [currency, setCurrencyState] = useState<string>("$");
+
+  // Dual Locations & Timezones
+  const [husbandLocation, setHusbandLocationState] = useState<UserLocation>(CITY_PRESETS["Dubai, UAE"]);
+  const [wifeLocation, setWifeLocationState] = useState<UserLocation>(CITY_PRESETS["Mumbai, India"]);
+
+  // Menstrual Cycle & Care Tracking
+  const [periodActive, setPeriodActiveState] = useState<boolean>(false);
+  const [periodStartDate, setPeriodStartDateState] = useState<string | null>(null);
+  const [periodEndDate, setPeriodEndDateState] = useState<string | null>(null);
+  const [periodCycles, setPeriodCyclesState] = useState<PeriodCycle[]>([]);
+  const [sharePeriodStatus, setSharePeriodStatusState] = useState<boolean>(true);
   
   const [globalSelectedDate, setGlobalSelectedDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
   const [prayersByDate, setPrayersByDateState] = useState<Record<string, Prayer[]>>({});
@@ -194,6 +229,13 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
         if (data.currency) setCurrencyState(data.currency);
         if (data.reminderTone) setReminderToneState(data.reminderTone);
         if (data.madhhab) setMadhhabState(data.madhhab);
+        if (data.husbandLocation) setHusbandLocationState(data.husbandLocation);
+        if (data.wifeLocation) setWifeLocationState(data.wifeLocation);
+        if (data.periodActive !== undefined) setPeriodActiveState(data.periodActive);
+        if (data.periodStartDate !== undefined) setPeriodStartDateState(data.periodStartDate);
+        if (data.periodEndDate !== undefined) setPeriodEndDateState(data.periodEndDate);
+        if (data.periodCycles) setPeriodCyclesState(data.periodCycles);
+        if (data.sharePeriodStatus !== undefined) setSharePeriodStatusState(data.sharePeriodStatus);
         setHasHusbandPush(!!data.husbandPushSubscription);
         setHasWifePush(!!data.wifePushSubscription);
         
@@ -349,7 +391,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
   };
 
   const sendInteraction = (
-    type: "HUG" | "KISS" | "TASK_ALERT" | "PRAYER_ALERT" | "PRAYER_COMPLETE" | "PRAYER_CELEBRATION",
+    type: "HUG" | "KISS" | "TASK_ALERT" | "PRAYER_ALERT" | "PRAYER_COMPLETE" | "PRAYER_CELEBRATION" | "CARE_NOTE" | "PERIOD_START" | "PERIOD_END",
     payload?: string,
     target: "PARTNER" | "BOTH" = "PARTNER"
   ) => {
@@ -391,6 +433,15 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
       } else if (type === "PRAYER_CELEBRATION") {
         title = "Prayer Complete Together 🤍";
         body = payload || "Alhamdulillah! Prayer complete for both of you today!";
+      } else if (type === "CARE_NOTE") {
+        title = "Love Note 💌";
+        body = payload || `${senderName} sent you some love 🤍`;
+      } else if (type === "PERIOD_START") {
+        title = "Cycle Update 🌸";
+        body = payload || "Heads up — her cycle just started. She could use some extra care today 🤍";
+      } else if (type === "PERIOD_END") {
+        title = "Cycle Update 🌸";
+        body = payload || "Her cycle has ended — prayer tracking resumes for her";
       } else if (type === "TASK_ALERT") {
         title = "New Task Assigned";
         body = `${senderName} assigned a task: ${payload || "Check tasks"}`;
@@ -419,6 +470,89 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     setMadhhabState(m);
     localStorage.setItem("bh_madhhab", m);
     updateFirebase({ madhhab: m });
+  };
+
+  const setHusbandLocation = (loc: UserLocation) => {
+    setHusbandLocationState(loc);
+    setHusbandTimezoneState(loc.timezone);
+    updateFirebase({ husbandLocation: loc, husbandTimezone: loc.timezone });
+  };
+
+  const setWifeLocation = (loc: UserLocation) => {
+    setWifeLocationState(loc);
+    setWifeTimezoneState(loc.timezone);
+    updateFirebase({ wifeLocation: loc, wifeTimezone: loc.timezone });
+  };
+
+  const markPeriodStart = () => {
+    const now = new Date().toISOString();
+    setPeriodActiveState(true);
+    setPeriodStartDateState(now);
+    setPeriodEndDateState(null);
+
+    const newCycle: PeriodCycle = {
+      id: "cycle_" + Date.now(),
+      startDate: now
+    };
+    const updatedCycles = [newCycle, ...periodCycles];
+    setPeriodCyclesState(updatedCycles);
+
+    updateFirebase({
+      periodActive: true,
+      periodStartDate: now,
+      periodEndDate: null,
+      periodCycles: updatedCycles
+    });
+
+    if (sharePeriodStatus) {
+      sendInteraction(
+        "PERIOD_START",
+        "Heads up — her cycle just started. She could use some extra care today 🤍",
+        "PARTNER"
+      );
+    }
+  };
+
+  const markPeriodEnd = () => {
+    const now = new Date().toISOString();
+    setPeriodActiveState(false);
+    setPeriodEndDateState(now);
+
+    let updatedCycles = [...periodCycles];
+    if (updatedCycles.length > 0 && !updatedCycles[0].endDate) {
+      const startMs = new Date(updatedCycles[0].startDate).getTime();
+      const endMs = new Date(now).getTime();
+      const durationDays = Math.max(1, Math.round((endMs - startMs) / (1000 * 60 * 60 * 24)));
+      updatedCycles[0] = {
+        ...updatedCycles[0],
+        endDate: now,
+        durationDays
+      };
+      setPeriodCyclesState(updatedCycles);
+    }
+
+    updateFirebase({
+      periodActive: false,
+      periodEndDate: now,
+      periodCycles: updatedCycles
+    });
+
+    if (sharePeriodStatus) {
+      sendInteraction(
+        "PERIOD_END",
+        "Her cycle has ended — prayer tracking resumes for her",
+        "PARTNER"
+      );
+    }
+  };
+
+  const setSharePeriodStatus = (share: boolean) => {
+    setSharePeriodStatusState(share);
+    updateFirebase({ sharePeriodStatus: share });
+  };
+
+  const sendCareNote = (message: string) => {
+    sendInteraction("CARE_NOTE", message, "PARTNER");
   };
 
   const setCurrency = (c: string) => {
@@ -492,6 +626,8 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
       relationshipMode, setRelationshipMode,
       husbandTimezone, setHusbandTimezone,
       wifeTimezone, setWifeTimezone,
+      husbandLocation, setHusbandLocation,
+      wifeLocation, setWifeLocation,
       husbandName, setHusbandName,
       wifeName, setWifeName,
       husbandPhoto, setHusbandPhoto,
@@ -500,6 +636,8 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
       hasHusbandPush, hasWifePush,
       reminderTone, setReminderTone,
       madhhab, setMadhhab,
+      periodActive, periodStartDate, periodEndDate, periodCycles, sharePeriodStatus,
+      markPeriodStart, markPeriodEnd, setSharePeriodStatus, sendCareNote,
       currency, setCurrency,
       householdPin,
       globalSelectedDate, setGlobalSelectedDate,

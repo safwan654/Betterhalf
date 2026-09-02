@@ -33,6 +33,18 @@ export default function NotificationAlert() {
         title = "Prayer Complete Together 🤍";
         subtitle = interactionPayload || "Alhamdulillah! Both of you prayed today!";
         icon = <Heart className="h-6 w-6 text-white" fill="white" />;
+      } else if (pendingAnimation === "CARE_NOTE") {
+        title = "Love Note 💌";
+        subtitle = interactionPayload || `${partnerName} sent you some love 🤍`;
+        icon = <Heart className="h-6 w-6 text-white" fill="white" />;
+      } else if (pendingAnimation === "PERIOD_START") {
+        title = "Cycle Update 🌸";
+        subtitle = interactionPayload || "Her cycle just started. Extra care today 🤍";
+        icon = <Heart className="h-6 w-6 text-white" fill="white" />;
+      } else if (pendingAnimation === "PERIOD_END") {
+        title = "Cycle Update 🌸";
+        subtitle = interactionPayload || "Her cycle ended — prayer tracking resumes";
+        icon = <Sparkles className="h-6 w-6 text-white" />;
       } else if (pendingAnimation === "HUG") {
         title = "Virtual Hug!";
         subtitle = `${partnerName} sent you a hug 🫂`;
@@ -74,6 +86,8 @@ export default function NotificationAlert() {
         alertContent.type === "PRAYER_ALERT" ? "bg-amber-500 shadow-amber-500/20 border-amber-400" :
         alertContent.type === "PRAYER_COMPLETE" ? "bg-emerald-600 shadow-emerald-600/20 border-emerald-500" :
         alertContent.type === "PRAYER_CELEBRATION" ? "bg-gradient-to-r from-emerald-600 to-teal-600 shadow-emerald-500/30 border-emerald-400" :
+        alertContent.type === "CARE_NOTE" || alertContent.type === "PERIOD_START" ? "bg-gradient-to-r from-rose-500 to-pink-600 shadow-rose-500/30 border-rose-400" :
+        alertContent.type === "PERIOD_END" ? "bg-gradient-to-r from-emerald-600 to-teal-600 shadow-emerald-500/30 border-emerald-400" :
         "bg-rose-500 shadow-rose-500/20 border-rose-400"
       }`}>
         <div className="bg-white/20 p-2 rounded-full">
