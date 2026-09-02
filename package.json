@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@prisma/client": "^5.0.0",
+    "@types/web-push": "^3.6.4",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "firebase": "^12.17.1",
@@ -19,7 +20,8 @@
     "next-themes": "^0.3.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "tailwind-merge": "^2.3.0"
+    "tailwind-merge": "^2.3.0",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@types/node": "^20.12.12",

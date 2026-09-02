@@ -2,8 +2,9 @@
 
 import { useGlobal } from "@/context/GlobalContext";
 import { useRouter } from "next/navigation";
-import { LogOut, Globe, HeartHandshake, Camera, Save, Check } from "lucide-react";
+import { LogOut, Globe, HeartHandshake, Camera, Save, Check, Bell } from "lucide-react";
 import { useMemo, useEffect, useState, useRef } from "react";
+import { subscribeUserToPush } from "@/lib/push";
 
 export default function Settings() {
   const globalContext = useGlobal();
@@ -23,6 +24,20 @@ export default function Settings() {
   const [localCurrency, setLocalCurrency] = useState("$");
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [pushStatus, setPushStatus] = useState<string | null>(null);
+  const [isSubscribing, setIsSubscribing] = useState(false);
+
+  const handleEnablePush = async () => {
+    setIsSubscribing(true);
+    setPushStatus(null);
+    const res = await subscribeUserToPush(globalContext.activeUser, globalContext.householdPin || "");
+    setIsSubscribing(false);
+    if (res.success) {
+      setPushStatus("SUCCESS: Push notifications enabled on this device!");
+    } else {
+      setPushStatus(`ERROR: ${res.reason}`);
+    }
+  };
 
   useEffect(() => {
     // Initialize local state from global context once mounted
@@ -269,13 +284,40 @@ export default function Settings() {
                 onChange={(e) => setLocalCurrency(e.target.value)}
                 className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs rounded-xl px-2.5 py-2 font-medium focus:outline-none focus:border-emerald-500/50"
               >
-                <option value="$">USD ($)</option>
-                <option value="€">EUR (€)</option>
-                <option value="£">GBP (£)</option>
-                <option value="₹">INR (₹)</option>
-                <option value="د.إ">AED (د.إ)</option>
-                <option value="R$">BRL (R$)</option>
+                <option value="$">$ (USD / AUD / CAD)</option>
+                <option value="€">€ (EUR)</option>
+                <option value="£">£ (GBP)</option>
+                <option value="AED">AED (UAE Dirham)</option>
+                <option value="SAR">SAR (Saudi Riyal)</option>
+                <option value="INR">₹ (INR)</option>
+                <option value="EGP">EGP (Egyptian Pound)</option>
+                <option value="PKR">PKR (Pakistani Rupee)</option>
+                <option value="BDT">BDT (Bangladeshi Taka)</option>
               </select>
+            </div>
+
+            {/* Phone Push Notifications */}
+            <div className="flex flex-col gap-2 pt-4 border-t border-slate-100 dark:border-zinc-800">
+              <label className="text-xs font-bold text-slate-700 dark:text-zinc-200 flex items-center gap-1.5">
+                <Bell className="h-4 w-4 text-amber-500" /> Phone Push Notifications
+              </label>
+              <p className="text-[10px] text-slate-400 dark:text-zinc-500">
+                Receive system notifications on your phone's lock screen when your partner sends a hug, kiss, prayer update, or task assignment.
+              </p>
+              <button
+                type="button"
+                onClick={handleEnablePush}
+                disabled={isSubscribing}
+                className="mt-1 flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-rose-500 hover:from-amber-600 hover:to-rose-600 active:scale-95 text-white font-bold text-xs py-2.5 px-4 rounded-xl shadow-sm transition-all disabled:opacity-50"
+              >
+                <Bell className="h-4 w-4" />
+                {isSubscribing ? "Subscribing Phone..." : "Enable Push Notifications on this Phone"}
+              </button>
+              {pushStatus && (
+                <span className={`text-[10px] font-bold mt-1.5 p-2 rounded-lg ${pushStatus.startsWith("SUCCESS") ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"}`}>
+                  {pushStatus}
+                </span>
+              )}
             </div>
             
           </div>

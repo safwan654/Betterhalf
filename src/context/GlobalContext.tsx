@@ -336,6 +336,39 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
         payload: payload || null
       }
     });
+
+    if (householdPin) {
+      const partner = activeUser === "HUSBAND" ? "WIFE" : "HUSBAND";
+      const senderName = activeUser === "HUSBAND" ? husbandName : wifeName;
+
+      let title = "BetterHalf Alert";
+      let body = `${senderName} sent an update!`;
+
+      if (type === "HUG") {
+        title = "Virtual Hug!";
+        body = `${senderName} sent you a hug dY -`;
+      } else if (type === "KISS") {
+        title = "Virtual Kiss!";
+        body = `${senderName} sent you a kiss dY~~`;
+      } else if (type === "PRAYER_ALERT") {
+        title = "Prayer Update";
+        body = `${senderName} completed ${payload || "a prayer"}!`;
+      } else if (type === "TASK_ALERT") {
+        title = "New Task Assigned";
+        body = `${senderName} assigned a task: ${payload || "Check tasks"}`;
+      }
+
+      fetch("/api/push", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          householdPin,
+          targetUser: partner,
+          title,
+          body
+        })
+      }).catch(err => console.error("Push notification error:", err));
+    }
   };
 
   const setCurrency = (c: string) => {
