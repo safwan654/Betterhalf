@@ -33,9 +33,33 @@ export default function Settings() {
     const res = await subscribeUserToPush(globalContext.activeUser, globalContext.householdPin || "");
     setIsSubscribing(false);
     if (res.success) {
-      setPushStatus("SUCCESS: Push notifications enabled on this device!");
+      setPushStatus("SUCCESS: Push notifications enabled on this device! Tap 'Send Test Notification' below to verify.");
     } else {
       setPushStatus(`ERROR: ${res.reason}`);
+    }
+  };
+
+  const handleTestPush = async () => {
+    setPushStatus("Sending test push notification...");
+    try {
+      const res = await fetch("/api/push", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          householdPin: globalContext.householdPin,
+          targetUser: globalContext.activeUser,
+          title: "Test Notification 🔔",
+          body: "If you see this, push notifications are working on your phone!"
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPushStatus("SUCCESS: Test notification sent! Lock your phone or check your notification bar.");
+      } else {
+        setPushStatus(`ERROR: ${data.message || data.error || "No subscription found. Please tap 'Enable Push Notifications' first."}`);
+      }
+    } catch (err: any) {
+      setPushStatus(`ERROR: ${err.message}`);
     }
   };
 
@@ -304,17 +328,27 @@ export default function Settings() {
               <p className="text-[10px] text-slate-400 dark:text-zinc-500">
                 Receive system notifications on your phone's lock screen when your partner sends a hug, kiss, prayer update, or task assignment.
               </p>
-              <button
-                type="button"
-                onClick={handleEnablePush}
-                disabled={isSubscribing}
-                className="mt-1 flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-rose-500 hover:from-amber-600 hover:to-rose-600 active:scale-95 text-white font-bold text-xs py-2.5 px-4 rounded-xl shadow-sm transition-all disabled:opacity-50"
-              >
-                <Bell className="h-4 w-4" />
-                {isSubscribing ? "Subscribing Phone..." : "Enable Push Notifications on this Phone"}
-              </button>
+              <div className="flex flex-col gap-2 mt-1">
+                <button
+                  type="button"
+                  onClick={handleEnablePush}
+                  disabled={isSubscribing}
+                  className="flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-rose-500 hover:from-amber-600 hover:to-rose-600 active:scale-95 text-white font-bold text-xs py-2.5 px-4 rounded-xl shadow-sm transition-all disabled:opacity-50"
+                >
+                  <Bell className="h-4 w-4" />
+                  {isSubscribing ? "Subscribing Phone..." : "1. Enable Push Notifications on this Phone"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleTestPush}
+                  className="flex items-center justify-center gap-2 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 active:scale-95 text-slate-700 dark:text-zinc-300 font-bold text-xs py-2.5 px-4 rounded-xl border border-slate-200 dark:border-zinc-700 transition-all"
+                >
+                  <Bell className="h-4 w-4 text-amber-500" />
+                  2. Send Test Notification to This Phone
+                </button>
+              </div>
               {pushStatus && (
-                <span className={`text-[10px] font-bold mt-1.5 p-2 rounded-lg ${pushStatus.startsWith("SUCCESS") ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"}`}>
+                <span className={`text-[10px] font-bold mt-1.5 p-2.5 rounded-xl block ${pushStatus.startsWith("SUCCESS") ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20" : pushStatus.startsWith("ERROR") ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20" : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"}`}>
                   {pushStatus}
                 </span>
               )}
