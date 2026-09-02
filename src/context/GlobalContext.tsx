@@ -117,6 +117,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
   const [pendingAnimation, setPendingAnimationState] = useState<"HUG" | "KISS" | "TASK_ALERT" | "PRAYER_ALERT" | null>(null);
   const [interactionPayload, setInteractionPayload] = useState<string | null>(null);
   const [lastInteractionTimestamp, setLastInteractionTimestamp] = useState<number>(0);
+  const lastInteractionTimestampRef = useRef<number>(0);
   const [currency, setCurrencyState] = useState<string>("$");
   
   const [globalSelectedDate, setGlobalSelectedDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
@@ -178,7 +179,8 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
         // Handle incoming interactions
         if (data.lastInteraction) {
           const { type, sender, timestamp, payload } = data.lastInteraction;
-          if (timestamp > lastInteractionTimestamp) {
+          if (timestamp > lastInteractionTimestampRef.current) {
+            lastInteractionTimestampRef.current = timestamp;
             setLastInteractionTimestamp(timestamp);
             // Only trigger if it was sent by the partner
             if (sender !== activeUserRef.current && activeUserRef.current) {
