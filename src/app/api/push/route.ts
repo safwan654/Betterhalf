@@ -27,19 +27,28 @@ export async function POST(request: Request) {
     }
 
     const data = snap.data();
-    const subField = targetUser === "HUSBAND" ? "husbandPushSubscription" : "wifePushSubscription";
-    const subscription = data[subField];
-
-    if (!subscription) {
-      return NextResponse.json({ message: "No push subscription found for target user" }, { status: 200 });
-    }
-
     const payload = JSON.stringify({
       title: title || "BetterHalf",
       body: body || "You have a new update",
       icon: icon || "/icon.jpg",
       url: url || "/"
     });
+
+    if (targetUser === "BOTH") {
+      const subscriptions = [data.husbandPushSubscription, data.wifePushSubscription].filter(Boolean);
+      if (subscriptions.length === 0) {
+        return NextResponse.json({ message: "No push subscriptions found" }, { status: 200 });
+      }
+      await Promise.allSettled(subscriptions.map(sub => webpush.sendNotification(sub, payload)));
+      return NextResponse.json({ success: true, count: subscriptions.length });
+    }
+
+    const subField = targetUser === "HUSBAND" ? "husbandPushSubscription" : "wifePushSubscription";
+    const subscription = data[subField];
+
+    if (!subscription) {
+      return NextResponse.json({ message: "No push subscription found for target user" }, { status: 200 });
+    }
 
     await webpush.sendNotification(subscription, payload);
 

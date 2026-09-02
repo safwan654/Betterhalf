@@ -2,7 +2,7 @@
 
 import { useGlobal } from "@/context/GlobalContext";
 import { useRouter } from "next/navigation";
-import { LogOut, Globe, HeartHandshake, Camera, Save, Check, Bell } from "lucide-react";
+import { LogOut, Globe, HeartHandshake, Camera, Save, Check, Bell, Clock } from "lucide-react";
 import { useMemo, useEffect, useState, useRef } from "react";
 import { subscribeUserToPush } from "@/lib/push";
 
@@ -22,6 +22,8 @@ export default function Settings() {
   const [localHusbandTimezone, setLocalHusbandTimezone] = useState("");
   const [localWifeTimezone, setLocalWifeTimezone] = useState("");
   const [localCurrency, setLocalCurrency] = useState("$");
+  const [localReminderTone, setLocalReminderTone] = useState<"GENTLE" | "DIRECT" | "PLAYFUL">("GENTLE");
+  const [localMadhhab, setLocalMadhhab] = useState<"STANDARD" | "HANAFI">("STANDARD");
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [pushStatus, setPushStatus] = useState<string | null>(null);
@@ -73,11 +75,13 @@ export default function Settings() {
     setLocalHusbandTimezone(globalContext.husbandTimezone);
     setLocalWifeTimezone(globalContext.wifeTimezone);
     setLocalCurrency(globalContext.currency || "$");
+    setLocalReminderTone(globalContext.reminderTone || "GENTLE");
+    setLocalMadhhab(globalContext.madhhab || "STANDARD");
     setMounted(true);
   }, [
     globalContext.husbandName, globalContext.wifeName, globalContext.husbandPhoto, 
     globalContext.wifePhoto, globalContext.relationshipMode, globalContext.husbandTimezone, 
-    globalContext.wifeTimezone, globalContext.currency
+    globalContext.wifeTimezone, globalContext.currency, globalContext.reminderTone, globalContext.madhhab
   ]);
 
   const handleLogout = () => {
@@ -112,6 +116,8 @@ export default function Settings() {
     globalContext.setHusbandTimezone(localHusbandTimezone);
     globalContext.setWifeTimezone(localWifeTimezone);
     globalContext.setCurrency(localCurrency);
+    globalContext.setReminderTone(localReminderTone);
+    globalContext.setMadhhab(localMadhhab);
     
     setTimeout(() => {
       setIsSaving(false);
@@ -371,6 +377,98 @@ export default function Settings() {
               )}
             </div>
             
+          </div>
+        </section>
+
+        {/* Spiritual & Prayer Preferences */}
+        <section className="flex flex-col gap-3">
+          <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-zinc-500 px-1">
+            Spiritual & Prayer Settings
+          </h3>
+          <div className="glass-panel rounded-3xl p-5 shadow-sm border border-slate-100/50 dark:border-zinc-850 flex flex-col gap-5">
+            {/* Reminder Tone */}
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-bold text-slate-700 dark:text-zinc-200 flex items-center gap-1.5">
+                <Bell className="h-4 w-4 text-amber-500" /> Prayer Reminder Tone
+              </label>
+              <p className="text-[10px] text-slate-400 dark:text-zinc-500">
+                Choose the wording style for prayer reminders sent to your partner.
+              </p>
+              <div className="grid grid-cols-3 gap-2 bg-slate-50 dark:bg-zinc-900 p-1 rounded-xl border border-slate-100 dark:border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setLocalReminderTone("GENTLE")}
+                  className={`py-2 px-1 text-[11px] font-bold rounded-lg transition-all ${
+                    localReminderTone === "GENTLE" 
+                      ? "bg-white dark:bg-zinc-800 shadow-sm text-slate-800 dark:text-zinc-100" 
+                      : "text-slate-400 dark:text-zinc-500 hover:text-slate-600"
+                  }`}
+                >
+                  🌿 Gentle
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLocalReminderTone("DIRECT")}
+                  className={`py-2 px-1 text-[11px] font-bold rounded-lg transition-all ${
+                    localReminderTone === "DIRECT" 
+                      ? "bg-white dark:bg-zinc-800 shadow-sm text-slate-800 dark:text-zinc-100" 
+                      : "text-slate-400 dark:text-zinc-500 hover:text-slate-600"
+                  }`}
+                >
+                  🕌 Direct
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLocalReminderTone("PLAYFUL")}
+                  className={`py-2 px-1 text-[11px] font-bold rounded-lg transition-all ${
+                    localReminderTone === "PLAYFUL" 
+                      ? "bg-white dark:bg-zinc-800 shadow-sm text-slate-800 dark:text-zinc-100" 
+                      : "text-slate-400 dark:text-zinc-500 hover:text-slate-600"
+                  }`}
+                >
+                  ✨🤍 Playful
+                </button>
+              </div>
+              <span className="text-[9px] text-slate-400 italic">
+                {localReminderTone === "GENTLE" && 'Preview: "Warm reminder from [Name]: Time for prayer 🌿"'}
+                {localReminderTone === "DIRECT" && 'Preview: "[Name]: Time for prayer 🕌"'}
+                {localReminderTone === "PLAYFUL" && 'Preview: "Hey love! [Name] is checking in: don\'t forget prayer! ✨🤍"'}
+              </span>
+            </div>
+
+            {/* Asr Madhhab Calculation */}
+            <div className="flex flex-col gap-2 pt-3 border-t border-slate-100 dark:border-zinc-800">
+              <label className="text-xs font-bold text-slate-700 dark:text-zinc-200 flex items-center gap-1.5">
+                <Clock className="h-4 w-4 text-emerald-500" /> Asr Calculation (Madhhab)
+              </label>
+              <p className="text-[10px] text-slate-400 dark:text-zinc-500">
+                Determines how Asr prayer start time is calculated for your household.
+              </p>
+              <div className="grid grid-cols-2 gap-2 bg-slate-50 dark:bg-zinc-900 p-1 rounded-xl border border-slate-100 dark:border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setLocalMadhhab("STANDARD")}
+                  className={`py-2 text-[11px] font-bold rounded-lg transition-all ${
+                    localMadhhab === "STANDARD" 
+                      ? "bg-white dark:bg-zinc-800 shadow-sm text-slate-800 dark:text-zinc-100" 
+                      : "text-slate-400 dark:text-zinc-500 hover:text-slate-600"
+                  }`}
+                >
+                  Standard (Shafi'i/Hanbali/Maliki)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLocalMadhhab("HANAFI")}
+                  className={`py-2 text-[11px] font-bold rounded-lg transition-all ${
+                    localMadhhab === "HANAFI" 
+                      ? "bg-white dark:bg-zinc-800 shadow-sm text-slate-800 dark:text-zinc-100" 
+                      : "text-slate-400 dark:text-zinc-500 hover:text-slate-600"
+                  }`}
+                >
+                  Hanafi (Later Asr)
+                </button>
+              </div>
+            </div>
           </div>
         </section>
 

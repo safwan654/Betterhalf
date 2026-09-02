@@ -5,9 +5,9 @@ import Header from "@/components/layout/header";
 import BottomNavigation from "@/components/layout/bottom-navigation";
 import { Flame, CheckCircle2, History, Share2, Clock, AlertCircle, X, Bell } from "lucide-react";
 import { useGlobal, PrayerStatus, initialPrayers } from "@/context/GlobalContext";
-import { format, isSameDay, parseISO } from "date-fns";
+import { format, isSameDay, parseISO, getDay } from "date-fns";
 
-function getPrayerCountdownText(timeStr: string, prayerName: string) {
+function getPrayerCountdownInfo(timeStr: string, prayerName: string) {
   try {
     const now = new Date();
     const parts = timeStr.trim().split(" ");
@@ -25,40 +25,76 @@ function getPrayerCountdownText(timeStr: string, prayerName: string) {
 
     if (diffMins > 0) {
       if (diffMins < 60) {
-        return `${prayerName} is in ${diffMins}m (${timeStr})`;
+        return { text: `${prayerName} is in ${diffMins}m (${timeStr})`, isWindowClosed: false };
       } else {
         const hrs = Math.floor(diffMins / 60);
         const mins = diffMins % 60;
-        return `${prayerName} is in ${hrs}h ${mins}m (${timeStr})`;
+        return { text: `${prayerName} is in ${hrs}h ${mins}m (${timeStr})`, isWindowClosed: false };
       }
     } else {
       const agoMins = Math.abs(diffMins);
+      // If more than 3.5 hours passed, window has likely closed
+      const isWindowClosed = agoMins > 210;
+      if (isWindowClosed) {
+        return { text: `${prayerName} time was ${timeStr}`, isWindowClosed: true };
+      }
       if (agoMins < 60) {
-        return `${prayerName} started ${agoMins}m ago (${timeStr})`;
+        return { text: `${prayerName} started ${agoMins}m ago (${timeStr})`, isWindowClosed: false };
       } else {
-        return `${prayerName} time was ${timeStr}`;
+        const hrs = Math.floor(agoMins / 60);
+        const mins = agoMins % 60;
+        return { text: `${prayerName} started ${hrs}h ${mins}m ago (${timeStr})`, isWindowClosed: false };
       }
     }
   } catch (err) {
-    return `${prayerName} (${timeStr})`;
+    return { text: `${prayerName} (${timeStr})`, isWindowClosed: false };
   }
 }
 
 export default function SpiritualTracker() {
-  const { activeUser, husbandName, wifeName, prayersByDate, setPrayersByDate, globalSelectedDate, sendInteraction } = useGlobal();
+  const { activeUser, husbandName, wifeName, prayersByDate, setPrayersByDate, globalSelectedDate, sendInteraction, madhhab } = useGlobal();
 
   const currentPrayers = prayersByDate[globalSelectedDate] || initialPrayers;
+  const isFriday = getDay(parseISO(globalSelectedDate)) === 5;
 
-  // State for Prayer Selection Modal & Reminder Toast
+  // State for Prayer Selection Modal, Reminder Toast & Cooldowns
   const [loggingPrayer, setLoggingPrayer] = useState<{ id: string, person: "husband" | "wife", name: string } | null>(null);
   const [reminderToast, setReminderToast] = useState<string | null>(null);
+  const [reminderCooldowns, setReminderCooldowns] = useState<Record<string, number>>({});
 
-  const handleRemindPartner = (prayerName: string, prayerTime: string) => {
-    const countdownText = getPrayerCountdownText(prayerTime, prayerName);
-    sendInteraction("PRAYER_ALERT", countdownText);
-
+  const handleRemindPartner = (prayerId: string, prayerName: string, prayerTime: string) => {
     const partnerName = activeUser === "HUSBAND" ? wifeName : husbandName;
-    setReminderToast(`Reminder for ${prayerName} sent to ${partnerName}! 🔔`);
+    const now = Date.now();
+
+    // Check 15-min cooldown
+    if (reminderCooldowns[prayerId] && now < reminderCooldowns[prayerId]) {
+      const remainingMins = Math.ceil((reminderCooldowns[prayerId] - now) / 60000);
+      setReminderToast(`Cooldown active: Please wait ${remainingMins}m before reminding again ⏳`);
+      setTimeout(() => setReminderToast(null), 3000);
+      return;
+    }
+
+    const isDhuhrOnFriday = isFriday && prayerId === "dhuhr";
+    const displayName = isDhuhrOnFriday ? "Jumu'ah" : prayerName;
+
+    // Window awareness
+    const countdownInfo = getPrayerCountdownInfo(prayerTime, displayName);
+    let reminderText = "";
+    if (countdownInfo.isWindowClosed) {
+      reminderText = `${displayName} time has passed — check if ${partnerName} prayed 🕌`;
+    } else {
+      reminderText = countdownInfo.text;
+    }
+
+    sendInteraction("PRAYER_ALERT", reminderText, "PARTNER");
+
+    // Set 15 min cooldown
+    setReminderCooldowns(prev => ({
+      ...prev,
+      [prayerId]: now + 15 * 60 * 1000
+    }));
+
+    setReminderToast(`Reminder for ${displayName} sent to ${partnerName}! 🔔`);
     setTimeout(() => setReminderToast(null), 3500);
   };
 
@@ -73,14 +109,39 @@ export default function SpiritualTracker() {
   const submitLog = (status: PrayerStatus) => {
     if (!loggingPrayer) return;
     
-    // Check if we should send an alert
     const targetPrayer = currentPrayers.find(p => p.id === loggingPrayer.id);
+    const partnerPerson = loggingPrayer.person === "husband" ? "wife" : "husband";
+    const senderName = activeUser === "HUSBAND" ? husbandName : wifeName;
+    const partnerName = activeUser === "HUSBAND" ? wifeName : husbandName;
+    const isDhuhrOnFriday = isFriday && loggingPrayer.id === "dhuhr";
+    const prayerDisplayName = isDhuhrOnFriday ? (loggingPrayer.person === "husband" ? "Jumu'ah" : "Dhuhr") : loggingPrayer.name;
+    const nowTimeStr = format(new Date(), "hh:mm a");
+
+    // Check if we should send an alert
     if (targetPrayer && status && status !== null) {
-      const partnerPerson = loggingPrayer.person === "husband" ? "wife" : "husband";
-      if (!targetPrayer[partnerPerson]) {
-        // Partner hasn't logged it yet, send an alert
-        sendInteraction("PRAYER_ALERT", targetPrayer.name);
+      const partnerAlreadyCompleted = !!targetPrayer[partnerPerson];
+
+      if (partnerAlreadyCompleted) {
+        // Both completed celebration!
+        sendInteraction(
+          "PRAYER_CELEBRATION",
+          `Alhamdulillah! ${prayerDisplayName} complete for both of you today 🤍`,
+          "BOTH"
+        );
+        setReminderToast(`${prayerDisplayName} complete for both of you today! 🤍`);
+      } else {
+        // Completion notification for partner
+        let completionMsg = `${senderName} completed ${prayerDisplayName} on time ✅ (${nowTimeStr})`;
+        if (status === "LATE") {
+          completionMsg = `${senderName} completed ${prayerDisplayName} — logged late ⏳ (${nowTimeStr})`;
+        } else if (status === "QADA") {
+          completionMsg = `${senderName} made up ${prayerDisplayName} (Qada) 🤲 (${nowTimeStr})`;
+        }
+
+        sendInteraction("PRAYER_COMPLETE", completionMsg, "PARTNER");
+        setReminderToast(`${prayerDisplayName} marked complete ✅ ${partnerName} notified`);
       }
+      setTimeout(() => setReminderToast(null), 4000);
     }
 
     const updatedPrayers = currentPrayers.map(p => {
@@ -224,20 +285,41 @@ export default function SpiritualTracker() {
             {currentPrayers.map((prayer) => {
               const bothLogged = prayer.husband && prayer.wife;
               const partComplete = prayer.husband || prayer.wife;
+              const isDhuhrOnFriday = isFriday && prayer.id === "dhuhr";
+              const displayName = isDhuhrOnFriday ? "Jumu'ah" : prayer.name;
+              const isAsr = prayer.id === "asr";
+              const cooldownActive = !!(reminderCooldowns[prayer.id] && Date.now() < reminderCooldowns[prayer.id]);
+              const cooldownRemainingMins = cooldownActive ? Math.ceil((reminderCooldowns[prayer.id] - Date.now()) / 60000) : 0;
 
               return (
                 <div key={prayer.id} className="grid grid-cols-12 gap-2 items-center py-3 border-b border-slate-50 dark:border-zinc-800/50 last:border-0 px-2 hover:bg-slate-50/50 dark:hover:bg-zinc-900/30 transition-colors rounded-xl">
                   {/* Prayer Name & Time & Reminder Bell */}
                   <div className="col-span-4 flex items-center justify-between pr-1">
                     <div className="flex flex-col">
-                      <span className="text-xs font-bold text-slate-700 dark:text-zinc-200">{prayer.name}</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs font-bold text-slate-700 dark:text-zinc-200">{displayName}</span>
+                        {isDhuhrOnFriday && (
+                          <span className="text-[8px] font-black text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 px-1 py-0.5 rounded">
+                            Fri
+                          </span>
+                        )}
+                        {isAsr && madhhab === "HANAFI" && (
+                          <span className="text-[8px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1 py-0.5 rounded" title="Hanafi Asr (2x shadow)">
+                            Hanafi
+                          </span>
+                        )}
+                      </div>
                       <span className="text-[9px] font-semibold text-slate-400 dark:text-zinc-500">{prayer.time}</span>
                     </div>
                     <button 
                       type="button"
-                      onClick={() => handleRemindPartner(prayer.name, prayer.time)}
-                      title={`Send reminder for ${prayer.name}`}
-                      className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 transition-all active:scale-90"
+                      onClick={() => handleRemindPartner(prayer.id, prayer.name, prayer.time)}
+                      title={cooldownActive ? `Cooldown active (${cooldownRemainingMins}m remaining)` : `Send reminder for ${displayName}`}
+                      className={`p-1.5 rounded-lg transition-all active:scale-90 ${
+                        cooldownActive
+                          ? "bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-600 opacity-60 cursor-not-allowed"
+                          : "bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400"
+                      }`}
                     >
                       <Bell className="h-3 w-3" />
                     </button>

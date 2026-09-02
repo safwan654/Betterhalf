@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useGlobal } from "@/context/GlobalContext";
-import { CheckSquare, Heart, Sparkles } from "lucide-react";
+import { CheckSquare, Heart, Sparkles, Bell } from "lucide-react";
 
 export default function NotificationAlert() {
   const { pendingAnimation, interactionPayload, activeUser, husbandName, wifeName, clearPendingAnimation } = useGlobal();
@@ -22,16 +22,24 @@ export default function NotificationAlert() {
         subtitle = interactionPayload || "a new task";
         icon = <CheckSquare className="h-6 w-6 text-white" />;
       } else if (pendingAnimation === "PRAYER_ALERT") {
-        title = `${partnerName} Logged a Prayer`;
-        subtitle = `${interactionPayload || "A prayer"} was marked complete.`;
+        title = "Prayer Reminder 🕌";
+        subtitle = interactionPayload || `${partnerName} sent a prayer reminder`;
+        icon = <Bell className="h-6 w-6 text-white" />;
+      } else if (pendingAnimation === "PRAYER_COMPLETE") {
+        title = "Prayer Completed ✅";
+        subtitle = interactionPayload || `${partnerName} completed prayer`;
         icon = <Sparkles className="h-6 w-6 text-white" />;
+      } else if (pendingAnimation === "PRAYER_CELEBRATION") {
+        title = "Prayer Complete Together 🤍";
+        subtitle = interactionPayload || "Alhamdulillah! Both of you prayed today!";
+        icon = <Heart className="h-6 w-6 text-white" fill="white" />;
       } else if (pendingAnimation === "HUG") {
         title = "Virtual Hug!";
-        subtitle = `${partnerName} sent you a hug dY -`;
+        subtitle = `${partnerName} sent you a hug 🫂`;
         icon = <Heart className="h-6 w-6 text-white" fill="white" />;
       } else if (pendingAnimation === "KISS") {
         title = "Virtual Kiss!";
-        subtitle = `${partnerName} sent you a kiss dY~~`;
+        subtitle = `${partnerName} sent you a kiss 😘`;
         icon = <Heart className="h-6 w-6 text-white" fill="white" />;
       }
 
@@ -41,7 +49,7 @@ export default function NotificationAlert() {
       const timer = setTimeout(() => {
         setShow(false);
         setTimeout(clearPendingAnimation, 500); // clear after animation finishes
-      }, 4000);
+      }, 4500);
       
       return () => clearTimeout(timer);
     } else {
@@ -63,7 +71,9 @@ export default function NotificationAlert() {
     >
       <div className={`text-white rounded-2xl p-4 shadow-xl flex items-center gap-4 max-w-sm w-full border ${
         alertContent.type === "TASK_ALERT" ? "bg-amber-500 shadow-amber-500/20 border-amber-400" :
-        alertContent.type === "PRAYER_ALERT" ? "bg-emerald-500 shadow-emerald-500/20 border-emerald-400" :
+        alertContent.type === "PRAYER_ALERT" ? "bg-amber-500 shadow-amber-500/20 border-amber-400" :
+        alertContent.type === "PRAYER_COMPLETE" ? "bg-emerald-600 shadow-emerald-600/20 border-emerald-500" :
+        alertContent.type === "PRAYER_CELEBRATION" ? "bg-gradient-to-r from-emerald-600 to-teal-600 shadow-emerald-500/30 border-emerald-400" :
         "bg-rose-500 shadow-rose-500/20 border-rose-400"
       }`}>
         <div className="bg-white/20 p-2 rounded-full">

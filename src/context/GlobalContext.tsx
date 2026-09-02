@@ -46,13 +46,18 @@ interface GlobalContextType {
   wifePhoto: string | null;
   setWifePhoto: (photoBase64: string | null) => void;
 
-  pendingAnimation: "HUG" | "KISS" | "TASK_ALERT" | "PRAYER_ALERT" | null;
+  pendingAnimation: "HUG" | "KISS" | "TASK_ALERT" | "PRAYER_ALERT" | "PRAYER_COMPLETE" | "PRAYER_CELEBRATION" | null;
   interactionPayload: string | null;
-  sendInteraction: (type: "HUG" | "KISS" | "TASK_ALERT" | "PRAYER_ALERT", payload?: string) => void;
+  sendInteraction: (type: "HUG" | "KISS" | "TASK_ALERT" | "PRAYER_ALERT" | "PRAYER_COMPLETE" | "PRAYER_CELEBRATION", payload?: string, target?: "PARTNER" | "BOTH") => void;
   clearPendingAnimation: () => void;
   hasHusbandPush: boolean;
   hasWifePush: boolean;
   
+  reminderTone: "GENTLE" | "DIRECT" | "PLAYFUL";
+  setReminderTone: (tone: "GENTLE" | "DIRECT" | "PLAYFUL") => void;
+  madhhab: "STANDARD" | "HANAFI";
+  setMadhhab: (m: "STANDARD" | "HANAFI") => void;
+
   currency: string;
   setCurrency: (currency: string) => void;
   
@@ -122,6 +127,8 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
   const lastInteractionTimestampRef = useRef<number>(0);
   const [hasHusbandPush, setHasHusbandPush] = useState<boolean>(false);
   const [hasWifePush, setHasWifePush] = useState<boolean>(false);
+  const [reminderTone, setReminderToneState] = useState<"GENTLE" | "DIRECT" | "PLAYFUL">("GENTLE");
+  const [madhhab, setMadhhabState] = useState<"STANDARD" | "HANAFI">("STANDARD");
   const [currency, setCurrencyState] = useState<string>("$");
   
   const [globalSelectedDate, setGlobalSelectedDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
@@ -159,6 +166,12 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     
     if (savedPrayers) setPrayersByDateState(JSON.parse(savedPrayers));
     if (savedTasks) setTasksState(JSON.parse(savedTasks));
+
+    const savedTone = localStorage.getItem("bh_reminder_tone") as "GENTLE" | "DIRECT" | "PLAYFUL" | null;
+    if (savedTone) setReminderToneState(savedTone);
+
+    const savedMadhhab = localStorage.getItem("bh_madhhab") as "STANDARD" | "HANAFI" | null;
+    if (savedMadhhab) setMadhhabState(savedMadhhab);
   }, []);
 
   // 2. Firebase Sync - Subscribe to Household Document
@@ -179,6 +192,8 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
         if (data.husbandPhoto !== undefined) setHusbandPhotoState(data.husbandPhoto);
         if (data.wifePhoto !== undefined) setWifePhotoState(data.wifePhoto);
         if (data.currency) setCurrencyState(data.currency);
+        if (data.reminderTone) setReminderToneState(data.reminderTone);
+        if (data.madhhab) setMadhhabState(data.madhhab);
         setHasHusbandPush(!!data.husbandPushSubscription);
         setHasWifePush(!!data.wifePushSubscription);
         
@@ -189,8 +204,8 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
           if (timestamp > lastInteractionTimestampRef.current) {
             lastInteractionTimestampRef.current = timestamp;
             setLastInteractionTimestamp(timestamp);
-            // Only trigger if it was sent by the partner AND is recent (not a stale reload/update)
-            if (isRecent && sender !== activeUserRef.current && activeUserRef.current) {
+            // Only trigger if it was sent by the partner (or celebration for both) AND is recent
+            if (isRecent && (sender !== activeUserRef.current || type === "PRAYER_CELEBRATION") && activeUserRef.current) {
               setInteractionPayload(payload || null);
               setPendingAnimationState(type);
               setTimeout(() => setPendingAnimationState(null), 4000);
@@ -333,7 +348,11 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     setPendingAnimationState(null);
   };
 
-  const sendInteraction = (type: "HUG" | "KISS" | "TASK_ALERT" | "PRAYER_ALERT", payload?: string) => {
+  const sendInteraction = (
+    type: "HUG" | "KISS" | "TASK_ALERT" | "PRAYER_ALERT" | "PRAYER_COMPLETE" | "PRAYER_CELEBRATION",
+    payload?: string,
+    target: "PARTNER" | "BOTH" = "PARTNER"
+  ) => {
     updateFirebase({ 
       lastInteraction: {
         type,
@@ -346,19 +365,32 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     if (householdPin) {
       const partner = activeUser === "HUSBAND" ? "WIFE" : "HUSBAND";
       const senderName = activeUser === "HUSBAND" ? husbandName : wifeName;
+      const targetUser = target === "BOTH" ? "BOTH" : partner;
 
       let title = "BetterHalf Alert";
       let body = `${senderName} sent an update!`;
 
       if (type === "HUG") {
         title = "Virtual Hug!";
-        body = `${senderName} sent you a hug dY -`;
+        body = `${senderName} sent you a hug 🫂`;
       } else if (type === "KISS") {
         title = "Virtual Kiss!";
-        body = `${senderName} sent you a kiss dY~~`;
+        body = `${senderName} sent you a kiss 😘`;
       } else if (type === "PRAYER_ALERT") {
-        title = "Prayer Update";
-        body = `${senderName} completed ${payload || "a prayer"}!`;
+        title = "Prayer Reminder 🕌";
+        if (reminderTone === "PLAYFUL") {
+          body = `Hey love! ${senderName} is checking in: ${payload || "don't forget prayer!"} ✨🤍`;
+        } else if (reminderTone === "DIRECT") {
+          body = `${senderName}: ${payload || "Time for prayer"} 🕌`;
+        } else {
+          body = `Warm reminder from ${senderName}: ${payload || "Time for prayer"} 🌿`;
+        }
+      } else if (type === "PRAYER_COMPLETE") {
+        title = "Prayer Completed ✅";
+        body = payload || `${senderName} completed prayer!`;
+      } else if (type === "PRAYER_CELEBRATION") {
+        title = "Prayer Complete Together 🤍";
+        body = payload || "Alhamdulillah! Prayer complete for both of you today!";
       } else if (type === "TASK_ALERT") {
         title = "New Task Assigned";
         body = `${senderName} assigned a task: ${payload || "Check tasks"}`;
@@ -369,12 +401,24 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           householdPin,
-          targetUser: partner,
+          targetUser,
           title,
           body
         })
       }).catch(err => console.error("Push notification error:", err));
     }
+  };
+
+  const setReminderTone = (tone: "GENTLE" | "DIRECT" | "PLAYFUL") => {
+    setReminderToneState(tone);
+    localStorage.setItem("bh_reminder_tone", tone);
+    updateFirebase({ reminderTone: tone });
+  };
+
+  const setMadhhab = (m: "STANDARD" | "HANAFI") => {
+    setMadhhabState(m);
+    localStorage.setItem("bh_madhhab", m);
+    updateFirebase({ madhhab: m });
   };
 
   const setCurrency = (c: string) => {
@@ -454,6 +498,8 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
       wifePhoto, setWifePhoto,
       pendingAnimation, interactionPayload, sendInteraction, clearPendingAnimation,
       hasHusbandPush, hasWifePush,
+      reminderTone, setReminderTone,
+      madhhab, setMadhhab,
       currency, setCurrency,
       householdPin,
       globalSelectedDate, setGlobalSelectedDate,
