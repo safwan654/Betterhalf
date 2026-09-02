@@ -3,17 +3,64 @@
 import { useState } from "react";
 import Header from "@/components/layout/header";
 import BottomNavigation from "@/components/layout/bottom-navigation";
-import { Flame, CheckCircle2, History, Share2, Clock, AlertCircle, X } from "lucide-react";
+import { Flame, CheckCircle2, History, Share2, Clock, AlertCircle, X, Bell } from "lucide-react";
 import { useGlobal, PrayerStatus, initialPrayers } from "@/context/GlobalContext";
 import { format, isSameDay, parseISO } from "date-fns";
 
+function getPrayerCountdownText(timeStr: string, prayerName: string) {
+  try {
+    const now = new Date();
+    const parts = timeStr.trim().split(" ");
+    const timeParts = parts[0].split(":");
+    let hours = parseInt(timeParts[0], 10);
+    const minutes = parseInt(timeParts[1], 10);
+    const modifier = parts[1] ? parts[1].toUpperCase() : "";
+
+    if (modifier === "PM" && hours < 12) hours += 12;
+    if (modifier === "AM" && hours === 12) hours = 0;
+
+    const prayerTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
+    const diffMs = prayerTime.getTime() - now.getTime();
+    const diffMins = Math.round(diffMs / 60000);
+
+    if (diffMins > 0) {
+      if (diffMins < 60) {
+        return `${prayerName} is in ${diffMins}m (${timeStr})`;
+      } else {
+        const hrs = Math.floor(diffMins / 60);
+        const mins = diffMins % 60;
+        return `${prayerName} is in ${hrs}h ${mins}m (${timeStr})`;
+      }
+    } else {
+      const agoMins = Math.abs(diffMins);
+      if (agoMins < 60) {
+        return `${prayerName} started ${agoMins}m ago (${timeStr})`;
+      } else {
+        return `${prayerName} time was ${timeStr}`;
+      }
+    }
+  } catch (err) {
+    return `${prayerName} (${timeStr})`;
+  }
+}
+
 export default function SpiritualTracker() {
-  const { activeUser, prayersByDate, setPrayersByDate, globalSelectedDate, sendInteraction } = useGlobal();
+  const { activeUser, husbandName, wifeName, prayersByDate, setPrayersByDate, globalSelectedDate, sendInteraction } = useGlobal();
 
   const currentPrayers = prayersByDate[globalSelectedDate] || initialPrayers;
 
-  // State for Prayer Selection Modal
+  // State for Prayer Selection Modal & Reminder Toast
   const [loggingPrayer, setLoggingPrayer] = useState<{ id: string, person: "husband" | "wife", name: string } | null>(null);
+  const [reminderToast, setReminderToast] = useState<string | null>(null);
+
+  const handleRemindPartner = (prayerName: string, prayerTime: string) => {
+    const countdownText = getPrayerCountdownText(prayerTime, prayerName);
+    sendInteraction("PRAYER_ALERT", countdownText);
+
+    const partnerName = activeUser === "HUSBAND" ? wifeName : husbandName;
+    setReminderToast(`Reminder for ${prayerName} sent to ${partnerName}! 🔔`);
+    setTimeout(() => setReminderToast(null), 3500);
+  };
 
   const handleLogClick = (id: string, name: string, person: "husband" | "wife", currentStatus: PrayerStatus) => {
     if (person.toUpperCase() !== activeUser) {
@@ -82,6 +129,15 @@ export default function SpiritualTracker() {
       <Header />
       
       <main className="mx-auto max-w-md px-4 pt-6 flex flex-col gap-6 relative">
+        {reminderToast && (
+          <div className="fixed top-16 left-4 right-4 z-[90] flex justify-center animate-in fade-in slide-in-from-top-2">
+            <div className="bg-amber-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-lg border border-amber-400 flex items-center gap-2">
+              <Bell className="h-4 w-4 fill-white" />
+              {reminderToast}
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center justify-between">
           <div className="flex flex-col">
             <h2 className="text-xl font-black tracking-tight">Spiritual Log</h2>
@@ -171,10 +227,20 @@ export default function SpiritualTracker() {
 
               return (
                 <div key={prayer.id} className="grid grid-cols-12 gap-2 items-center py-3 border-b border-slate-50 dark:border-zinc-800/50 last:border-0 px-2 hover:bg-slate-50/50 dark:hover:bg-zinc-900/30 transition-colors rounded-xl">
-                  {/* Prayer Name & Time */}
-                  <div className="col-span-4 flex flex-col">
-                    <span className="text-xs font-bold text-slate-700 dark:text-zinc-200">{prayer.name}</span>
-                    <span className="text-[9px] font-semibold text-slate-400 dark:text-zinc-500">{prayer.time}</span>
+                  {/* Prayer Name & Time & Reminder Bell */}
+                  <div className="col-span-4 flex items-center justify-between pr-1">
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold text-slate-700 dark:text-zinc-200">{prayer.name}</span>
+                      <span className="text-[9px] font-semibold text-slate-400 dark:text-zinc-500">{prayer.time}</span>
+                    </div>
+                    <button 
+                      type="button"
+                      onClick={() => handleRemindPartner(prayer.name, prayer.time)}
+                      title={`Send reminder for ${prayer.name}`}
+                      className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 transition-all active:scale-90"
+                    >
+                      <Bell className="h-3 w-3" />
+                    </button>
                   </div>
 
                   {/* Husband Checkbox */}
