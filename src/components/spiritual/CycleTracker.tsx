@@ -27,8 +27,9 @@ import {
   ChevronDown as ChevronDownIcon, 
   ChevronUp as ChevronUpIcon, 
   History as HistoryIcon,
-  Activity as ActivityIcon,
-  AlertCircle as AlertCircleIcon
+  CheckCircle2 as CheckCircle2Icon,
+  CalendarPlus as CalendarPlusIcon,
+  Flower2 as Flower2Icon
 } from "lucide-react";
 
 export default function CycleTracker() {
@@ -81,6 +82,8 @@ export default function CycleTracker() {
     ? Math.round(completedCycles.reduce((acc, c) => acc + (c.durationDays || 5), 0) / completedCycles.length)
     : 5;
 
+  const hasLoggedCycles = periodCycles.length > 0;
+
   // Calculate estimated next period date
   const lastCycle = periodCycles[0];
   const lastStartDate = lastCycle?.startDate || periodStartDate;
@@ -120,7 +123,6 @@ export default function CycleTracker() {
   const openEditModal = (cycle: PeriodCycle) => {
     setEditingCycle(cycle);
     
-    // Extract date & time
     if (cycle.startDate.includes("T")) {
       const parts = cycle.startDate.split("T");
       setEditStartDate(parts[0]);
@@ -167,13 +169,18 @@ export default function CycleTracker() {
     setTimeout(() => setConfirmToast(null), 3000);
   };
 
-  // Handle Add Past Cycle
+  // Handle Add Past Cycle (Historical Backfill)
   const handleSaveAddPast = (e: React.FormEvent) => {
     e.preventDefault();
     if (!pastStartDate || !pastEndDate) return;
 
     const fullStart = pastStartTime ? `${pastStartDate}T${pastStartTime}:00` : `${pastStartDate}T00:00:00`;
     const fullEnd = pastEndTime ? `${pastEndDate}T${pastEndTime}:00` : `${pastEndDate}T23:59:59`;
+
+    if (isBefore(parseISO(fullEnd), parseISO(fullStart))) {
+      alert("End date cannot be earlier than start date.");
+      return;
+    }
 
     addPastPeriodCycle({
       startDate: fullStart,
@@ -212,17 +219,17 @@ export default function CycleTracker() {
     // A) Husband View: Period is ACTIVE
     if (periodActive) {
       return (
-        <div className="glass-panel p-5 rounded-3xl border border-rose-200/60 dark:border-rose-900/40 bg-gradient-to-br from-rose-50/60 via-white to-pink-50/40 dark:from-rose-950/20 dark:via-zinc-900 dark:to-zinc-900 flex flex-col gap-3 shadow-sm">
+        <div className="glass-panel p-5 rounded-3xl border border-rose-300 dark:border-rose-900/60 bg-gradient-to-br from-rose-50 via-pink-50/50 to-white dark:from-rose-950/30 dark:via-zinc-900 dark:to-zinc-900 flex flex-col gap-3 shadow-md shadow-rose-500/5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="p-2.5 rounded-2xl bg-rose-500/10 text-rose-500 shadow-sm">
-                <MoonIcon className="h-5 w-5" />
+              <div className="p-2.5 rounded-2xl bg-rose-500 text-white shadow-md shadow-rose-500/20">
+                <Flower2Icon className="h-5 w-5" />
               </div>
               <div className="flex flex-col">
                 <span className="text-[10px] font-black uppercase tracking-wider text-rose-500">
                   {wifeName}'s Cycle Status
                 </span>
-                <h4 className="text-sm font-extrabold text-slate-800 dark:text-zinc-100">
+                <h4 className="text-sm font-black text-slate-800 dark:text-zinc-100">
                   🌸 Cycle Active · Day {cycleDay}
                 </h4>
               </div>
@@ -262,23 +269,35 @@ export default function CycleTracker() {
               </h4>
             </div>
           </div>
-          <span className="text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-purple-500/10 px-2.5 py-1 rounded-full">
-            {daysUntilNext > 0 ? `In ~${daysUntilNext} days` : "Approaching soon"}
-          </span>
+          {hasLoggedCycles ? (
+            <span className="text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-purple-500/10 px-2.5 py-1 rounded-full">
+              {daysUntilNext > 0 ? `In ~${daysUntilNext} days` : "Approaching soon"}
+            </span>
+          ) : (
+            <span className="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-zinc-800 px-2.5 py-1 rounded-full">
+              Awaiting data
+            </span>
+          )}
         </div>
 
-        <div className="p-3 rounded-2xl bg-purple-500/5 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/30 flex items-center justify-between text-xs">
-          <div className="flex flex-col">
-            <span className="text-[10px] text-slate-400 font-semibold uppercase">Estimated Next Period</span>
-            <span className="font-extrabold text-slate-800 dark:text-zinc-100">
-              ~{format(nextEstimatedDate, "MMMM d, yyyy")}
-            </span>
+        {hasLoggedCycles ? (
+          <div className="p-3 rounded-2xl bg-purple-500/5 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/30 flex items-center justify-between text-xs">
+            <div className="flex flex-col">
+              <span className="text-[10px] text-slate-400 font-semibold uppercase">Estimated Next Period</span>
+              <span className="font-extrabold text-slate-800 dark:text-zinc-100">
+                ~{format(nextEstimatedDate, "MMMM d, yyyy")}
+              </span>
+            </div>
+            <div className="flex flex-col text-right">
+              <span className="text-[10px] text-slate-400 font-semibold uppercase">Avg Duration</span>
+              <span className="font-extrabold text-slate-800 dark:text-zinc-100">{avgDuration} days</span>
+            </div>
           </div>
-          <div className="flex flex-col text-right">
-            <span className="text-[10px] text-slate-400 font-semibold uppercase">Avg Duration</span>
-            <span className="font-extrabold text-slate-800 dark:text-zinc-100">{avgDuration} days</span>
+        ) : (
+          <div className="p-3 rounded-2xl bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 text-xs text-slate-500">
+            Predictions will appear after {wifeName} logs her first cycle.
           </div>
-        </div>
+        )}
 
         {/* Gentle Care / Hydration action for Husband */}
         <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-zinc-800">
@@ -306,60 +325,71 @@ export default function CycleTracker() {
   // 2. WIFE VIEW (Full Management & Tracking)
   // ==========================================
   return (
-    <div className="glass-panel p-5 rounded-3xl border border-rose-200/60 dark:border-rose-900/40 bg-gradient-to-br from-rose-50/50 via-white to-purple-50/40 dark:from-rose-950/20 dark:via-zinc-900 dark:to-zinc-900 flex flex-col gap-4 shadow-sm">
+    <div className={`glass-panel p-5 rounded-3xl transition-all duration-300 flex flex-col gap-4 shadow-sm ${
+      periodActive 
+        ? "border border-rose-300 dark:border-rose-800/60 bg-gradient-to-br from-rose-50/90 via-pink-50/40 to-white dark:from-rose-950/30 dark:via-zinc-900 dark:to-zinc-900 ring-1 ring-rose-400/20 shadow-md shadow-rose-500/5"
+        : "border border-slate-200/80 dark:border-zinc-800 bg-gradient-to-br from-slate-50/70 via-white to-purple-50/30 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-900"
+    }`}>
       
-      {/* Header & Main Start/End Actions */}
+      {/* Header with Explicit Current State Confirmation */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="p-2.5 rounded-2xl bg-rose-500/10 text-rose-500 shadow-sm">
-            <MoonIcon className="h-5 w-5" />
+          <div className={`p-2.5 rounded-2xl shadow-sm transition-all ${
+            periodActive 
+              ? "bg-rose-500 text-white shadow-rose-500/30 animate-pulse" 
+              : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+          }`}>
+            {periodActive ? <Flower2Icon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
           </div>
           <div className="flex flex-col">
-            <span className="text-[10px] font-black uppercase tracking-wider text-rose-500">
-              Women's Health & Prayer Exemption (رخصة)
+            <span className={`text-[10px] font-black uppercase tracking-wider flex items-center gap-1 ${
+              periodActive ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"
+            }`}>
+              {periodActive ? "Menstrual Cycle Active" : "🌿 Clean / Taharah Window"}
             </span>
-            <h4 className="text-sm font-extrabold text-slate-800 dark:text-zinc-100">
-              {periodActive ? `Cycle Active · Day ${cycleDay}` : "Menstrual Cycle Tracker"}
+            <h4 className="text-sm font-black text-slate-800 dark:text-zinc-100">
+              {periodActive ? `🌸 Period Active · Day ${cycleDay}` : "Menstrual Cycle Tracker"}
             </h4>
           </div>
         </div>
 
+        {/* Primary Action Button (Swaps based on active state) */}
         {periodActive ? (
           <div className="flex items-center gap-1.5">
             {periodCycles[0] && (
               <button
                 onClick={() => openEditModal(periodCycles[0])}
                 title="Edit Start Date/Time"
-                className="p-2 rounded-xl bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 text-slate-600 dark:text-zinc-300 transition-all active:scale-95"
+                className="p-2 rounded-xl bg-white dark:bg-zinc-800 hover:bg-slate-100 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-700 transition-all active:scale-95 shadow-xs"
               >
                 <Edit3Icon className="h-3.5 w-3.5" />
               </button>
             )}
             <button
               onClick={openEndModal}
-              className="px-3 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-900 text-white dark:bg-zinc-100 dark:text-zinc-900 transition-all shadow-sm active:scale-95"
+              className="px-3.5 py-2 rounded-xl text-xs font-extrabold bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:text-zinc-900 transition-all shadow-md active:scale-95 flex items-center gap-1.5"
             >
-              Mark Cycle End
+              <CheckCircle2Icon className="h-3.5 w-3.5 text-emerald-400" /> Mark Period End
             </button>
           </div>
         ) : (
           <div className="flex items-center gap-1.5">
             <button
               onClick={openStartModal}
-              className="px-3.5 py-2 rounded-xl text-xs font-bold bg-rose-500 hover:bg-rose-600 text-white shadow-rose-500/20 shadow-sm transition-all active:scale-95 flex items-center gap-1.5"
+              className="px-4 py-2.5 rounded-2xl text-xs font-black bg-rose-500 hover:bg-rose-600 text-white shadow-md shadow-rose-500/25 transition-all active:scale-95 flex items-center gap-1.5"
             >
-              <SparklesIcon className="h-3.5 w-3.5" /> Mark Period Start
+              <SparklesIcon className="h-3.5 w-3.5 fill-white/30" /> Mark Period Start
             </button>
           </div>
         )}
       </div>
 
-      {/* Status Banner */}
+      {/* State Banner */}
       {periodActive ? (
-        <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-200/50 dark:border-rose-900/40 flex flex-col gap-1.5">
+        <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-200 dark:border-rose-900/50 flex flex-col gap-1.5 animate-in fade-in duration-200">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-rose-700 dark:text-rose-300 flex items-center gap-1.5">
-              <SparklesIcon className="h-3.5 w-3.5" /> Prayer Exemption Active
+              <SparklesIcon className="h-3.5 w-3.5" /> Prayer Exemption Active (رخصة شرعية)
             </span>
             {periodStartDate && (
               <div className="flex items-center gap-1.5">
@@ -382,36 +412,47 @@ export default function CycleTracker() {
           </p>
         </div>
       ) : (
+        /* Not on Period: Prediction Card with Honest 0-Cycle Empty State */
         <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-zinc-850/50 border border-slate-100 dark:border-zinc-800 flex items-center justify-between">
           <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Next Estimated Period</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              {hasLoggedCycles ? "Next Estimated Period" : "Cycle Insights"}
+            </span>
             <span className="text-xs font-extrabold text-slate-800 dark:text-zinc-100">
-              ~{format(nextEstimatedDate, "MMMM d, yyyy")}
+              {hasLoggedCycles ? `~${format(nextEstimatedDate, "MMMM d, yyyy")}` : "Add your first cycle to unlock predictions"}
             </span>
           </div>
-          <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 bg-purple-500/10 px-2 py-1 rounded-lg">
-            {daysUntilNext > 0 ? `In ~${daysUntilNext} days` : "Approaching"}
+          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg ${
+            hasLoggedCycles 
+              ? "text-purple-600 dark:text-purple-400 bg-purple-500/10" 
+              : "text-slate-500 bg-slate-200/60 dark:bg-zinc-800"
+          }`}>
+            {hasLoggedCycles ? (daysUntilNext > 0 ? `In ~${daysUntilNext} days` : "Approaching") : "Needs 1 cycle"}
           </span>
         </div>
       )}
 
-      {/* Cycle Stats & Log Retroactive Action */}
+      {/* Cycle Stats */}
       <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100 dark:border-zinc-800 text-[11px]">
         <div className="flex flex-col p-2.5 rounded-2xl bg-slate-50 dark:bg-zinc-850/60 border border-slate-100 dark:border-zinc-800">
           <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Avg Duration</span>
-          <span className="font-extrabold text-slate-700 dark:text-zinc-200">{avgDuration} days</span>
+          <span className="font-extrabold text-slate-700 dark:text-zinc-200">
+            {hasLoggedCycles ? `${avgDuration} days` : "—"}
+          </span>
         </div>
         <div className="flex flex-col p-2.5 rounded-2xl bg-slate-50 dark:bg-zinc-850/60 border border-slate-100 dark:border-zinc-800">
           <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Cycle Length</span>
-          <span className="font-extrabold text-slate-700 dark:text-zinc-200">~28 days</span>
+          <span className="font-extrabold text-slate-700 dark:text-zinc-200">
+            {hasLoggedCycles ? "~28 days" : "—"}
+          </span>
         </div>
         <div className="flex flex-col p-2.5 rounded-2xl bg-slate-50 dark:bg-zinc-850/60 border border-slate-100 dark:border-zinc-800">
-          <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Logged</span>
-          <span className="font-extrabold text-slate-700 dark:text-zinc-200">{periodCycles.length} cycles</span>
+          <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">History</span>
+          <span className="font-extrabold text-slate-700 dark:text-zinc-200">{periodCycles.length} logged</span>
         </div>
       </div>
 
-      {/* Privacy Setting & Add Past Cycle Bar */}
+      {/* Privacy Setting */}
       <div className="flex items-center justify-between pt-1">
         <label className="text-[11px] font-bold text-slate-600 dark:text-zinc-300 flex items-center gap-1.5 cursor-pointer">
           <ShieldIcon className="h-3.5 w-3.5 text-slate-400" /> Share status with Husband for Care Mode
@@ -424,23 +465,24 @@ export default function CycleTracker() {
         />
       </div>
 
-      {/* Cycle History Accordion & Past Cycle Logging */}
+      {/* Cycle History Section & Differentiated Secondary "Add Past Period" Action */}
       <div className="flex flex-col gap-2 pt-2 border-t border-slate-100 dark:border-zinc-800">
         <div className="flex items-center justify-between">
           <button
             onClick={() => setShowHistory(!showHistory)}
             className="text-xs font-extrabold text-slate-700 dark:text-zinc-200 flex items-center gap-1.5 hover:text-rose-500 transition-colors"
           >
-            <HistoryIcon className="h-3.5 w-3.5 text-rose-500" />
-            Cycle History & Past Period Log ({periodCycles.length})
+            <HistoryIcon className="h-3.5 w-3.5 text-slate-400" />
+            Cycle History ({periodCycles.length})
             {showHistory ? <ChevronUpIcon className="h-3.5 w-3.5 text-slate-400" /> : <ChevronDownIcon className="h-3.5 w-3.5 text-slate-400" />}
           </button>
 
+          {/* Secondary Historical Backfill Button */}
           <button
             onClick={() => setShowAddPastModal(true)}
-            className="text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 px-2.5 py-1 rounded-lg transition-all flex items-center gap-1"
+            className="border border-dashed border-slate-300 dark:border-zinc-700 hover:border-rose-400 bg-slate-50/70 hover:bg-rose-50/50 dark:bg-zinc-850 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:text-rose-600 text-[10px] font-bold px-2.5 py-1 rounded-xl transition-all flex items-center gap-1 shadow-2xs active:scale-95"
           >
-            <PlusIcon className="h-3 w-3" /> Add Past Period
+            <CalendarPlusIcon className="h-3 w-3 text-slate-400" /> Add Past Period
           </button>
         </div>
 
@@ -449,7 +491,7 @@ export default function CycleTracker() {
           <div className="flex flex-col gap-2 mt-1 animate-in fade-in">
             {periodCycles.length === 0 ? (
               <span className="text-[11px] text-slate-400 italic text-center py-2">
-                No past cycles recorded. Click "+ Add Past Period" to log historical dates.
+                No past cycles recorded. Tap "Add Past Period" to backfill historical dates.
               </span>
             ) : (
               periodCycles.map((cycle) => {
@@ -680,16 +722,16 @@ export default function CycleTracker() {
       )}
 
       {/* ========================================================= */}
-      {/* 3. ADD PAST PERIOD MODAL (Retroactive Logging) */}
+      {/* 3. ADD PAST PERIOD MODAL (Historical Backfill) */}
       {/* ========================================================= */}
       {showAddPastModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="glass-panel w-full max-w-sm rounded-3xl p-5 shadow-2xl border border-white/20 dark:border-zinc-800 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-3">
               <div className="flex flex-col">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-rose-500">Retroactive Log</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-rose-500">Historical Backfill</span>
                 <h3 className="text-base font-extrabold text-slate-800 dark:text-zinc-100">
-                  Add Past Period
+                  Log Past Period
                 </h3>
               </div>
               <button 
@@ -753,9 +795,9 @@ export default function CycleTracker() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 text-xs font-bold rounded-xl bg-rose-500 hover:bg-rose-600 text-white shadow-md shadow-rose-500/20 transition-all flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2.5 text-xs font-bold rounded-xl bg-slate-900 hover:bg-black text-white dark:bg-white dark:text-zinc-900 shadow-md transition-all flex items-center justify-center gap-1.5"
                 >
-                  <PlusIcon className="h-4 w-4" /> Add to History
+                  <PlusIcon className="h-4 w-4" /> Save Past Period
                 </button>
               </div>
             </form>
