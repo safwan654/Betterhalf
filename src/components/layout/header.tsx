@@ -93,10 +93,10 @@ export default function Header() {
             <span>{relationshipMode === "TOGETHER" ? "🏠 Together" : "✈️ LDR"}</span>
           </button>
 
-          {/* Active User Display & Quick Switch */}
-          <button
-            onClick={() => setActiveUser(activeUser === "HUSBAND" ? "WIFE" : "HUSBAND")}
-            title="Click to switch active profile"
+          {/* Logged-In User Profile Badge */}
+          <Link
+            href="/settings"
+            title={`Logged in as ${activeUser === "HUSBAND" ? husbandName : wifeName}`}
             className="flex items-center gap-1.5 rounded-full border border-slate-200/70 bg-slate-50/80 p-0.5 pr-2.5 text-[10px] font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-100 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 active:scale-95"
           >
             <div className={cn(
@@ -111,8 +111,8 @@ export default function Header() {
                 currentInitial.toUpperCase()
               )}
             </div>
-            <span className="truncate max-w-[65px]">{activeUser === "HUSBAND" ? husbandName : wifeName}</span>
-          </button>
+            <span className="truncate max-w-[70px]">{activeUser === "HUSBAND" ? husbandName : wifeName}</span>
+          </Link>
 
           {/* Settings Link */}
           <Link
