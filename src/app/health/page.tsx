@@ -194,21 +194,34 @@ export default function HealthPage() {
 
           <div className="grid grid-cols-2 gap-3">
             {/* Husband Protein */}
-            <div className="flex flex-col p-3.5 rounded-2xl bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 gap-2.5">
-              <div className="flex items-center justify-between text-xs font-bold">
-                <div className="flex items-center gap-1.5">
-                  <div className="h-5 w-5 rounded-full overflow-hidden bg-amber-500 text-white flex items-center justify-center text-[9px] font-black shrink-0">
+            <div className="flex flex-col p-3.5 rounded-2xl bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 gap-2 shadow-xs">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <div className="h-6 w-6 rounded-full overflow-hidden bg-amber-500 text-white flex items-center justify-center text-[10px] font-black shrink-0 border border-white dark:border-zinc-700">
                     {husbandPhoto ? (
                       <img src={husbandPhoto} alt={husbandName} className="h-full w-full object-cover" />
                     ) : (
                       (husbandName || "H").charAt(0).toUpperCase()
                     )}
                   </div>
-                  <span className="text-slate-700 dark:text-zinc-200">{husbandName}</span>
+                  <span className="text-xs font-black text-slate-800 dark:text-zinc-100 truncate">{husbandName}</span>
                 </div>
-                <span className="text-amber-600 dark:text-amber-400 font-extrabold">{nutrition.husband.protein}g / {nutrition.husband.proteinGoal}g</span>
+                <span className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0">
+                  {husbandProteinPercent}%
+                </span>
               </div>
-              <div className="h-2 w-full bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+
+              <div className="flex items-baseline justify-between pt-0.5">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-base font-black text-amber-600 dark:text-amber-400">{nutrition.husband.protein}g</span>
+                  <span className="text-[11px] font-bold text-slate-400">/ {nutrition.husband.proteinGoal}g</span>
+                </div>
+                <span className="text-[9px] font-semibold text-slate-400">
+                  {Math.max(0, nutrition.husband.proteinGoal - nutrition.husband.protein)}g left
+                </span>
+              </div>
+
+              <div className="h-2 w-full bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden mt-0.5">
                 <div 
                   className="h-full bg-amber-500 rounded-full transition-all duration-500"
                   style={{ width: `${husbandProteinPercent}%` }}
@@ -217,21 +230,34 @@ export default function HealthPage() {
             </div>
 
             {/* Wife Protein */}
-            <div className="flex flex-col p-3.5 rounded-2xl bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 gap-2.5">
-              <div className="flex items-center justify-between text-xs font-bold">
-                <div className="flex items-center gap-1.5">
-                  <div className="h-5 w-5 rounded-full overflow-hidden bg-rose-500 text-white flex items-center justify-center text-[9px] font-black shrink-0">
+            <div className="flex flex-col p-3.5 rounded-2xl bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 gap-2 shadow-xs">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <div className="h-6 w-6 rounded-full overflow-hidden bg-rose-500 text-white flex items-center justify-center text-[10px] font-black shrink-0 border border-white dark:border-zinc-700">
                     {wifePhoto ? (
                       <img src={wifePhoto} alt={wifeName} className="h-full w-full object-cover" />
                     ) : (
                       (wifeName || "W").charAt(0).toUpperCase()
                     )}
                   </div>
-                  <span className="text-slate-700 dark:text-zinc-200">{wifeName}</span>
+                  <span className="text-xs font-black text-slate-800 dark:text-zinc-100 truncate">{wifeName}</span>
                 </div>
-                <span className="text-rose-500 dark:text-rose-400 font-extrabold">{nutrition.wife.protein}g / {nutrition.wife.proteinGoal}g</span>
+                <span className="text-[10px] font-black px-1.5 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 shrink-0">
+                  {wifeProteinPercent}%
+                </span>
               </div>
-              <div className="h-2 w-full bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
+
+              <div className="flex items-baseline justify-between pt-0.5">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-base font-black text-rose-600 dark:text-rose-400">{nutrition.wife.protein}g</span>
+                  <span className="text-[11px] font-bold text-slate-400">/ {nutrition.wife.proteinGoal}g</span>
+                </div>
+                <span className="text-[9px] font-semibold text-slate-400">
+                  {Math.max(0, nutrition.wife.proteinGoal - nutrition.wife.protein)}g left
+                </span>
+              </div>
+
+              <div className="h-2 w-full bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden mt-0.5">
                 <div 
                   className="h-full bg-rose-500 rounded-full transition-all duration-500"
                   style={{ width: `${wifeProteinPercent}%` }}
