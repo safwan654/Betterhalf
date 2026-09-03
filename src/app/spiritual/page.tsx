@@ -30,8 +30,6 @@ import {
   getTimezoneAbbr 
 } from "@/lib/prayer-times";
 import SpiritualCalendar from "@/components/spiritual/SpiritualCalendar";
-import CareCard from "@/components/spiritual/CareCard";
-import CycleTracker from "@/components/spiritual/CycleTracker";
 
 export default function SpiritualTracker() {
   const { 
@@ -41,13 +39,15 @@ export default function SpiritualTracker() {
     prayersByDate, 
     setPrayersByDate, 
     globalSelectedDate, 
-    setGlobalSelectedDate,
+    setGlobalSelectedDate, 
     sendInteraction, 
-    madhhab,
-    husbandLocation,
-    wifeLocation,
-    periodActive,
-    sharePeriodStatus
+    madhhab, 
+    husbandLocation, 
+    wifeLocation, 
+    periodActive, 
+    periodStartDate, 
+    periodCycles, 
+    sharePeriodStatus 
   } = useGlobal();
 
   const [activeTab, setActiveTab] = useState<"CHECKLIST" | "CALENDAR">("CHECKLIST");
@@ -68,6 +68,30 @@ export default function SpiritualTracker() {
   const wifePrayerTimes = useMemo(() => {
     return calculatePrayerTimes(wifeLocation || CITY_PRESETS["Mumbai, India"], selectedDateObj, madhhab);
   }, [wifeLocation, selectedDateObj, madhhab]);
+
+  // Fine-grained prayer exemption check based on date and time
+  const isWifePrayerExempt = (prayerDate: Date): boolean => {
+    const prayerMs = prayerDate.getTime();
+
+    // Check active cycle
+    if (periodActive && periodStartDate) {
+      const activeStartMs = new Date(periodStartDate).getTime();
+      if (prayerMs >= activeStartMs) {
+        return true;
+      }
+    }
+
+    // Check historical cycles
+    for (const cycle of periodCycles) {
+      const startMs = new Date(cycle.startDate).getTime();
+      const endMs = cycle.endDate ? new Date(cycle.endDate).getTime() : Infinity;
+      if (prayerMs >= startMs && prayerMs <= endMs) {
+        return true;
+      }
+    }
+
+    return false;
+  };
 
   // Makruh window for active user
   const activeUserPrayerTimes = activeUser === "HUSBAND" ? husbandPrayerTimes : wifePrayerTimes;
@@ -246,16 +270,6 @@ export default function SpiritualTracker() {
           <SpiritualCalendar onSelectDate={(d) => { setGlobalSelectedDate(d); setActiveTab("CHECKLIST"); }} />
         ) : (
           <>
-            {/* Husband Care Mode Card (if wife cycle active and shared) */}
-            {activeUser === "HUSBAND" && periodActive && sharePeriodStatus && (
-              <CareCard />
-            )}
-
-            {/* Wife Cycle Tracker Card */}
-            {activeUser === "WIFE" && (
-              <CycleTracker />
-            )}
-
             {/* Timezone Locations & Isha Midnight Summary */}
             <div className="glass-panel p-3.5 rounded-3xl border border-slate-100/60 dark:border-zinc-850 flex items-center justify-between text-[11px] shadow-sm">
               <div className="flex flex-col">
@@ -314,12 +328,12 @@ export default function SpiritualTracker() {
                 const displayName = isDhuhrOnFriday ? "Jumu'ah" : prayer.name;
                 const isAsr = prayer.id === "asr";
 
-                const isWifeExempt = periodActive && isSameDay(selectedDateObj, new Date());
+                const isWifeExempt = wTimeObj?.date ? isWifePrayerExempt(wTimeObj.date) : false;
                 const cooldownActive = !!(reminderCooldowns[prayer.id] && Date.now() < reminderCooldowns[prayer.id]);
                 const cooldownRemainingMins = cooldownActive ? Math.ceil((reminderCooldowns[prayer.id] - Date.now()) / 60000) : 0;
 
                 const hStatus = prayer.husband;
-                const wStatus = isWifeExempt ? "EXEMPT" : prayer.wife;
+                const wStatus = isWifeExempt ? (prayer.wife || "EXEMPT") : prayer.wife;
                 const bothLogged = (hStatus && hStatus !== "MISSED") && (wStatus && wStatus !== "MISSED");
                 const partComplete = (hStatus && hStatus !== "MISSED") || (wStatus && wStatus !== "MISSED");
 

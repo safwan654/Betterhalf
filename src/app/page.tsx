@@ -14,11 +14,13 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { initialPrayers } from "@/context/GlobalContext";
+import CareCard from "@/components/spiritual/CareCard";
 
 export default function Dashboard() {
   const { 
     relationshipMode, activeUser, husbandName, wifeName,
-    prayersByDate, tasks, financeTransactions, liquidBalances, currency, sendInteraction, globalSelectedDate
+    prayersByDate, tasks, financeTransactions, liquidBalances, currency, sendInteraction, globalSelectedDate,
+    periodActive, sharePeriodStatus
   } = useGlobal();
   
   const [hugsCount, setHugsCount] = useState(0);
@@ -65,6 +67,11 @@ export default function Dashboard() {
         <section className="glass-panel rounded-2xl p-4 shadow-sm">
           <WeeklyTimeline />
         </section>
+
+        {/* Husband Care Mode (Appears on Husband's Dashboard when Wife's Period is active) */}
+        {activeUser === "HUSBAND" && periodActive && sharePeriodStatus && (
+          <CareCard />
+        )}
 
         {/* LDR Mode Connection Corner */}
         {relationshipMode === "DISTANCE" && (

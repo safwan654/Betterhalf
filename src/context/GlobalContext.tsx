@@ -25,7 +25,9 @@ export interface DoctorVisit { id: number; date: string; doctorName: string; pat
 export interface PeriodCycle {
   id: string;
   startDate: string;
+  startTime?: string;
   endDate?: string;
+  endTime?: string;
   durationDays?: number;
 }
 
@@ -77,8 +79,8 @@ interface GlobalContextType {
   periodEndDate: string | null;
   periodCycles: PeriodCycle[];
   sharePeriodStatus: boolean;
-  markPeriodStart: () => void;
-  markPeriodEnd: () => void;
+  markPeriodStart: (dateStr?: string, timeStr?: string) => void;
+  markPeriodEnd: (dateStr?: string, timeStr?: string) => void;
   setSharePeriodStatus: (share: boolean) => void;
   sendCareNote: (message: string) => void;
 
@@ -484,22 +486,33 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     updateFirebase({ wifeLocation: loc, wifeTimezone: loc.timezone });
   };
 
-  const markPeriodStart = () => {
-    const now = new Date().toISOString();
+  const markPeriodStart = (dateStr?: string, timeStr?: string) => {
+    let startTimestampStr = "";
+    if (dateStr) {
+      if (timeStr) {
+        startTimestampStr = `${dateStr}T${timeStr}:00`;
+      } else {
+        startTimestampStr = `${dateStr}T00:00:00`;
+      }
+    } else {
+      startTimestampStr = new Date().toISOString();
+    }
+
     setPeriodActiveState(true);
-    setPeriodStartDateState(now);
+    setPeriodStartDateState(startTimestampStr);
     setPeriodEndDateState(null);
 
     const newCycle: PeriodCycle = {
       id: "cycle_" + Date.now(),
-      startDate: now
+      startDate: startTimestampStr,
+      startTime: timeStr || undefined
     };
     const updatedCycles = [newCycle, ...periodCycles];
     setPeriodCyclesState(updatedCycles);
 
     updateFirebase({
       periodActive: true,
-      periodStartDate: now,
+      periodStartDate: startTimestampStr,
       periodEndDate: null,
       periodCycles: updatedCycles
     });
@@ -513,19 +526,30 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const markPeriodEnd = () => {
-    const now = new Date().toISOString();
+  const markPeriodEnd = (dateStr?: string, timeStr?: string) => {
+    let endTimestampStr = "";
+    if (dateStr) {
+      if (timeStr) {
+        endTimestampStr = `${dateStr}T${timeStr}:00`;
+      } else {
+        endTimestampStr = `${dateStr}T23:59:59`;
+      }
+    } else {
+      endTimestampStr = new Date().toISOString();
+    }
+
     setPeriodActiveState(false);
-    setPeriodEndDateState(now);
+    setPeriodEndDateState(endTimestampStr);
 
     let updatedCycles = [...periodCycles];
     if (updatedCycles.length > 0 && !updatedCycles[0].endDate) {
       const startMs = new Date(updatedCycles[0].startDate).getTime();
-      const endMs = new Date(now).getTime();
+      const endMs = new Date(endTimestampStr).getTime();
       const durationDays = Math.max(1, Math.round((endMs - startMs) / (1000 * 60 * 60 * 24)));
       updatedCycles[0] = {
         ...updatedCycles[0],
-        endDate: now,
+        endDate: endTimestampStr,
+        endTime: timeStr || undefined,
         durationDays
       };
       setPeriodCyclesState(updatedCycles);
@@ -533,7 +557,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
 
     updateFirebase({
       periodActive: false,
-      periodEndDate: now,
+      periodEndDate: endTimestampStr,
       periodCycles: updatedCycles
     });
 

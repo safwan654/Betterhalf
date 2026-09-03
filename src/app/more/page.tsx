@@ -2,12 +2,12 @@
 
 import Header from "@/components/layout/header";
 import BottomNavigation from "@/components/layout/bottom-navigation";
-import { ShoppingCart, Dumbbell, ShieldAlert, PhoneCall, ChevronRight } from "lucide-react";
+import { ShoppingCart, Dumbbell, ShieldAlert, PhoneCall, ChevronRight, CheckSquare, Activity } from "lucide-react";
 import Link from "next/link";
 import { useGlobal } from "@/context/GlobalContext";
 
 export default function MoreIndex() {
-  const { pantryItems, workoutsByDate, nutritionByDate, callsByDate, vaultRecords, globalSelectedDate } = useGlobal();
+  const { pantryItems, workoutsByDate, nutritionByDate, callsByDate, vaultRecords, tasks, globalSelectedDate } = useGlobal();
 
   const currentWorkouts = workoutsByDate[globalSelectedDate] || [];
   const currentNutrition = nutritionByDate[globalSelectedDate] || { husband: { protein: 0, proteinGoal: 150 }, wife: { protein: 0, proteinGoal: 100 } };
@@ -21,8 +21,20 @@ export default function MoreIndex() {
   const activeCalls = currentCalls.length;
   
   const uncheckedPantry = pantryItems.filter(i => !i.checked).length;
+  const pendingTasks = tasks.filter(t => t.urgency === "HIGH").length;
 
   const modules = [
+    {
+      id: "tasks",
+      title: "Shared Tasks & Chores",
+      desc: "Track daily tasks, priorities and home chores.",
+      status: pendingTasks > 0 ? `${pendingTasks} high priority` : `${tasks.length} tasks`,
+      icon: CheckSquare,
+      color: "text-emerald-500",
+      bg: "bg-emerald-500/10",
+      tagColor: "text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20",
+      href: "/tasks"
+    },
     {
       id: "pantry",
       title: "Pantry & Grocery Sync",
@@ -37,13 +49,13 @@ export default function MoreIndex() {
     {
       id: "fitness",
       title: "Fitness & Health Hub",
-      desc: "Track shared/individual workouts, protein targets.",
+      desc: "Track workouts, protein targets, and cycle care.",
       status: `${currentWorkouts.length} workouts, ${avgFitness}% protein`,
-      icon: Dumbbell,
+      icon: Activity,
       color: "text-rose-500",
       bg: "bg-rose-500/10",
       tagColor: "text-rose-600 bg-rose-50 dark:bg-rose-500/10 dark:text-rose-400 border-rose-200 dark:border-rose-500/20",
-      href: "/more/fitness"
+      href: "/health"
     },
     {
       id: "network",
