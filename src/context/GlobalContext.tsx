@@ -78,9 +78,13 @@ interface GlobalContextType {
   periodStartDate: string | null;
   periodEndDate: string | null;
   periodCycles: PeriodCycle[];
+  setPeriodCycles: (cycles: PeriodCycle[]) => void;
   sharePeriodStatus: boolean;
   markPeriodStart: (dateStr?: string, timeStr?: string) => void;
   markPeriodEnd: (dateStr?: string, timeStr?: string) => void;
+  updatePeriodCycle: (cycleId: string, updated: Partial<PeriodCycle>) => void;
+  deletePeriodCycle: (cycleId: string) => void;
+  addPastPeriodCycle: (cycleData: { startDate: string; startTime?: string; endDate: string; endTime?: string }) => void;
   setSharePeriodStatus: (share: boolean) => void;
   sendCareNote: (message: string) => void;
 
@@ -570,6 +574,71 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updatePeriodCycle = (cycleId: string, updated: Partial<PeriodCycle>) => {
+    const updatedCycles = periodCycles.map(c => {
+      if (c.id === cycleId) {
+        const merged = { ...c, ...updated };
+        if (merged.startDate && merged.endDate) {
+          const startMs = new Date(merged.startDate).getTime();
+          const endMs = new Date(merged.endDate).getTime();
+          merged.durationDays = Math.max(1, Math.round((endMs - startMs) / (1000 * 60 * 60 * 24)));
+        }
+        return merged;
+      }
+      return c;
+    });
+
+    setPeriodCyclesState(updatedCycles);
+
+    // If active cycle start date was modified, update active start state
+    const firstCycle = updatedCycles[0];
+    if (firstCycle && firstCycle.id === cycleId && !firstCycle.endDate) {
+      setPeriodStartDateState(firstCycle.startDate);
+      updateFirebase({ periodStartDate: firstCycle.startDate, periodCycles: updatedCycles });
+    } else {
+      updateFirebase({ periodCycles: updatedCycles });
+    }
+  };
+
+  const deletePeriodCycle = (cycleId: string) => {
+    const updatedCycles = periodCycles.filter(c => c.id !== cycleId);
+    setPeriodCyclesState(updatedCycles);
+
+    // If the active cycle was deleted
+    const wasActive = periodCycles[0]?.id === cycleId && !periodCycles[0]?.endDate;
+    if (wasActive) {
+      setPeriodActiveState(false);
+      setPeriodStartDateState(null);
+      updateFirebase({ periodActive: false, periodStartDate: null, periodCycles: updatedCycles });
+    } else {
+      updateFirebase({ periodCycles: updatedCycles });
+    }
+  };
+
+  const addPastPeriodCycle = (cycleData: { startDate: string; startTime?: string; endDate: string; endTime?: string }) => {
+    const startMs = new Date(cycleData.startDate).getTime();
+    const endMs = new Date(cycleData.endDate).getTime();
+    const durationDays = Math.max(1, Math.round((endMs - startMs) / (1000 * 60 * 60 * 24)));
+
+    const newCycle: PeriodCycle = {
+      id: "cycle_" + Date.now(),
+      ...cycleData,
+      durationDays
+    };
+
+    const updatedCycles = [newCycle, ...periodCycles].sort((a, b) => {
+      return new Date(b.startDate).getTime() - new Date(a.startDate).getTime();
+    });
+
+    setPeriodCyclesState(updatedCycles);
+    updateFirebase({ periodCycles: updatedCycles });
+  };
+
+  const setPeriodCycles = (cycles: PeriodCycle[]) => {
+    setPeriodCyclesState(cycles);
+    updateFirebase({ periodCycles: cycles });
+  };
+
   const setSharePeriodStatus = (share: boolean) => {
     setSharePeriodStatusState(share);
     updateFirebase({ sharePeriodStatus: share });
@@ -660,8 +729,8 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
       hasHusbandPush, hasWifePush,
       reminderTone, setReminderTone,
       madhhab, setMadhhab,
-      periodActive, periodStartDate, periodEndDate, periodCycles, sharePeriodStatus,
-      markPeriodStart, markPeriodEnd, setSharePeriodStatus, sendCareNote,
+      periodActive, periodStartDate, periodEndDate, periodCycles, setPeriodCycles, sharePeriodStatus,
+      markPeriodStart, markPeriodEnd, updatePeriodCycle, deletePeriodCycle, addPastPeriodCycle, setSharePeriodStatus, sendCareNote,
       currency, setCurrency,
       householdPin,
       globalSelectedDate, setGlobalSelectedDate,
