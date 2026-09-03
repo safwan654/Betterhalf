@@ -29,7 +29,10 @@ import {
   History as HistoryIcon,
   CheckCircle2 as CheckCircle2Icon,
   CalendarPlus as CalendarPlusIcon,
-  Flower2 as Flower2Icon
+  Flower2 as Flower2Icon,
+  Send as SendIcon,
+  Coffee as CoffeeIcon,
+  Smile as SmileIcon
 } from "lucide-react";
 
 export default function CycleTracker() {
@@ -52,8 +55,10 @@ export default function CycleTracker() {
 
   const [confirmToast, setConfirmToast] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [showHusbandCareSheet, setShowHusbandCareSheet] = useState(false);
+  const [customCareText, setCustomCareText] = useState("");
   
-  // Modals state
+  // Modals state (Wife)
   const [startEndModal, setStartEndModal] = useState<"START" | "END" | null>(null);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [selectedTime, setSelectedTime] = useState("");
@@ -202,113 +207,100 @@ export default function CycleTracker() {
     }
   };
 
-  const handleSendHydrationCare = () => {
-    sendCareNote("Stay healthy, hydrated & rest well my love 💧🤍 Thinking of you!");
-    setConfirmToast("Care note sent to her dashboard! 🤍");
-    setTimeout(() => setConfirmToast(null), 3000);
+  const handleDispatchCareNote = (text: string) => {
+    sendCareNote(text);
+    setShowHusbandCareSheet(false);
+    setCustomCareText("");
+    setConfirmToast(`Care note sent to ${wifeName}! 🤍`);
+    setTimeout(() => setConfirmToast(null), 3500);
+  };
+
+  // Contextual advice for Husband
+  const getHusbandContextualAdvice = () => {
+    if (periodActive) {
+      if (cycleDay <= 2) {
+        return "She might be experiencing cramps and fatigue today. Extra warmth, rest, or warm tea will help 🤍";
+      } else if (cycleDay <= 4) {
+        return "Mid-cycle check-in: Ask how she's feeling or offer a favorite comfort snack 🍵";
+      } else {
+        return "Cycle is easing up: Send a sweet love note and check if she needs anything ✨";
+      }
+    } else {
+      if (daysUntilNext <= 3 && hasLoggedCycles) {
+        return "Cycle approaching in a few days — gentle reminder to hydrate & take it easy 💧";
+      } else {
+        return "Pre-cycle wellness: Keeping her healthy, hydrated & rested ✨";
+      }
+    }
   };
 
   // ==========================================
-  // 1. HUSBAND VIEW
+  // 1. HUSBAND VIEW (Scoped Insights & Multi-Action Care)
   // ==========================================
   if (activeUser === "HUSBAND") {
     if (!sharePeriodStatus) {
       return null;
     }
 
-    // A) Husband View: Period is ACTIVE
-    if (periodActive) {
-      return (
-        <div className="glass-panel p-5 rounded-3xl border border-rose-300 dark:border-rose-900/60 bg-gradient-to-br from-rose-50 via-pink-50/50 to-white dark:from-rose-950/30 dark:via-zinc-900 dark:to-zinc-900 flex flex-col gap-3 shadow-md shadow-rose-500/5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2.5 rounded-2xl bg-rose-500 text-white shadow-md shadow-rose-500/20">
-                <Flower2Icon className="h-5 w-5" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black uppercase tracking-wider text-rose-500">
-                  {wifeName}'s Cycle Status
-                </span>
-                <h4 className="text-sm font-black text-slate-800 dark:text-zinc-100">
-                  🌸 Cycle Active · Day {cycleDay}
-                </h4>
-              </div>
-            </div>
-            <span className="text-[10px] font-bold text-rose-600 bg-rose-500/10 border border-rose-200 dark:border-rose-900/40 px-2.5 py-1 rounded-full">
-              Resting (Exempt)
-            </span>
-          </div>
-
-          <p className="text-[11px] text-slate-600 dark:text-zinc-300 leading-relaxed">
-            {wifeName} is currently on her cycle. Her daily prayers are excused (رخصة شرعية). Be extra supportive today! 🤍
-          </p>
-
-          {confirmToast && (
-            <span className="text-[10px] font-bold text-center text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 p-2 rounded-xl animate-in fade-in">
-              {confirmToast}
-            </span>
-          )}
-        </div>
-      );
-    }
-
-    // B) Husband View: Period has ENDED -> Show Next Period Approximate Time
     return (
-      <div className="glass-panel p-5 rounded-3xl border border-purple-200/60 dark:border-purple-900/40 bg-gradient-to-br from-purple-50/50 via-white to-slate-50 dark:from-purple-950/20 dark:via-zinc-900 dark:to-zinc-900 flex flex-col gap-3.5 shadow-sm">
+      <div className={`glass-panel p-5 rounded-3xl transition-all duration-300 flex flex-col gap-3.5 shadow-sm ${
+        periodActive 
+          ? "border border-rose-300 dark:border-rose-900/60 bg-gradient-to-br from-rose-50 via-pink-50/50 to-white dark:from-rose-950/30 dark:via-zinc-900 dark:to-zinc-900 shadow-md shadow-rose-500/5"
+          : "border border-purple-200/60 dark:border-purple-900/40 bg-gradient-to-br from-purple-50/50 via-white to-slate-50 dark:from-purple-950/20 dark:via-zinc-900 dark:to-zinc-900"
+      }`}>
+        
+        {/* Header with Clear Current State Indicator */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="p-2.5 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 shadow-sm">
-              <MoonIcon className="h-5 w-5" />
+            <div className={`p-2.5 rounded-2xl shadow-sm ${
+              periodActive 
+                ? "bg-rose-500 text-white shadow-rose-500/20" 
+                : "bg-purple-500/10 text-purple-600 dark:text-purple-400"
+            }`}>
+              {periodActive ? <Flower2Icon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
             </div>
             <div className="flex flex-col">
-              <span className="text-[10px] font-black uppercase tracking-wider text-purple-600 dark:text-purple-400">
-                Women's Health Insights
+              <span className={`text-[10px] font-black uppercase tracking-wider ${
+                periodActive ? "text-rose-500" : "text-purple-600 dark:text-purple-400"
+              }`}>
+                {periodActive ? `${wifeName}'s Cycle Status` : "Women's Health Insights"}
               </span>
-              <h4 className="text-sm font-extrabold text-slate-800 dark:text-zinc-100">
-                {wifeName}'s Next Cycle Preview
+              <h4 className="text-sm font-black text-slate-800 dark:text-zinc-100">
+                {periodActive ? `🌸 Cycle Active · Day ${cycleDay}` : `${wifeName}'s Cycle Preview`}
               </h4>
             </div>
           </div>
-          {hasLoggedCycles ? (
-            <span className="text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-purple-500/10 px-2.5 py-1 rounded-full">
-              {daysUntilNext > 0 ? `In ~${daysUntilNext} days` : "Approaching soon"}
-            </span>
-          ) : (
-            <span className="text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-zinc-800 px-2.5 py-1 rounded-full">
-              Awaiting data
-            </span>
-          )}
+
+          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
+            periodActive 
+              ? "text-rose-600 bg-rose-500/10 border border-rose-200 dark:border-rose-900/40" 
+              : "text-purple-700 dark:text-purple-300 bg-purple-500/10"
+          }`}>
+            {periodActive ? "Resting (Exempt)" : (hasLoggedCycles ? (daysUntilNext > 0 ? `In ~${daysUntilNext} days` : "Approaching") : "Awaiting data")}
+          </span>
         </div>
 
-        {hasLoggedCycles ? (
-          <div className="p-3 rounded-2xl bg-purple-500/5 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/30 flex items-center justify-between text-xs">
-            <div className="flex flex-col">
-              <span className="text-[10px] text-slate-400 font-semibold uppercase">Estimated Next Period</span>
-              <span className="font-extrabold text-slate-800 dark:text-zinc-100">
-                ~{format(nextEstimatedDate, "MMMM d, yyyy")}
-              </span>
-            </div>
-            <div className="flex flex-col text-right">
-              <span className="text-[10px] text-slate-400 font-semibold uppercase">Avg Duration</span>
-              <span className="font-extrabold text-slate-800 dark:text-zinc-100">{avgDuration} days</span>
-            </div>
-          </div>
-        ) : (
-          <div className="p-3 rounded-2xl bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 text-xs text-slate-500">
-            Predictions will appear after {wifeName} logs her first cycle.
-          </div>
-        )}
+        {/* Contextual Dynamic Caption */}
+        <div className="p-3 rounded-2xl bg-white/70 dark:bg-zinc-900/70 border border-slate-100 dark:border-zinc-800 flex items-center justify-between text-xs">
+          <p className="text-[11px] text-slate-600 dark:text-zinc-300 leading-relaxed">
+            {getHusbandContextualAdvice()}
+          </p>
+        </div>
 
-        {/* Gentle Care / Hydration action for Husband */}
+        {/* Care Action Header & Multi-Option Trigger */}
         <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-zinc-800">
-          <span className="text-[11px] text-slate-500 dark:text-zinc-400 flex items-center gap-1.5">
-            <DropletsIcon className="h-3.5 w-3.5 text-blue-500" /> Remind her to stay hydrated & rested
+          <span className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 flex items-center gap-1.5">
+            <HeartIcon className="h-3.5 w-3.5 text-rose-500 fill-rose-500" /> Send attentiveness & care
           </span>
           <button
-            onClick={handleSendHydrationCare}
-            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-purple-500 hover:bg-purple-600 text-white shadow-purple-500/20 shadow-sm transition-all active:scale-95 flex items-center gap-1"
+            onClick={() => setShowHusbandCareSheet(true)}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold text-white shadow-sm transition-all active:scale-95 flex items-center gap-1.5 ${
+              periodActive 
+                ? "bg-rose-500 hover:bg-rose-600 shadow-rose-500/20" 
+                : "bg-purple-500 hover:bg-purple-600 shadow-purple-500/20"
+            }`}
           >
-            <HeartIcon className="h-3.5 w-3.5 fill-white" /> Send Care
+            <SparklesIcon className="h-3.5 w-3.5" /> Send Care
           </button>
         </div>
 
@@ -316,6 +308,96 @@ export default function CycleTracker() {
           <span className="text-[10px] font-bold text-center text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 p-2 rounded-xl animate-in fade-in">
             {confirmToast}
           </span>
+        )}
+
+        {/* Husband Multi-Option Care Modal / Sheet */}
+        {showHusbandCareSheet && (
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="glass-panel w-full max-w-sm rounded-3xl p-5 shadow-2xl border border-white/20 dark:border-zinc-800 flex flex-col gap-3.5 animate-in fade-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-2.5">
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-rose-500">Love & Care</span>
+                  <h3 className="text-base font-extrabold text-slate-800 dark:text-zinc-100">
+                    Send Care Note to {wifeName}
+                  </h3>
+                </div>
+                <button 
+                  onClick={() => setShowHusbandCareSheet(false)}
+                  className="p-1.5 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  <XIcon className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Preset Quick Notes */}
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => handleDispatchCareNote("Hope you're resting comfortably my love 🤍 Let me know if you need anything!")}
+                  className="p-3 rounded-2xl bg-rose-50 hover:bg-rose-100/80 dark:bg-rose-950/30 dark:hover:bg-rose-900/40 border border-rose-200 dark:border-rose-900/40 text-left transition-all active:scale-98 flex items-center gap-2.5"
+                >
+                  <span className="text-lg">💌</span>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-rose-900 dark:text-rose-200">Send Love Note</span>
+                    <span className="text-[10px] text-rose-600 dark:text-rose-400">"Hope you're resting comfortably my love 🤍"</span>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => handleDispatchCareNote("Thinking of you! Drink some warm tea and take it easy today ✨")}
+                  className="p-3 rounded-2xl bg-amber-50 hover:bg-amber-100/80 dark:bg-amber-950/30 dark:hover:bg-amber-900/40 border border-amber-200 dark:border-amber-900/40 text-left transition-all active:scale-98 flex items-center gap-2.5"
+                >
+                  <span className="text-lg">🍵</span>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-amber-900 dark:text-amber-200">Warm Tea & Rest Check-in</span>
+                    <span className="text-[10px] text-amber-600 dark:text-amber-400">"Drink some warm tea and take it easy ✨"</span>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => handleDispatchCareNote("Would you like me to order you some comfort food or your favorite treats? 🍓🍫")}
+                  className="p-3 rounded-2xl bg-purple-50 hover:bg-purple-100/80 dark:bg-purple-950/30 dark:hover:bg-purple-900/40 border border-purple-200 dark:border-purple-900/40 text-left transition-all active:scale-98 flex items-center gap-2.5"
+                >
+                  <span className="text-lg">🍫</span>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-purple-900 dark:text-purple-200">Offer Comfort Food / Treats</span>
+                    <span className="text-[10px] text-purple-600 dark:text-purple-400">"Would you like me to order your favorite treats? 🍓"</span>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => handleDispatchCareNote("Stay healthy, hydrated & rest well my love 💧🤍 Thinking of you!")}
+                  className="p-3 rounded-2xl bg-blue-50 hover:bg-blue-100/80 dark:bg-blue-950/30 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-900/40 text-left transition-all active:scale-98 flex items-center gap-2.5"
+                >
+                  <span className="text-lg">💧</span>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-blue-900 dark:text-blue-200">Stay Hydrated Reminder</span>
+                    <span className="text-[10px] text-blue-600 dark:text-blue-400">"Stay healthy, hydrated & rest well 💧🤍"</span>
+                  </div>
+                </button>
+              </div>
+
+              {/* Custom Note Input */}
+              <div className="flex flex-col gap-1.5 pt-1 border-t border-slate-100 dark:border-zinc-800">
+                <label className="text-[10px] font-bold text-slate-500 uppercase">Or write a custom message</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={customCareText}
+                    onChange={(e) => setCustomCareText(e.target.value)}
+                    placeholder="e.g. Taking care of dinner tonight 🤍"
+                    className="flex-1 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none"
+                  />
+                  <button
+                    disabled={!customCareText.trim()}
+                    onClick={() => handleDispatchCareNote(customCareText.trim())}
+                    className="px-3.5 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 disabled:opacity-40 text-white font-bold text-xs transition-all active:scale-95"
+                  >
+                    Send
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     );
