@@ -2,49 +2,57 @@
 
 import { useState } from "react";
 import { useGlobal } from "@/context/GlobalContext";
-import { Moon, Shield, Sparkles, Calendar, Clock, X, Check, History } from "lucide-react";
-import { format, parseISO, differenceInDays } from "date-fns";
+import { Moon, Shield, Sparkles, Calendar, Clock, X, Check, Heart, Droplets, Coffee } from "lucide-react";
+import { format, parseISO, differenceInDays, addDays } from "date-fns";
 
 export default function CycleTracker() {
   const { 
+    activeUser,
+    wifeName,
+    husbandName,
     periodActive, 
     periodStartDate, 
     periodCycles, 
     markPeriodStart, 
     markPeriodEnd, 
     sharePeriodStatus, 
-    setSharePeriodStatus 
+    setSharePeriodStatus,
+    sendCareNote
   } = useGlobal();
 
   const [confirmToast, setConfirmToast] = useState<string | null>(null);
   
-  // Start/End Modal or Drawer state
+  // Start/End Modal state (Wife only)
   const [modalMode, setModalMode] = useState<"START" | "END" | null>(null);
   const [selectedDate, setSelectedDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [selectedTime, setSelectedTime] = useState("");
-  const [useCurrentTime, setUseCurrentTime] = useState(false);
 
   const cycleDay = periodStartDate 
     ? Math.max(1, differenceInDays(new Date(), parseISO(periodStartDate)) + 1)
     : 1;
 
-  // Average duration
+  // Average duration & Next cycle estimation
   const completedCycles = periodCycles.filter(c => c.durationDays);
   const avgDuration = completedCycles.length > 0
     ? Math.round(completedCycles.reduce((acc, c) => acc + (c.durationDays || 5), 0) / completedCycles.length)
     : 5;
 
+  // Calculate estimated next period date
+  const lastCycle = periodCycles[0];
+  const lastStartDate = lastCycle?.startDate || periodStartDate;
+  const baseDate = lastStartDate ? parseISO(lastStartDate) : new Date();
+  const nextEstimatedDate = addDays(baseDate, 28);
+  const daysUntilNext = differenceInDays(nextEstimatedDate, new Date());
+
   const openStartModal = () => {
     setSelectedDate(format(new Date(), "yyyy-MM-dd"));
     setSelectedTime(format(new Date(), "HH:mm"));
-    setUseCurrentTime(true);
     setModalMode("START");
   };
 
   const openEndModal = () => {
     setSelectedDate(format(new Date(), "yyyy-MM-dd"));
     setSelectedTime(format(new Date(), "HH:mm"));
-    setUseCurrentTime(true);
     setModalMode("END");
   };
 
@@ -63,6 +71,116 @@ export default function CycleTracker() {
     setTimeout(() => setConfirmToast(null), 3500);
   };
 
+  const handleSendHydrationCare = () => {
+    sendCareNote("Stay healthy, hydrated & rest well my love 💧🤍 Thinking of you!");
+    setConfirmToast("Care note sent to her dashboard! 🤍");
+    setTimeout(() => setConfirmToast(null), 3000);
+  };
+
+  // ==========================================
+  // 1. HUSBAND VIEW
+  // ==========================================
+  if (activeUser === "HUSBAND") {
+    if (!sharePeriodStatus) {
+      return null;
+    }
+
+    // A) Husband View: Period is ACTIVE
+    if (periodActive) {
+      return (
+        <div className="glass-panel p-5 rounded-3xl border border-rose-200/60 dark:border-rose-900/40 bg-gradient-to-br from-rose-50/60 via-white to-pink-50/40 dark:from-rose-950/20 dark:via-zinc-900 dark:to-zinc-900 flex flex-col gap-3 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2.5 rounded-2xl bg-rose-500/10 text-rose-500 shadow-sm">
+                <Moon className="h-5 w-5" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black uppercase tracking-wider text-rose-500">
+                  {wifeName}'s Cycle Status
+                </span>
+                <h4 className="text-sm font-extrabold text-slate-800 dark:text-zinc-100">
+                  🌸 Cycle Active · Day {cycleDay}
+                </h4>
+              </div>
+            </div>
+            <span className="text-[10px] font-bold text-rose-600 bg-rose-500/10 border border-rose-200 dark:border-rose-900/40 px-2.5 py-1 rounded-full">
+              Resting (Exempt)
+            </span>
+          </div>
+
+          <p className="text-[11px] text-slate-600 dark:text-zinc-300 leading-relaxed">
+            {wifeName} is currently on her cycle. Her daily prayers are excused (رخصة شرعية). Be extra supportive today! 🤍
+          </p>
+
+          {confirmToast && (
+            <span className="text-[10px] font-bold text-center text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 p-2 rounded-xl animate-in fade-in">
+              {confirmToast}
+            </span>
+          )}
+        </div>
+      );
+    }
+
+    // B) Husband View: Period has ENDED -> Show Next Period Approximate Time
+    return (
+      <div className="glass-panel p-5 rounded-3xl border border-purple-200/60 dark:border-purple-900/40 bg-gradient-to-br from-purple-50/50 via-white to-slate-50 dark:from-purple-950/20 dark:via-zinc-900 dark:to-zinc-900 flex flex-col gap-3.5 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2.5 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 shadow-sm">
+              <Moon className="h-5 w-5" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black uppercase tracking-wider text-purple-600 dark:text-purple-400">
+                Women's Health Insights
+              </span>
+              <h4 className="text-sm font-extrabold text-slate-800 dark:text-zinc-100">
+                {wifeName}'s Next Cycle Preview
+              </h4>
+            </div>
+          </div>
+          <span className="text-[10px] font-bold text-purple-700 dark:text-purple-300 bg-purple-500/10 px-2.5 py-1 rounded-full">
+            {daysUntilNext > 0 ? `In ~${daysUntilNext} days` : "Approaching soon"}
+          </span>
+        </div>
+
+        <div className="p-3 rounded-2xl bg-purple-500/5 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/30 flex items-center justify-between text-xs">
+          <div className="flex flex-col">
+            <span className="text-[10px] text-slate-400 font-semibold uppercase">Estimated Next Period</span>
+            <span className="font-extrabold text-slate-800 dark:text-zinc-100">
+              ~{format(nextEstimatedDate, "MMMM d, yyyy")}
+            </span>
+          </div>
+          <div className="flex flex-col text-right">
+            <span className="text-[10px] text-slate-400 font-semibold uppercase">Avg Duration</span>
+            <span className="font-extrabold text-slate-800 dark:text-zinc-100">{avgDuration} days</span>
+          </div>
+        </div>
+
+        {/* Gentle Care / Hydration action for Husband */}
+        <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-zinc-800">
+          <span className="text-[11px] text-slate-500 dark:text-zinc-400 flex items-center gap-1.5">
+            <Droplets className="h-3.5 w-3.5 text-blue-500" /> Remind her to stay hydrated & rested
+          </span>
+          <button
+            onClick={handleSendHydrationCare}
+            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-purple-500 hover:bg-purple-600 text-white shadow-purple-500/20 shadow-sm transition-all active:scale-95 flex items-center gap-1"
+          >
+            <Heart className="h-3.5 w-3.5 fill-white" /> Send Care
+          </button>
+        </div>
+
+        {confirmToast && (
+          <span className="text-[10px] font-bold text-center text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 p-2 rounded-xl animate-in fade-in">
+            {confirmToast}
+          </span>
+        )}
+      </div>
+    );
+  }
+
+  // ==========================================
+  // 2. WIFE VIEW (Full Controls)
+  // ==========================================
   return (
     <div className="glass-panel p-5 rounded-3xl border border-rose-200/60 dark:border-rose-900/40 bg-gradient-to-br from-rose-50/50 via-white to-purple-50/40 dark:from-rose-950/20 dark:via-zinc-900 dark:to-zinc-900 flex flex-col gap-4 shadow-sm">
       <div className="flex items-center justify-between">
