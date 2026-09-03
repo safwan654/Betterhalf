@@ -2,17 +2,19 @@
 
 import { useGlobal } from "@/context/GlobalContext";
 import { useRouter } from "next/navigation";
-import { LogOut, Globe, HeartHandshake, Camera, Save, Check, Bell, Clock } from "lucide-react";
+import { LogOut, Globe, HeartHandshake, Camera, Save, Check, Bell, Clock, Trash2, User, Sparkles } from "lucide-react";
 import { useMemo, useEffect, useState, useRef } from "react";
 import { subscribeUserToPush } from "@/lib/push";
 import { CITY_PRESETS, UserLocation } from "@/lib/prayer-times";
+import { compressImage } from "@/lib/image-utils";
 
 export default function Settings() {
   const globalContext = useGlobal();
   const router = useRouter();
   
   const [mounted, setMounted] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const husbandFileInputRef = useRef<HTMLInputElement>(null);
+  const wifeFileInputRef = useRef<HTMLInputElement>(null);
 
   // Local state for the form
   const [localHusbandName, setLocalHusbandName] = useState("");
@@ -31,6 +33,7 @@ export default function Settings() {
   const [isSaved, setIsSaved] = useState(false);
   const [pushStatus, setPushStatus] = useState<string | null>(null);
   const [isSubscribing, setIsSubscribing] = useState(false);
+  const [photoToast, setPhotoToast] = useState<string | null>(null);
 
   const handleEnablePush = async () => {
     setIsSubscribing(true);
@@ -38,9 +41,9 @@ export default function Settings() {
     const res = await subscribeUserToPush(globalContext.activeUser, globalContext.householdPin || "");
     setIsSubscribing(false);
     if (res.success) {
-      setPushStatus("SUCCESS: Push notifications enabled on this device! Tap 'Send Test Notification' below to verify.");
+      setPushStatus("✅ Push Notifications Enabled Successfully!");
     } else {
-      setPushStatus(`ERROR: ${res.reason}`);
+      setPushStatus("❌ " + (res.reason || "Failed to enable push notifications"));
     }
   };
 
@@ -69,7 +72,6 @@ export default function Settings() {
   };
 
   useEffect(() => {
-    // Initialize local state from global context once mounted
     setLocalHusbandName(globalContext.husbandName);
     setLocalWifeName(globalContext.wifeName);
     setLocalHusbandPhoto(globalContext.husbandPhoto);
@@ -95,25 +97,52 @@ export default function Settings() {
     router.replace("/login");
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleHusbandPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64String = reader.result as string;
-      if (globalContext.activeUser === "HUSBAND") {
-        setLocalHusbandPhoto(base64String);
-      } else {
-        setLocalWifePhoto(base64String);
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressed = await compressImage(file, 360, 360, 0.85);
+      setLocalHusbandPhoto(compressed);
+      globalContext.setHusbandPhoto(compressed);
+      setPhotoToast(`✅ ${localHusbandName || "Husband"}'s photo updated!`);
+      setTimeout(() => setPhotoToast(null), 3000);
+    } catch (err) {
+      console.error("Failed to compress photo", err);
+    }
+  };
+
+  const handleWifePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const compressed = await compressImage(file, 360, 360, 0.85);
+      setLocalWifePhoto(compressed);
+      globalContext.setWifePhoto(compressed);
+      setPhotoToast(`✅ ${localWifeName || "Wife"}'s photo updated!`);
+      setTimeout(() => setPhotoToast(null), 3000);
+    } catch (err) {
+      console.error("Failed to compress photo", err);
+    }
+  };
+
+  const handleRemoveHusbandPhoto = () => {
+    setLocalHusbandPhoto(null);
+    globalContext.setHusbandPhoto(null);
+    setPhotoToast(`Removed ${localHusbandName || "Husband"}'s photo.`);
+    setTimeout(() => setPhotoToast(null), 2500);
+  };
+
+  const handleRemoveWifePhoto = () => {
+    setLocalWifePhoto(null);
+    globalContext.setWifePhoto(null);
+    setPhotoToast(`Removed ${localWifeName || "Wife"}'s photo.`);
+    setTimeout(() => setPhotoToast(null), 2500);
   };
 
   const handleSave = () => {
     setIsSaving(true);
-    // Push local state to global context (which saves to Firebase/LocalStorage)
     globalContext.setHusbandName(localHusbandName);
     globalContext.setWifeName(localWifeName);
     globalContext.setHusbandPhoto(localHusbandPhoto);
@@ -131,7 +160,7 @@ export default function Settings() {
       setIsSaving(false);
       setIsSaved(true);
       setTimeout(() => setIsSaved(false), 2000);
-    }, 600); // Tiny visual delay for UX
+    }, 600);
   };
 
   const timezones = useMemo(() => {
@@ -203,41 +232,122 @@ export default function Settings() {
       
       <main className="mx-auto max-w-md px-4 pt-6 flex flex-col gap-6">
         
-        {/* Profile Card / Editor */}
-        <section className="glass-panel rounded-3xl p-5 shadow-sm border border-slate-100/50 dark:border-zinc-850 flex flex-col gap-4">
-          <div className="flex items-center gap-4">
-            <div className="relative group">
-              <div className="h-16 w-16 rounded-full overflow-hidden bg-gradient-to-tr from-rose-500 to-amber-500 flex items-center justify-center shadow-lg shadow-rose-500/20 text-2xl font-black text-white relative">
-                {currentPhoto ? (
-                  <img src={currentPhoto} alt="Profile" className="h-full w-full object-cover" />
-                ) : (
-                  currentName.charAt(0).toUpperCase()
-                )}
+        {/* Dual Profile DP Cards & Name Editors */}
+        <section className="flex flex-col gap-3">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+              Profile Display Pictures (DP) & Names
+            </h3>
+            {photoToast && (
+              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full animate-in fade-in">
+                {photoToast}
+              </span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {/* 1. Husband DP Card */}
+            <div className="glass-panel rounded-3xl p-4 shadow-sm border border-slate-100/60 dark:border-zinc-850 flex items-center gap-3.5 bg-gradient-to-br from-amber-50/40 via-white to-slate-50 dark:from-amber-950/10 dark:via-zinc-900 dark:to-zinc-900">
+              <div className="relative group shrink-0">
+                <div className="h-16 w-16 rounded-full overflow-hidden bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center shadow-md shadow-amber-500/20 text-2xl font-black text-white relative border-2 border-white dark:border-zinc-800">
+                  {localHusbandPhoto ? (
+                    <img src={localHusbandPhoto} alt="Husband DP" className="h-full w-full object-cover" />
+                  ) : (
+                    (localHusbandName || "Husband").charAt(0).toUpperCase()
+                  )}
+                </div>
+                <button 
+                  type="button"
+                  onClick={() => husbandFileInputRef.current?.click()}
+                  title="Upload / Change Husband Photo"
+                  className="absolute -bottom-1 -right-1 h-6 w-6 bg-amber-500 hover:bg-amber-600 text-white rounded-full flex items-center justify-center shadow-md border-2 border-white dark:border-zinc-900 transition-transform active:scale-95"
+                >
+                  <Camera className="h-3 w-3" />
+                </button>
+                <input 
+                  type="file" 
+                  ref={husbandFileInputRef} 
+                  onChange={handleHusbandPhotoUpload} 
+                  accept="image/*" 
+                  className="hidden" 
+                />
               </div>
-              <button 
-                onClick={() => fileInputRef.current?.click()}
-                className="absolute -bottom-1 -right-1 h-6 w-6 bg-slate-800 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-full flex items-center justify-center shadow-md border-2 border-white dark:border-zinc-900 transition-transform active:scale-95"
-              >
-                <Camera className="h-3 w-3" />
-              </button>
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handlePhotoUpload} 
-                accept="image/*" 
-                className="hidden" 
-              />
+
+              <div className="flex flex-col flex-1 gap-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-extrabold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                    Husband
+                  </span>
+                  {localHusbandPhoto && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveHusbandPhoto}
+                      className="text-[10px] text-slate-400 hover:text-rose-500 font-bold"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+                <input 
+                  type="text" 
+                  value={localHusbandName}
+                  onChange={(e) => setLocalHusbandName(e.target.value)}
+                  placeholder="Husband's Name"
+                  className="w-full bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-2.5 py-1.5 text-xs font-bold focus:outline-none focus:border-amber-500 transition-colors"
+                />
+              </div>
             </div>
-            
-            <div className="flex flex-col flex-1 gap-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Editing {globalContext.activeUser}</span>
-              <input 
-                type="text" 
-                value={currentName}
-                onChange={(e) => handleNameChange(e.target.value)}
-                placeholder="Your Name"
-                className="w-full bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-3 py-2 text-sm font-bold focus:outline-none focus:border-amber-500/50 transition-colors"
-              />
+
+            {/* 2. Wife DP Card */}
+            <div className="glass-panel rounded-3xl p-4 shadow-sm border border-slate-100/60 dark:border-zinc-850 flex items-center gap-3.5 bg-gradient-to-br from-rose-50/40 via-white to-slate-50 dark:from-rose-950/10 dark:via-zinc-900 dark:to-zinc-900">
+              <div className="relative group shrink-0">
+                <div className="h-16 w-16 rounded-full overflow-hidden bg-gradient-to-tr from-rose-500 to-pink-500 flex items-center justify-center shadow-md shadow-rose-500/20 text-2xl font-black text-white relative border-2 border-white dark:border-zinc-800">
+                  {localWifePhoto ? (
+                    <img src={localWifePhoto} alt="Wife DP" className="h-full w-full object-cover" />
+                  ) : (
+                    (localWifeName || "Wife").charAt(0).toUpperCase()
+                  )}
+                </div>
+                <button 
+                  type="button"
+                  onClick={() => wifeFileInputRef.current?.click()}
+                  title="Upload / Change Wife Photo"
+                  className="absolute -bottom-1 -right-1 h-6 w-6 bg-rose-500 hover:bg-rose-600 text-white rounded-full flex items-center justify-center shadow-md border-2 border-white dark:border-zinc-900 transition-transform active:scale-95"
+                >
+                  <Camera className="h-3 w-3" />
+                </button>
+                <input 
+                  type="file" 
+                  ref={wifeFileInputRef} 
+                  onChange={handleWifePhotoUpload} 
+                  accept="image/*" 
+                  className="hidden" 
+                />
+              </div>
+
+              <div className="flex flex-col flex-1 gap-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-extrabold text-rose-600 dark:text-rose-400 uppercase tracking-wider">
+                    Wife
+                  </span>
+                  {localWifePhoto && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveWifePhoto}
+                      className="text-[10px] text-slate-400 hover:text-rose-500 font-bold"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+                <input 
+                  type="text" 
+                  value={localWifeName}
+                  onChange={(e) => setLocalWifeName(e.target.value)}
+                  placeholder="Wife's Name"
+                  className="w-full bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-2.5 py-1.5 text-xs font-bold focus:outline-none focus:border-rose-400 transition-colors"
+                />
+              </div>
             </div>
           </div>
         </section>

@@ -19,6 +19,7 @@ import CareCard from "@/components/spiritual/CareCard";
 export default function Dashboard() {
   const { 
     relationshipMode, activeUser, husbandName, wifeName,
+    husbandPhoto, wifePhoto, husbandLocation, wifeLocation, husbandTimezone, wifeTimezone,
     prayersByDate, tasks, financeTransactions, liquidBalances, currency, sendInteraction, globalSelectedDate,
     periodActive, sharePeriodStatus
   } = useGlobal();
@@ -58,11 +59,66 @@ export default function Dashboard() {
   const totalLiquid = liquidBalances.husband + liquidBalances.wife;
 
   return (
-    <div className="min-h-screen bg-background pb-24 text-slate-800 dark:text-zinc-100 transition-colors duration-300">
+    <div className="min-h-screen bg-background pb-32 text-slate-800 dark:text-zinc-100 transition-colors duration-300">
       <Header />
       
-      <main className="mx-auto max-w-md px-4 pt-4 flex flex-col gap-6">
+      <main className="mx-auto max-w-md px-4 pt-4 flex flex-col gap-5">
         
+        {/* Couple Presence & DP Avatar Hero Card */}
+        <section className="glass-panel rounded-3xl p-4.5 border border-slate-100/60 dark:border-zinc-850 shadow-sm bg-gradient-to-br from-rose-50/40 via-white to-amber-50/30 dark:from-rose-950/15 dark:via-zinc-900 dark:to-amber-950/15 flex items-center justify-between">
+          {/* Husband Avatar & Name */}
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="h-12 w-12 rounded-full overflow-hidden bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-lg font-black text-white shadow-md shadow-amber-500/20 border-2 border-white dark:border-zinc-800">
+                {husbandPhoto ? (
+                  <img src={husbandPhoto} alt={husbandName} className="h-full w-full object-cover" />
+                ) : (
+                  (husbandName || "H").charAt(0).toUpperCase()
+                )}
+              </div>
+              {activeUser === "HUSBAND" && (
+                <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-zinc-900" title="Active" />
+              )}
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs font-black text-slate-800 dark:text-zinc-100 leading-tight">{husbandName}</span>
+              <span className="text-[10px] font-semibold text-slate-400">{husbandLocation?.city || "Dubai"}</span>
+            </div>
+          </div>
+
+          {/* Center Connection Icon / Tap for Love */}
+          <div className="flex flex-col items-center gap-1 px-2">
+            <button
+              onClick={handleSendKiss}
+              title="Tap to blow a kiss!"
+              className="p-2 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 transition-all active:scale-90"
+            >
+              <Heart className="h-4 w-4 fill-rose-500 animate-pulse" />
+            </button>
+            <span className="text-[8px] font-black uppercase tracking-wider text-rose-400">Together</span>
+          </div>
+
+          {/* Wife Avatar & Name */}
+          <div className="flex items-center gap-3 text-right">
+            <div className="flex flex-col">
+              <span className="text-xs font-black text-slate-800 dark:text-zinc-100 leading-tight">{wifeName}</span>
+              <span className="text-[10px] font-semibold text-slate-400">{wifeLocation?.city || "Mumbai"}</span>
+            </div>
+            <div className="relative">
+              <div className="h-12 w-12 rounded-full overflow-hidden bg-gradient-to-tr from-rose-500 to-pink-500 flex items-center justify-center text-lg font-black text-white shadow-md shadow-rose-500/20 border-2 border-white dark:border-zinc-800">
+                {wifePhoto ? (
+                  <img src={wifePhoto} alt={wifeName} className="h-full w-full object-cover" />
+                ) : (
+                  (wifeName || "W").charAt(0).toUpperCase()
+                )}
+              </div>
+              {activeUser === "WIFE" && (
+                <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-zinc-900" title="Active" />
+              )}
+            </div>
+          </div>
+        </section>
+
         {/* Weekly Timeline */}
         <section className="glass-panel rounded-2xl p-4 shadow-sm">
           <WeeklyTimeline />

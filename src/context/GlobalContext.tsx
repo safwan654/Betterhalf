@@ -208,6 +208,11 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     if (savedPrayers) setPrayersByDateState(JSON.parse(savedPrayers));
     if (savedTasks) setTasksState(JSON.parse(savedTasks));
 
+    const savedHusbandPhoto = localStorage.getItem("bh_husband_photo");
+    const savedWifePhoto = localStorage.getItem("bh_wife_photo");
+    if (savedHusbandPhoto) setHusbandPhotoState(savedHusbandPhoto);
+    if (savedWifePhoto) setWifePhotoState(savedWifePhoto);
+
     const savedTone = localStorage.getItem("bh_reminder_tone") as "GENTLE" | "DIRECT" | "PLAYFUL" | null;
     if (savedTone) setReminderToneState(savedTone);
 
@@ -230,8 +235,14 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
         if (data.wifeTimezone) setWifeTimezoneState(data.wifeTimezone);
         if (data.husbandName) setHusbandNameState(data.husbandName);
         if (data.wifeName) setWifeNameState(data.wifeName);
-        if (data.husbandPhoto !== undefined) setHusbandPhotoState(data.husbandPhoto);
-        if (data.wifePhoto !== undefined) setWifePhotoState(data.wifePhoto);
+        if (data.husbandPhoto !== undefined) {
+          setHusbandPhotoState(data.husbandPhoto);
+          if (data.husbandPhoto) try { localStorage.setItem("bh_husband_photo", data.husbandPhoto); } catch (e) {}
+        }
+        if (data.wifePhoto !== undefined) {
+          setWifePhotoState(data.wifePhoto);
+          if (data.wifePhoto) try { localStorage.setItem("bh_wife_photo", data.wifePhoto); } catch (e) {}
+        }
         if (data.currency) setCurrencyState(data.currency);
         if (data.reminderTone) setReminderToneState(data.reminderTone);
         if (data.madhhab) setMadhhabState(data.madhhab);
@@ -385,10 +396,20 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
 
   const setHusbandPhoto = (photo: string | null) => {
     setHusbandPhotoState(photo);
+    if (photo) {
+      try { localStorage.setItem("bh_husband_photo", photo); } catch (e) {}
+    } else {
+      localStorage.removeItem("bh_husband_photo");
+    }
     updateFirebase({ husbandPhoto: photo });
   };
   const setWifePhoto = (photo: string | null) => {
     setWifePhotoState(photo);
+    if (photo) {
+      try { localStorage.setItem("bh_wife_photo", photo); } catch (e) {}
+    } else {
+      localStorage.removeItem("bh_wife_photo");
+    }
     updateFirebase({ wifePhoto: photo });
   };
 

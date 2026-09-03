@@ -36,6 +36,8 @@ export default function SpiritualTracker() {
     activeUser, 
     husbandName, 
     wifeName, 
+    husbandPhoto,
+    wifePhoto,
     prayersByDate, 
     setPrayersByDate, 
     globalSelectedDate, 
@@ -311,10 +313,28 @@ export default function SpiritualTracker() {
               </div>
 
               {/* Table Header */}
-              <div className="grid grid-cols-12 gap-2 py-1.5 text-[9px] font-black uppercase tracking-wider text-slate-400 dark:text-zinc-500 px-2 border-b border-slate-100 dark:border-zinc-800/50">
+              <div className="grid grid-cols-12 gap-2 py-2 text-[9px] font-black uppercase tracking-wider text-slate-400 dark:text-zinc-500 px-2 border-b border-slate-100 dark:border-zinc-800/50 items-center">
                 <div className="col-span-4">Prayer</div>
-                <div className="col-span-2 text-center">{husbandName.charAt(0)} ({husbandPrayerTimes.tzAbbr})</div>
-                <div className="col-span-2 text-center">{wifeName.charAt(0)} ({wifePrayerTimes.tzAbbr})</div>
+                <div className="col-span-2 flex items-center justify-center gap-1">
+                  <div className="h-4 w-4 rounded-full overflow-hidden bg-amber-500 text-white flex items-center justify-center text-[8px] font-black shrink-0">
+                    {husbandPhoto ? (
+                      <img src={husbandPhoto} alt={husbandName} className="h-full w-full object-cover" />
+                    ) : (
+                      (husbandName || "H").charAt(0).toUpperCase()
+                    )}
+                  </div>
+                  <span>{husbandPrayerTimes.tzAbbr}</span>
+                </div>
+                <div className="col-span-2 flex items-center justify-center gap-1">
+                  <div className="h-4 w-4 rounded-full overflow-hidden bg-rose-500 text-white flex items-center justify-center text-[8px] font-black shrink-0">
+                    {wifePhoto ? (
+                      <img src={wifePhoto} alt={wifeName} className="h-full w-full object-cover" />
+                    ) : (
+                      (wifeName || "W").charAt(0).toUpperCase()
+                    )}
+                  </div>
+                  <span>{wifePrayerTimes.tzAbbr}</span>
+                </div>
                 <div className="col-span-4 text-right">Status</div>
               </div>
 

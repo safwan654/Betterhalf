@@ -29,6 +29,8 @@ export default function HealthPage() {
     activeUser,
     husbandName,
     wifeName,
+    husbandPhoto,
+    wifePhoto,
     workoutsByDate, 
     setWorkoutsByDate, 
     nutritionByDate, 
@@ -192,10 +194,19 @@ export default function HealthPage() {
 
           <div className="grid grid-cols-2 gap-3">
             {/* Husband Protein */}
-            <div className="flex flex-col p-3 rounded-2xl bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 gap-2">
+            <div className="flex flex-col p-3.5 rounded-2xl bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 gap-2.5">
               <div className="flex items-center justify-between text-xs font-bold">
-                <span className="text-slate-600 dark:text-zinc-300">{husbandName}</span>
-                <span className="text-amber-600 dark:text-amber-400">{nutrition.husband.protein}g / {nutrition.husband.proteinGoal}g</span>
+                <div className="flex items-center gap-1.5">
+                  <div className="h-5 w-5 rounded-full overflow-hidden bg-amber-500 text-white flex items-center justify-center text-[9px] font-black shrink-0">
+                    {husbandPhoto ? (
+                      <img src={husbandPhoto} alt={husbandName} className="h-full w-full object-cover" />
+                    ) : (
+                      (husbandName || "H").charAt(0).toUpperCase()
+                    )}
+                  </div>
+                  <span className="text-slate-700 dark:text-zinc-200">{husbandName}</span>
+                </div>
+                <span className="text-amber-600 dark:text-amber-400 font-extrabold">{nutrition.husband.protein}g / {nutrition.husband.proteinGoal}g</span>
               </div>
               <div className="h-2 w-full bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
                 <div 
@@ -206,10 +217,19 @@ export default function HealthPage() {
             </div>
 
             {/* Wife Protein */}
-            <div className="flex flex-col p-3 rounded-2xl bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 gap-2">
+            <div className="flex flex-col p-3.5 rounded-2xl bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 gap-2.5">
               <div className="flex items-center justify-between text-xs font-bold">
-                <span className="text-slate-600 dark:text-zinc-300">{wifeName}</span>
-                <span className="text-rose-500 dark:text-rose-400">{nutrition.wife.protein}g / {nutrition.wife.proteinGoal}g</span>
+                <div className="flex items-center gap-1.5">
+                  <div className="h-5 w-5 rounded-full overflow-hidden bg-rose-500 text-white flex items-center justify-center text-[9px] font-black shrink-0">
+                    {wifePhoto ? (
+                      <img src={wifePhoto} alt={wifeName} className="h-full w-full object-cover" />
+                    ) : (
+                      (wifeName || "W").charAt(0).toUpperCase()
+                    )}
+                  </div>
+                  <span className="text-slate-700 dark:text-zinc-200">{wifeName}</span>
+                </div>
+                <span className="text-rose-500 dark:text-rose-400 font-extrabold">{nutrition.wife.protein}g / {nutrition.wife.proteinGoal}g</span>
               </div>
               <div className="h-2 w-full bg-slate-200 dark:bg-zinc-800 rounded-full overflow-hidden">
                 <div 
@@ -357,10 +377,19 @@ export default function HealthPage() {
               className="p-3.5 rounded-2xl bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 flex flex-col gap-2 cursor-pointer hover:border-amber-400 transition-all active:scale-98"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black text-slate-800 dark:text-zinc-200">{husbandName}</span>
+                <div className="flex items-center gap-2">
+                  <div className="h-6 w-6 rounded-full overflow-hidden bg-amber-500 text-white flex items-center justify-center text-[10px] font-black shrink-0">
+                    {husbandPhoto ? (
+                      <img src={husbandPhoto} alt={husbandName} className="h-full w-full object-cover" />
+                    ) : (
+                      (husbandName || "H").charAt(0).toUpperCase()
+                    )}
+                  </div>
+                  <span className="text-xs font-black text-slate-800 dark:text-zinc-200">{husbandName}</span>
+                </div>
                 <span className="text-[9px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded">Edit</span>
               </div>
-              <div className="flex flex-col text-[11px] text-slate-500 dark:text-zinc-400 gap-0.5">
+              <div className="flex flex-col text-[11px] text-slate-500 dark:text-zinc-400 gap-0.5 pt-1">
                 <span>Height: <strong className="text-slate-700 dark:text-zinc-200">{healthProfiles.husband?.height || "—"}</strong></span>
                 <span>Weight: <strong className="text-slate-700 dark:text-zinc-200">{healthProfiles.husband?.weight || "—"}</strong></span>
                 <span>Blood: <strong className="text-slate-700 dark:text-zinc-200">{healthProfiles.husband?.bloodType || "—"}</strong></span>
@@ -376,10 +405,19 @@ export default function HealthPage() {
               className="p-3.5 rounded-2xl bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 flex flex-col gap-2 cursor-pointer hover:border-rose-400 transition-all active:scale-98"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black text-slate-800 dark:text-zinc-200">{wifeName}</span>
+                <div className="flex items-center gap-2">
+                  <div className="h-6 w-6 rounded-full overflow-hidden bg-rose-500 text-white flex items-center justify-center text-[10px] font-black shrink-0">
+                    {wifePhoto ? (
+                      <img src={wifePhoto} alt={wifeName} className="h-full w-full object-cover" />
+                    ) : (
+                      (wifeName || "W").charAt(0).toUpperCase()
+                    )}
+                  </div>
+                  <span className="text-xs font-black text-slate-800 dark:text-zinc-200">{wifeName}</span>
+                </div>
                 <span className="text-[9px] font-bold text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded">Edit</span>
               </div>
-              <div className="flex flex-col text-[11px] text-slate-500 dark:text-zinc-400 gap-0.5">
+              <div className="flex flex-col text-[11px] text-slate-500 dark:text-zinc-400 gap-0.5 pt-1">
                 <span>Height: <strong className="text-slate-700 dark:text-zinc-200">{healthProfiles.wife?.height || "—"}</strong></span>
                 <span>Weight: <strong className="text-slate-700 dark:text-zinc-200">{healthProfiles.wife?.weight || "—"}</strong></span>
                 <span>Blood: <strong className="text-slate-700 dark:text-zinc-200">{healthProfiles.wife?.bloodType || "—"}</strong></span>

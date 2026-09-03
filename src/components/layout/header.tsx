@@ -93,12 +93,14 @@ export default function Header() {
             <span>{relationshipMode === "TOGETHER" ? "🏠 Together" : "✈️ LDR"}</span>
           </button>
 
-          {/* Active User Display */}
-          <div
-            className="flex items-center gap-1 rounded-full border border-slate-200/70 bg-slate-50/80 p-0.5 pr-2 text-[10px] font-semibold text-slate-750 shadow-sm transition-all dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300"
+          {/* Active User Display & Quick Switch */}
+          <button
+            onClick={() => setActiveUser(activeUser === "HUSBAND" ? "WIFE" : "HUSBAND")}
+            title="Click to switch active profile"
+            className="flex items-center gap-1.5 rounded-full border border-slate-200/70 bg-slate-50/80 p-0.5 pr-2.5 text-[10px] font-bold text-slate-700 shadow-sm transition-all hover:bg-slate-100 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 active:scale-95"
           >
             <div className={cn(
-              "h-4.5 w-4.5 rounded-full flex items-center justify-center text-[9px] text-white font-bold transition-all-custom overflow-hidden",
+              "h-6 w-6 rounded-full flex items-center justify-center text-[10px] text-white font-black transition-all overflow-hidden shrink-0 border border-white dark:border-zinc-700",
               activeUser === "HUSBAND" 
                 ? "bg-amber-500 shadow-sm shadow-amber-500/30" 
                 : "bg-rose-500 shadow-sm shadow-rose-500/30"
@@ -109,8 +111,8 @@ export default function Header() {
                 currentInitial.toUpperCase()
               )}
             </div>
-            <span>{activeUser === "HUSBAND" ? husbandName : wifeName}</span>
-          </div>
+            <span className="truncate max-w-[65px]">{activeUser === "HUSBAND" ? husbandName : wifeName}</span>
+          </button>
 
           {/* Settings Link */}
           <Link
