@@ -82,7 +82,7 @@ export default function MoreIndex() {
   ];
 
   return (
-    <div className="min-h-screen bg-background pb-24 text-slate-800 dark:text-zinc-100 transition-colors duration-300">
+    <div className="min-h-screen bg-background pb-32 text-slate-800 dark:text-zinc-100 transition-colors duration-300">
       <Header />
       
       <main className="mx-auto max-w-md px-4 pt-6 flex flex-col gap-6">

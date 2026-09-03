@@ -17,8 +17,8 @@ export default function BottomNavigation() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 h-16 border-t border-slate-200/50 bg-white/80 backdrop-blur-lg dark:border-zinc-800/50 dark:bg-zinc-900/80">
-      <div className="mx-auto flex h-full max-w-md items-center justify-around px-4">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200/60 bg-white/90 backdrop-blur-xl dark:border-zinc-800/60 dark:bg-zinc-950/90 pt-1.5 pb-[max(env(safe-area-inset-bottom,18px),18px)] shadow-[0_-4px_25px_rgba(0,0,0,0.04)]">
+      <div className="mx-auto flex max-w-md items-center justify-around px-2">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
@@ -27,19 +27,19 @@ export default function BottomNavigation() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 py-1 text-xs font-medium transition-all-custom",
+                "flex flex-col items-center justify-center gap-0.5 py-0.5 text-[11px] font-bold transition-all active:scale-95",
                 isActive
-                  ? "text-rose-500 dark:text-rose-400"
+                  ? "text-rose-500 dark:text-rose-400 font-extrabold"
                   : "text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-300"
               )}
             >
               <div className={cn(
-                "rounded-full px-3 py-1 transition-all-custom",
-                isActive ? "bg-rose-500/10 dark:bg-rose-400/10" : ""
+                "rounded-2xl px-3 py-1 transition-all duration-200",
+                isActive ? "bg-rose-500/10 dark:bg-rose-400/15 scale-105" : ""
               )}>
-                <Icon className={cn("h-5 w-5 transition-transform", isActive && "scale-110")} />
+                <Icon className={cn("h-5 w-5 transition-transform", isActive ? "stroke-[2.5]" : "stroke-[1.75]")} />
               </div>
-              <span>{item.label}</span>
+              <span className="leading-tight">{item.label}</span>
             </Link>
           );
         })}
