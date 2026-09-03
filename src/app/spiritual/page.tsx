@@ -55,19 +55,19 @@ export default function SpiritualTracker() {
   const [reminderToast, setReminderToast] = useState<string | null>(null);
   const [reminderCooldowns, setReminderCooldowns] = useState<Record<string, number>>({});
 
-  const isFriday = getDay(parseISO(globalSelectedDate)) === 5;
-  const currentPrayers = prayersByDate[globalSelectedDate] || initialPrayers;
+  const todayDateObj = useMemo(() => new Date(), []);
+  const todayStr = useMemo(() => format(todayDateObj, "yyyy-MM-dd"), [todayDateObj]);
+  const isFriday = getDay(todayDateObj) === 5;
+  const currentPrayers = prayersByDate[todayStr] || initialPrayers;
 
-  // Calculate local prayer times for husband & wife
-  const selectedDateObj = useMemo(() => parseISO(globalSelectedDate), [globalSelectedDate]);
-
+  // Calculate local prayer times for husband & wife for today
   const husbandPrayerTimes = useMemo(() => {
-    return calculatePrayerTimes(husbandLocation || CITY_PRESETS["Dubai, UAE"], selectedDateObj, madhhab);
-  }, [husbandLocation, selectedDateObj, madhhab]);
+    return calculatePrayerTimes(husbandLocation || CITY_PRESETS["Dubai, UAE"], todayDateObj, madhhab);
+  }, [husbandLocation, todayDateObj, madhhab]);
 
   const wifePrayerTimes = useMemo(() => {
-    return calculatePrayerTimes(wifeLocation || CITY_PRESETS["Mumbai, India"], selectedDateObj, madhhab);
-  }, [wifeLocation, selectedDateObj, madhhab]);
+    return calculatePrayerTimes(wifeLocation || CITY_PRESETS["Mumbai, India"], todayDateObj, madhhab);
+  }, [wifeLocation, todayDateObj, madhhab]);
 
   // Fine-grained prayer exemption check based on date and time
   const isWifePrayerExempt = (prayerDate: Date): boolean => {
@@ -210,19 +210,19 @@ export default function SpiritualTracker() {
 
     setPrayersByDate({
       ...prayersByDate,
-      [globalSelectedDate]: updatedPrayers
+      [todayStr]: updatedPrayers
     });
     setLoggingPrayer(null);
   };
 
   const handleWhatsAppShare = () => {
-    const message = `Alhamdulillah, I just updated my prayer log! 🕌✨\n\nCheck BetterHalf: https://betterhalf.vercel.app/spiritual`;
+    const message = `Alhamdulillah, I just updated my prayer log for today! 🕌✨\n\nCheck BetterHalf: https://betterhalf.vercel.app/spiritual`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, "_blank");
   };
 
   const husbandCompleted = currentPrayers.filter(p => p.husband && p.husband !== "MISSED").length;
-  const wifeCompleted = currentPrayers.filter(p => p.wife && p.wife !== "MISSED" || (periodActive && isSameDay(selectedDateObj, new Date()))).length;
+  const wifeCompleted = currentPrayers.filter(p => (p.wife && p.wife !== "MISSED") || isWifePrayerExempt(todayDateObj)).length;
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 pb-28 text-slate-900 dark:text-zinc-100 transition-colors">
@@ -267,7 +267,7 @@ export default function SpiritualTracker() {
 
         {/* Render Tab Content */}
         {activeTab === "CALENDAR" ? (
-          <SpiritualCalendar onSelectDate={(d) => { setGlobalSelectedDate(d); setActiveTab("CHECKLIST"); }} />
+          <SpiritualCalendar />
         ) : (
           <>
             {/* Timezone Locations & Isha Midnight Summary */}
@@ -296,7 +296,7 @@ export default function SpiritualTracker() {
               <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-zinc-800 px-1">
                 <div className="flex flex-col">
                   <h3 className="text-sm font-extrabold text-slate-800 dark:text-zinc-100">Daily Checklist</h3>
-                  <span className="text-[10px] text-slate-400">{format(selectedDateObj, "EEEE, MMMM d, yyyy")}</span>
+                  <span className="text-[10px] text-slate-400">Today · {format(todayDateObj, "EEEE, MMMM d, yyyy")}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   {madhhab === "HANAFI" && (
