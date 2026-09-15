@@ -176,15 +176,9 @@ export default function SpiritualTracker() {
     const nowTimeFormatted = formatTimeWithTZ(new Date(), userLoc?.timezone || "UTC", true);
 
     if (targetPrayer && status && status !== null) {
-      const partnerAlreadyCompleted = !!targetPrayer[partnerPerson] && targetPrayer[partnerPerson] !== "MISSED";
-
-      if (partnerAlreadyCompleted) {
-        sendInteraction(
-          "PRAYER_CELEBRATION",
-          `Alhamdulillah! ${prayerDisplayName} complete for both of you today 🤍`,
-          "BOTH"
-        );
-        setReminderToast(`${prayerDisplayName} complete for both of you today! 🤍`);
+      if (status === "MISSED") {
+        // No notification sent to partner when marking as missed
+        setReminderToast(`${prayerDisplayName} marked as missed`);
       } else {
         let completionMsg = `Prayer Completed ✅ - ${senderName} just prayed ${prayerDisplayName} (${nowTimeFormatted})`;
         if (status === "LATE") {
@@ -195,9 +189,7 @@ export default function SpiritualTracker() {
           completionMsg = `${senderName} marked ${prayerDisplayName} as Exempt (رخصة) 🤍`;
         }
 
-        if (status !== "MISSED") {
-          sendInteraction("PRAYER_COMPLETE", completionMsg, "PARTNER");
-        }
+        sendInteraction("PRAYER_COMPLETE", completionMsg, "PARTNER");
         setReminderToast(`${prayerDisplayName} marked ${status.toLowerCase()} ✅ ${partnerName} notified`);
       }
       setTimeout(() => setReminderToast(null), 4000);

@@ -278,22 +278,16 @@ export default function SpiritualCalendar({ onSelectDate }: SpiritualCalendarPro
       ? localPrayerTimeObj.timeStr 
       : format(new Date(), "hh:mm a");
 
-    let celebrationTriggered = false;
-    const targetPrayer = updated.find(p => p.id === prayerId);
-    if (targetPrayer) {
-      const hDone = targetPrayer.husband && targetPrayer.husband !== "MISSED";
-      const wDone = targetPrayer.wife && targetPrayer.wife !== "MISSED";
-      if (hDone && wDone && newStatus !== "MISSED") {
-        celebrationTriggered = true;
+    if (newStatus && newStatus !== "MISSED") {
+      let completionMsg = `Prayer Completed ✅ - ${senderName} just prayed ${prayerName} (${timeStrWithTZ})`;
+      if (newStatus === "LATE") {
+        completionMsg = `${senderName} completed ${prayerName} — logged late (${timeStrWithTZ})`;
+      } else if (newStatus === "QADA") {
+        completionMsg = `${senderName} made up ${prayerName} (Qada) 🤲 (${timeStrWithTZ})`;
+      } else if (newStatus === "EXEMPT") {
+        completionMsg = `${senderName} marked ${prayerName} as Exempt (رخصة) 🤍`;
       }
-    }
-
-    if (celebrationTriggered) {
-      sendInteraction("PRAYER_CELEBRATION", `${prayerName} complete for both of you today 🤍`, "BOTH");
-    } else if (newStatus === "ON_TIME") {
-      sendInteraction("PRAYER_COMPLETE", `${senderName} completed ${prayerName} on time ✅ (${timeStrWithTZ})`);
-    } else if (newStatus === "LATE") {
-      sendInteraction("PRAYER_COMPLETE", `${senderName} completed ${prayerName} — logged late (${timeStrWithTZ})`);
+      sendInteraction("PRAYER_COMPLETE", completionMsg, "PARTNER");
     }
 
     setLoggingPrayer(null);
