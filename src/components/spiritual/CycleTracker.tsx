@@ -312,9 +312,9 @@ export default function CycleTracker() {
 
         {/* Husband Multi-Option Care Modal / Sheet */}
         {showHusbandCareSheet && (
-          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="glass-panel w-full max-w-sm rounded-3xl p-5 shadow-2xl border border-white/20 dark:border-zinc-800 flex flex-col gap-3.5 animate-in fade-in zoom-in-95 duration-200">
-              <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-2.5">
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+            <div className="glass-panel w-full max-w-sm max-h-[88vh] overflow-y-auto my-auto rounded-3xl p-5 shadow-2xl border border-white/20 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-col gap-3.5 animate-in fade-in zoom-in-95 duration-200">
+              <div className="sticky -top-5 bg-white dark:bg-zinc-900 pt-1 pb-2.5 z-10 flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 -mx-1 px-1">
                 <div className="flex flex-col">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-rose-500">Love & Care</span>
                   <h3 className="text-base font-extrabold text-slate-800 dark:text-zinc-100">
@@ -642,9 +642,9 @@ export default function CycleTracker() {
       {/* 1. START / END CYCLE MODAL */}
       {/* ========================================================= */}
       {startEndModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="glass-panel w-full max-w-sm rounded-3xl p-5 shadow-2xl border border-white/20 dark:border-zinc-800 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-3">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="glass-panel w-full max-w-sm max-h-[88vh] overflow-y-auto my-auto rounded-3xl p-5 shadow-2xl border border-white/20 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className="sticky -top-5 bg-white dark:bg-zinc-900 pt-1 pb-3 z-10 flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 -mx-1 px-1">
               <div className="flex flex-col">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-rose-500">
                   {startEndModal === "START" ? "Start Cycle" : "End Cycle"}
@@ -722,9 +722,9 @@ export default function CycleTracker() {
       {/* 2. EDIT CYCLE MODAL (Change Start/End Dates & Times) */}
       {/* ========================================================= */}
       {editingCycle && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="glass-panel w-full max-w-sm rounded-3xl p-5 shadow-2xl border border-white/20 dark:border-zinc-800 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-3">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="glass-panel w-full max-w-sm max-h-[88vh] overflow-y-auto my-auto rounded-3xl p-5 shadow-2xl border border-white/20 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className="sticky -top-5 bg-white dark:bg-zinc-900 pt-1 pb-3 z-10 flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 -mx-1 px-1">
               <div className="flex flex-col">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500">Edit Cycle Dates</span>
                 <h3 className="text-base font-extrabold text-slate-800 dark:text-zinc-100">
@@ -807,9 +807,9 @@ export default function CycleTracker() {
       {/* 3. ADD PAST PERIOD MODAL (Historical Backfill) */}
       {/* ========================================================= */}
       {showAddPastModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="glass-panel w-full max-w-sm rounded-3xl p-5 shadow-2xl border border-white/20 dark:border-zinc-800 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-3">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="glass-panel w-full max-w-sm max-h-[88vh] overflow-y-auto my-auto rounded-3xl p-5 shadow-2xl border border-white/20 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className="sticky -top-5 bg-white dark:bg-zinc-900 pt-1 pb-3 z-10 flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 -mx-1 px-1">
               <div className="flex flex-col">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-rose-500">Historical Backfill</span>
                 <h3 className="text-base font-extrabold text-slate-800 dark:text-zinc-100">
@@ -879,7 +879,7 @@ export default function CycleTracker() {
                   type="submit"
                   className="flex-1 py-2.5 text-xs font-bold rounded-xl bg-slate-900 hover:bg-black text-white dark:bg-white dark:text-zinc-900 shadow-md transition-all flex items-center justify-center gap-1.5"
                 >
-                  <PlusIcon className="h-4 w-4" /> Save Past Period
+                  <CheckIcon className="h-4 w-4" /> Save Record
                 </button>
               </div>
             </form>

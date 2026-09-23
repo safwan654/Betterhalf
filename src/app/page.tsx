@@ -149,7 +149,7 @@ export default function Dashboard() {
               <button
                 onClick={handleSendHug}
                 disabled={hugSentLocal}
-                className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all shadow-sm ${
+                className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border transition-all shadow-sm ${
                   hugSentLocal 
                     ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800" 
                     : "bg-white dark:bg-zinc-900 border-slate-100 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-850 active:scale-95"
@@ -157,14 +157,14 @@ export default function Dashboard() {
               >
                 {hugSentLocal ? (
                   <>
-                    <Check className="h-6 w-6 text-emerald-500 mb-1" />
-                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">Sent to {partnerName}!</span>
+                    <Check className="h-6 w-6 text-emerald-500 mb-1 animate-bounce" />
+                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">Warm Hug Sent! 🫂</span>
                   </>
                 ) : (
                   <>
-                    <span className="text-xl">🤗</span>
-                    <span className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 mt-1">Send a Virtual Hug</span>
-                    <span className="text-xs font-black text-rose-500 dark:text-rose-455 mt-0.5">{hugsCount} Sent</span>
+                    <span className="text-2xl animate-pulse">🤗</span>
+                    <span className="text-[10px] font-black text-slate-700 dark:text-zinc-300 mt-1">Send a Virtual Hug</span>
+                    <span className="text-xs font-black text-rose-500 mt-0.5">{hugsCount} Sent</span>
                   </>
                 )}
               </button>
@@ -172,7 +172,7 @@ export default function Dashboard() {
               <button
                 onClick={handleSendKiss}
                 disabled={kissSentLocal}
-                className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all shadow-sm ${
+                className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border transition-all shadow-sm ${
                   kissSentLocal 
                     ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800" 
                     : "bg-white dark:bg-zinc-900 border-slate-100 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-850 active:scale-95"
@@ -180,16 +180,38 @@ export default function Dashboard() {
               >
                 {kissSentLocal ? (
                   <>
-                    <Check className="h-6 w-6 text-emerald-500 mb-1" />
-                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">Sent to {partnerName}!</span>
+                    <Check className="h-6 w-6 text-emerald-500 mb-1 animate-bounce" />
+                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">Sweet Kiss Sent! 💋</span>
                   </>
                 ) : (
                   <>
-                    <span className="text-xl">😘</span>
-                    <span className="text-[10px] font-bold text-slate-500 dark:text-zinc-400 mt-1">Blow a Kiss</span>
-                    <span className="text-xs font-black text-rose-500 dark:text-rose-455 mt-0.5">{kissesCount} Sent</span>
+                    <span className="text-2xl animate-pulse">😘</span>
+                    <span className="text-[10px] font-black text-slate-700 dark:text-zinc-300 mt-1">Blow a Kiss</span>
+                    <span className="text-xs font-black text-rose-500 mt-0.5">{kissesCount} Sent</span>
                   </>
                 )}
+              </button>
+            </div>
+
+            {/* Quick Sweet Presets */}
+            <div className="flex items-center gap-1.5 pt-1 overflow-x-auto no-scrollbar">
+              <button
+                onClick={() => sendInteraction("HUG", "Thinking of you always! 🤍")}
+                className="px-2.5 py-1 rounded-full bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 text-[10px] font-bold text-slate-600 dark:text-zinc-300 whitespace-nowrap hover:border-rose-400 active:scale-95 transition-all flex items-center gap-1"
+              >
+                <span>💭</span> Thinking of you!
+              </button>
+              <button
+                onClick={() => sendInteraction("KISS", "Can't wait to see you today! ✨")}
+                className="px-2.5 py-1 rounded-full bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 text-[10px] font-bold text-slate-600 dark:text-zinc-300 whitespace-nowrap hover:border-rose-400 active:scale-95 transition-all flex items-center gap-1"
+              >
+                <span>💋</span> Can't wait to see you!
+              </button>
+              <button
+                onClick={() => sendInteraction("HUG", "Take a break, you're doing amazing! ☕✨")}
+                className="px-2.5 py-1 rounded-full bg-white dark:bg-zinc-900 border border-slate-200/80 dark:border-zinc-800 text-[10px] font-bold text-slate-600 dark:text-zinc-300 whitespace-nowrap hover:border-rose-400 active:scale-95 transition-all flex items-center gap-1"
+              >
+                <span>☕</span> Take a rest
               </button>
             </div>
           </section>

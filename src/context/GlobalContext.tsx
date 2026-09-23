@@ -440,11 +440,15 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
       let body = `${senderName} sent an update!`;
 
       if (type === "HUG") {
-        title = "Virtual Hug!";
-        body = `${senderName} sent you a hug 🫂`;
+        title = `Warm Hug from ${senderName} 🤗💖`;
+        body = payload 
+          ? `${senderName}: "${payload}" 🫂✨` 
+          : `${senderName} is wrapping you in a warm, tight hug from afar 🫂✨ "Thinking of you always!"`;
       } else if (type === "KISS") {
-        title = "Virtual Kiss!";
-        body = `${senderName} sent you a kiss 😘`;
+        title = `Sweet Kiss from ${senderName} 💋✨`;
+        body = payload 
+          ? `${senderName}: "${payload}" 😘💖` 
+          : `${senderName} blew a sweet kiss straight to your heart 😘💖 "Mwah! Can't wait to see you."`;
       } else if (type === "PRAYER_ALERT") {
         title = "Prayer Reminder 🕌";
         if (reminderTone === "PLAYFUL") {

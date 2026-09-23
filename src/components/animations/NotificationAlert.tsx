@@ -46,12 +46,12 @@ export default function NotificationAlert() {
         subtitle = interactionPayload || "Her cycle ended — prayer tracking resumes";
         icon = <Sparkles className="h-6 w-6 text-white" />;
       } else if (pendingAnimation === "HUG") {
-        title = "Virtual Hug!";
-        subtitle = `${partnerName} sent you a hug 🫂`;
+        title = `Warm Hug from ${partnerName} 🤗`;
+        subtitle = interactionPayload || `${partnerName} wrapped you in a tight, warm hug 🫂💖`;
         icon = <Heart className="h-6 w-6 text-white" fill="white" />;
       } else if (pendingAnimation === "KISS") {
-        title = "Virtual Kiss!";
-        subtitle = `${partnerName} sent you a kiss 😘`;
+        title = `Sweet Kiss from ${partnerName} 💋`;
+        subtitle = interactionPayload || `${partnerName} blew you a sweet kiss 😘✨`;
         icon = <Heart className="h-6 w-6 text-white" fill="white" />;
       }
 
