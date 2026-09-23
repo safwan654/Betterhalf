@@ -21,14 +21,21 @@ export default function MoreIndex() {
   const activeCalls = currentCalls.length;
   
   const uncheckedPantry = pantryItems.filter(i => !i.checked).length;
-  const pendingTasks = tasks.filter(t => t.urgency === "HIGH").length;
+  const activeTasks = tasks.filter(t => !t.completed);
+  const highPriorityActive = activeTasks.filter(t => t.urgency === "HIGH").length;
+  const taskStatus = 
+    activeTasks.length === 0 
+      ? (tasks.length > 0 ? "All completed ✅" : "0 active tasks")
+      : highPriorityActive > 0 
+        ? `${highPriorityActive} high priority` 
+        : `${activeTasks.length} active ${activeTasks.length === 1 ? "task" : "tasks"}`;
 
   const modules = [
     {
       id: "tasks",
       title: "Shared Tasks & Chores",
       desc: "Track daily tasks, priorities and home chores.",
-      status: pendingTasks > 0 ? `${pendingTasks} high priority` : `${tasks.length} tasks`,
+      status: taskStatus,
       icon: CheckSquare,
       color: "text-emerald-500",
       bg: "bg-emerald-500/10",

@@ -8,7 +8,17 @@ import { UserLocation, CITY_PRESETS } from "@/lib/prayer-times";
 
 export type PrayerStatus = "ON_TIME" | "LATE" | "QADA" | "EXEMPT" | "MISSED" | null;
 export interface Prayer { id: string; name: string; time: string; husband: PrayerStatus; wife: PrayerStatus; }
-export interface Task { id: string; title: string; urgency: "HIGH"|"MEDIUM"|"LOW"; category: string; due: string; }
+export interface Task { 
+  id: string; 
+  title: string; 
+  urgency: "HIGH" | "MEDIUM" | "LOW"; 
+  category: string; 
+  due: string; 
+  completed?: boolean;
+  completedAt?: number;
+  createdAt?: number;
+  assignedTo?: "HUSBAND" | "WIFE" | "SHARED";
+}
 export interface FinanceTransaction { id: string; name: string; amount: number; date: string; type: "PENDING" | "SPENT"; allocation: "HUSBAND" | "WIFE" | "SHARED"; }
 export interface LiquidBalances { husband: number; wife: number; }
 

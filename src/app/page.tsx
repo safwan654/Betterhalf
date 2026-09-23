@@ -13,14 +13,14 @@ import {
   Clock, HeartHandshake, CalendarClock, Check, Inbox, Gamepad2
 } from "lucide-react";
 import Link from "next/link";
-import { initialPrayers } from "@/context/GlobalContext";
+import { initialPrayers, Task } from "@/context/GlobalContext";
 import CareCard from "@/components/spiritual/CareCard";
 
 export default function Dashboard() {
   const { 
     relationshipMode, activeUser, husbandName, wifeName,
     husbandPhoto, wifePhoto, husbandLocation, wifeLocation, husbandTimezone, wifeTimezone,
-    prayersByDate, tasks, financeTransactions, liquidBalances, currency, sendInteraction, globalSelectedDate,
+    prayersByDate, tasks, setTasks, financeTransactions, liquidBalances, currency, sendInteraction, globalSelectedDate,
     periodActive, sharePeriodStatus
   } = useGlobal();
   
@@ -30,7 +30,27 @@ export default function Dashboard() {
   const [hugSentLocal, setHugSentLocal] = useState(false);
   const [kissSentLocal, setKissSentLocal] = useState(false);
 
-  const currentTasks = tasks.filter(t => t.due === globalSelectedDate);
+  const todayStr = new Date().toISOString().split("T")[0];
+  const isSelectedToday = globalSelectedDate === todayStr;
+
+  const activeTasks = tasks.filter(t => !t.completed);
+  const currentTasks = tasks.filter(t => {
+    if (t.due === globalSelectedDate) return true;
+    if (isSelectedToday && (t.due === "Today" || !t.due)) return true;
+    return false;
+  });
+
+  const toggleTaskComplete = (id: string) => {
+    const updated = tasks.map(t => {
+      if (t.id === id) {
+        const isComp = !t.completed;
+        return { ...t, completed: isComp, completedAt: isComp ? Date.now() : undefined };
+      }
+      return t;
+    });
+    setTasks(updated);
+  };
+
   const currentPrayers = prayersByDate[globalSelectedDate] || initialPrayers;
 
   const handleSendHug = () => {
@@ -344,18 +364,35 @@ export default function Dashboard() {
           {currentTasks.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-4 text-slate-400 dark:text-zinc-500">
               <CheckSquare className="h-6 w-6 mb-2 opacity-30" />
-              <span className="text-xs font-medium">0 Tasks</span>
+              <span className="text-xs font-medium">
+                {activeTasks.length > 0 ? `${activeTasks.length} other active ${activeTasks.length === 1 ? "task" : "tasks"}` : "All caught up! 0 active tasks"}
+              </span>
               <Link href="/tasks" className="mt-2 text-[10px] font-bold bg-amber-50 text-amber-600 dark:bg-amber-500/10 dark:text-amber-500 border border-amber-200 dark:border-amber-500/20 px-3 py-1.5 rounded-full hover:bg-amber-100 transition-colors">
-                + Add a Task
+                {activeTasks.length > 0 ? "View All Tasks" : "+ Add a Task"}
               </Link>
             </div>
           ) : (
             <div className="flex flex-col gap-2">
               {currentTasks.map((task) => (
-                <div key={task.title} className="flex items-start justify-between p-2 rounded-xl bg-slate-50/80 dark:bg-zinc-900/50 border border-slate-100/10">
-                  <div className="flex flex-col gap-0.5 max-w-[70%]">
-                    <span className="text-xs font-bold text-slate-700 dark:text-zinc-200 line-clamp-1">{task.title}</span>
-                    <span className="text-[9px] text-slate-400 dark:text-zinc-500">{task.category}</span>
+                <div key={task.id || task.title} className="flex items-start justify-between p-2.5 rounded-xl bg-slate-50/80 dark:bg-zinc-900/50 border border-slate-100/10 hover:border-slate-200 dark:hover:border-zinc-800 transition-colors">
+                  <div className="flex items-start gap-2.5 max-w-[70%]">
+                    <button
+                      onClick={() => toggleTaskComplete(task.id)}
+                      className={`h-5 w-5 mt-0.5 rounded-md border flex items-center justify-center flex-shrink-0 transition-colors ${
+                        task.completed 
+                          ? "bg-amber-500 border-amber-500 text-white" 
+                          : "border-slate-300 dark:border-zinc-700 hover:border-amber-500 bg-white dark:bg-zinc-800"
+                      }`}
+                      aria-label="Toggle task completion"
+                    >
+                      {task.completed && <Check className="h-3 w-3 stroke-[3]" />}
+                    </button>
+                    <div className="flex flex-col gap-0.5">
+                      <span className={`text-xs font-bold line-clamp-1 transition-all ${task.completed ? "line-through text-slate-400 dark:text-zinc-500" : "text-slate-700 dark:text-zinc-200"}`}>
+                        {task.title}
+                      </span>
+                      <span className="text-[9px] font-medium text-slate-400 dark:text-zinc-500">{task.category}</span>
+                    </div>
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     <span className={`text-[8px] font-extrabold px-1.5 py-0.5 rounded-full ${

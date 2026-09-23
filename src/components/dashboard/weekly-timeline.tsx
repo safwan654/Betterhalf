@@ -20,7 +20,7 @@ export default function WeeklyTimeline() {
       date: dayDate,
       dateString: dayDateString,
       isToday: isSameDay(dayDate, currentDate),
-      hasPendingItems: tasks.some(t => t.due === dayDateString) // Basic indicator based on tasks
+      hasPendingItems: tasks.some(t => !t.completed && (t.due === dayDateString || (t.due === "Today" && isSameDay(dayDate, currentDate))))
     };
   });
 
