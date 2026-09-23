@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import Header from "@/components/layout/header";
 import BottomNavigation from "@/components/layout/bottom-navigation";
@@ -55,6 +56,9 @@ export default function HealthPage() {
 
   const [proteinInput, setProteinInput] = useState("");
   const [proteinSpender, setProteinSpender] = useState<"Husband" | "Wife">(activeUser === "HUSBAND" ? "Husband" : "Wife");
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   // Health Profile Edit Modal State
   const [showHealthModal, setShowHealthModal] = useState(false);
@@ -539,10 +543,10 @@ export default function HealthPage() {
       </main>
 
       {/* Edit Health Profile Modal */}
-      {showHealthModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="glass-panel w-full max-w-sm rounded-3xl p-5 shadow-2xl border border-white/20 dark:border-zinc-800 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 pb-3">
+      {mounted && showHealthModal && createPortal(
+        <div className="fixed inset-0 z-[9999] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 w-full max-w-sm max-h-[85vh] overflow-y-auto my-auto rounded-3xl p-5 shadow-2xl border border-slate-200 dark:border-zinc-800 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className="sticky -top-5 bg-white dark:bg-zinc-900 pt-1 pb-3 z-10 flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 -mx-1 px-1">
               <div className="flex flex-col">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-rose-500">Edit Vitals</span>
                 <h3 className="text-base font-extrabold text-slate-800 dark:text-zinc-100">
@@ -566,7 +570,7 @@ export default function HealthPage() {
                     value={healthEditForm.height}
                     onChange={(e) => setHealthEditForm({ ...healthEditForm, height: e.target.value })}
                     placeholder="e.g. 5'10 / 178cm"
-                    className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none"
+                    className="bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none"
                   />
                 </div>
                 <div className="flex flex-col gap-1">
@@ -576,7 +580,7 @@ export default function HealthPage() {
                     value={healthEditForm.weight}
                     onChange={(e) => setHealthEditForm({ ...healthEditForm, weight: e.target.value })}
                     placeholder="e.g. 75 kg"
-                    className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none"
+                    className="bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none"
                   />
                 </div>
               </div>
@@ -589,7 +593,7 @@ export default function HealthPage() {
                     value={healthEditForm.bloodType}
                     onChange={(e) => setHealthEditForm({ ...healthEditForm, bloodType: e.target.value })}
                     placeholder="e.g. O+ / A+"
-                    className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none"
+                    className="bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none"
                   />
                 </div>
                 <div className="flex flex-col gap-1">
@@ -599,7 +603,7 @@ export default function HealthPage() {
                     value={healthEditForm.allergies}
                     onChange={(e) => setHealthEditForm({ ...healthEditForm, allergies: e.target.value })}
                     placeholder="e.g. Peanuts, Penicillin"
-                    className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none"
+                    className="bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none"
                   />
                 </div>
               </div>
@@ -611,7 +615,7 @@ export default function HealthPage() {
                   onChange={(e) => setHealthEditForm({ ...healthEditForm, notes: e.target.value })}
                   placeholder="e.g. Regular multivitamins, asthma inhaler as needed"
                   rows={2}
-                  className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none resize-none"
+                  className="bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none resize-none"
                 />
               </div>
 
@@ -619,20 +623,21 @@ export default function HealthPage() {
                 <button
                   type="button"
                   onClick={() => setShowHealthModal(false)}
-                  className="flex-1 py-2.5 text-xs font-bold rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400"
+                  className="flex-1 py-2.5 text-xs font-bold rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:bg-slate-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 text-xs font-bold rounded-xl bg-slate-900 text-white dark:bg-white dark:text-zinc-900 shadow-md transition-all active:scale-95"
+                  className="flex-1 py-2.5 text-xs font-bold rounded-xl bg-rose-500 hover:bg-rose-600 text-white shadow-md transition-all"
                 >
-                  Save Vitals
+                  Save Profile
                 </button>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <BottomNavigation />

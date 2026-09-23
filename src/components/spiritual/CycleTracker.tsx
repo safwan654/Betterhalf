@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useGlobal, PeriodCycle } from "@/context/GlobalContext";
 import { 
   format, 
@@ -52,6 +53,9 @@ export default function CycleTracker() {
     setSharePeriodStatus,
     sendCareNote
   } = useGlobal();
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const [confirmToast, setConfirmToast] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
@@ -311,9 +315,9 @@ export default function CycleTracker() {
         )}
 
         {/* Husband Multi-Option Care Modal / Sheet */}
-        {showHusbandCareSheet && (
-          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-            <div className="glass-panel w-full max-w-sm max-h-[88vh] overflow-y-auto my-auto rounded-3xl p-5 shadow-2xl border border-white/20 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-col gap-3.5 animate-in fade-in zoom-in-95 duration-200">
+        {mounted && showHusbandCareSheet && createPortal(
+          <div className="fixed inset-0 z-[9999] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 w-full max-w-sm max-h-[85vh] overflow-y-auto my-auto rounded-3xl p-5 shadow-2xl border border-slate-200 dark:border-zinc-800 flex flex-col gap-3.5 animate-in fade-in zoom-in-95 duration-200">
               <div className="sticky -top-5 bg-white dark:bg-zinc-900 pt-1 pb-2.5 z-10 flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 -mx-1 px-1">
                 <div className="flex flex-col">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-rose-500">Love & Care</span>
@@ -385,7 +389,7 @@ export default function CycleTracker() {
                     value={customCareText}
                     onChange={(e) => setCustomCareText(e.target.value)}
                     placeholder="e.g. Taking care of dinner tonight 🤍"
-                    className="flex-1 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none"
+                    className="flex-1 bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none"
                   />
                   <button
                     disabled={!customCareText.trim()}
@@ -397,7 +401,8 @@ export default function CycleTracker() {
                 </div>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     );
@@ -641,9 +646,9 @@ export default function CycleTracker() {
       {/* ========================================================= */}
       {/* 1. START / END CYCLE MODAL */}
       {/* ========================================================= */}
-      {startEndModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="glass-panel w-full max-w-sm max-h-[88vh] overflow-y-auto my-auto rounded-3xl p-5 shadow-2xl border border-white/20 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+      {mounted && startEndModal && createPortal(
+        <div className="fixed inset-0 z-[9999] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 w-full max-w-sm max-h-[85vh] overflow-y-auto my-auto rounded-3xl p-5 shadow-2xl border border-slate-200 dark:border-zinc-800 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
             <div className="sticky -top-5 bg-white dark:bg-zinc-900 pt-1 pb-3 z-10 flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 -mx-1 px-1">
               <div className="flex flex-col">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-rose-500">
@@ -670,7 +675,7 @@ export default function CycleTracker() {
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-800 dark:text-zinc-100 focus:outline-none focus:border-rose-400"
+                  className="w-full bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-800 dark:text-zinc-100 focus:outline-none focus:border-rose-400"
                 />
               </div>
 
@@ -693,7 +698,7 @@ export default function CycleTracker() {
                   type="time"
                   value={selectedTime}
                   onChange={(e) => setSelectedTime(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-800 dark:text-zinc-100 focus:outline-none focus:border-rose-400"
+                  className="w-full bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-800 dark:text-zinc-100 focus:outline-none focus:border-rose-400"
                 />
               </div>
             </div>
@@ -715,15 +720,16 @@ export default function CycleTracker() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ========================================================= */}
       {/* 2. EDIT CYCLE MODAL (Change Start/End Dates & Times) */}
       {/* ========================================================= */}
-      {editingCycle && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="glass-panel w-full max-w-sm max-h-[88vh] overflow-y-auto my-auto rounded-3xl p-5 shadow-2xl border border-white/20 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+      {mounted && editingCycle && createPortal(
+        <div className="fixed inset-0 z-[9999] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 w-full max-w-sm max-h-[85vh] overflow-y-auto my-auto rounded-3xl p-5 shadow-2xl border border-slate-200 dark:border-zinc-800 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
             <div className="sticky -top-5 bg-white dark:bg-zinc-900 pt-1 pb-3 z-10 flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 -mx-1 px-1">
               <div className="flex flex-col">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500">Edit Cycle Dates</span>
@@ -749,14 +755,14 @@ export default function CycleTracker() {
                     required
                     value={editStartDate}
                     onChange={(e) => setEditStartDate(e.target.value)}
-                    className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-zinc-100 focus:outline-none"
+                    className="bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-zinc-100 focus:outline-none"
                   />
                   <input
                     type="time"
                     value={editStartTime}
                     onChange={(e) => setEditStartTime(e.target.value)}
                     placeholder="Optional time"
-                    className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-zinc-100 focus:outline-none"
+                    className="bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-zinc-100 focus:outline-none"
                   />
                 </div>
               </div>
@@ -771,14 +777,14 @@ export default function CycleTracker() {
                     type="date"
                     value={editEndDate}
                     onChange={(e) => setEditEndDate(e.target.value)}
-                    className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-zinc-100 focus:outline-none"
+                    className="bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-zinc-100 focus:outline-none"
                   />
                   <input
                     type="time"
                     value={editEndTime}
                     onChange={(e) => setEditEndTime(e.target.value)}
                     placeholder="Optional time"
-                    className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-zinc-100 focus:outline-none"
+                    className="bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-zinc-100 focus:outline-none"
                   />
                 </div>
               </div>
@@ -800,15 +806,16 @@ export default function CycleTracker() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ========================================================= */}
       {/* 3. ADD PAST PERIOD MODAL (Historical Backfill) */}
       {/* ========================================================= */}
-      {showAddPastModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="glass-panel w-full max-w-sm max-h-[88vh] overflow-y-auto my-auto rounded-3xl p-5 shadow-2xl border border-white/20 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+      {mounted && showAddPastModal && createPortal(
+        <div className="fixed inset-0 z-[9999] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 w-full max-w-sm max-h-[85vh] overflow-y-auto my-auto rounded-3xl p-5 shadow-2xl border border-slate-200 dark:border-zinc-800 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
             <div className="sticky -top-5 bg-white dark:bg-zinc-900 pt-1 pb-3 z-10 flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 -mx-1 px-1">
               <div className="flex flex-col">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-rose-500">Historical Backfill</span>
@@ -834,14 +841,14 @@ export default function CycleTracker() {
                     required
                     value={pastStartDate}
                     onChange={(e) => setPastStartDate(e.target.value)}
-                    className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-zinc-100 focus:outline-none"
+                    className="bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-zinc-100 focus:outline-none"
                   />
                   <input
                     type="time"
                     value={pastStartTime}
                     onChange={(e) => setPastStartTime(e.target.value)}
                     placeholder="Optional time"
-                    className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-zinc-100 focus:outline-none"
+                    className="bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-zinc-100 focus:outline-none"
                   />
                 </div>
               </div>
@@ -855,14 +862,14 @@ export default function CycleTracker() {
                     required
                     value={pastEndDate}
                     onChange={(e) => setPastEndDate(e.target.value)}
-                    className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-zinc-100 focus:outline-none"
+                    className="bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-zinc-100 focus:outline-none"
                   />
                   <input
                     type="time"
                     value={pastEndTime}
                     onChange={(e) => setPastEndTime(e.target.value)}
                     placeholder="Optional time"
-                    className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-zinc-100 focus:outline-none"
+                    className="bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-zinc-100 focus:outline-none"
                   />
                 </div>
               </div>
@@ -884,7 +891,8 @@ export default function CycleTracker() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>
