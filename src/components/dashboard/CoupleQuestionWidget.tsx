@@ -4,14 +4,13 @@ import { useState } from "react";
 import { useGlobal } from "@/context/GlobalContext";
 import { getTodayCoupleQuestion } from "@/lib/couple-questions";
 import { 
-  Sparkles, 
   Heart, 
-  MessageCircle, 
   CheckCircle2, 
   Lock, 
-  HelpCircle,
-  Flame,
-  Award
+  RotateCcw,
+  Pencil,
+  Sparkles,
+  MessageCircle
 } from "lucide-react";
 
 export default function CoupleQuestionWidget() {
@@ -21,7 +20,7 @@ export default function CoupleQuestionWidget() {
     wifeName, 
     coupleDailyAnswers, 
     submitCoupleDailyAnswer,
-    sendInteraction 
+    undoCoupleDailyAnswer 
   } = useGlobal();
 
   const todayQuestion = getTodayCoupleQuestion();
@@ -32,9 +31,7 @@ export default function CoupleQuestionWidget() {
   const partnerAnswer = isHusband ? currentEntry.wifeAnswer : currentEntry.husbandAnswer;
   const partnerName = isHusband ? wifeName : husbandName;
 
-  const [selectedOption, setSelectedOption] = useState<string>("");
-  const [customText, setCustomText] = useState<string>("");
-  const [justAnswered, setJustAnswered] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const bothAnswered = !!(currentEntry.husbandAnswer && currentEntry.wifeAnswer);
   const isSameAnswer = bothAnswered && (currentEntry.husbandAnswer?.toLowerCase().trim() === currentEntry.wifeAnswer?.toLowerCase().trim());
@@ -42,9 +39,12 @@ export default function CoupleQuestionWidget() {
   const handleAnswer = (ans: string) => {
     if (!ans) return;
     submitCoupleDailyAnswer(todayQuestion.id, ans);
-    setJustAnswered(true);
-    sendInteraction("CARE_NOTE", `Answered today's couple question: "${ans}" ✨`, "PARTNER");
-    setTimeout(() => setJustAnswered(false), 3000);
+    setIsEditing(false);
+  };
+
+  const handleUndo = () => {
+    undoCoupleDailyAnswer(todayQuestion.id);
+    setIsEditing(true);
   };
 
   return (
@@ -70,58 +70,92 @@ export default function CoupleQuestionWidget() {
           &ldquo;{todayQuestion.question}&rdquo;
         </h4>
 
-        {/* Both Answered State (Similarity Gauge & Revealed Answers) */}
-        {bothAnswered ? (
+        {/* Both Answered State */}
+        {bothAnswered && !isEditing ? (
           <div className="flex flex-col gap-2.5 animate-in fade-in">
-            {/* Similarity Badge */}
-            <div className="flex items-center justify-between rounded-2xl bg-gradient-to-r from-rose-500/10 to-amber-500/10 p-3 border border-rose-200/60">
-              <span className="text-xs font-black text-[#44342B] flex items-center gap-1.5">
-                <Heart className="h-4 w-4 text-rose-500 fill-rose-500 animate-pulse" />
-                {isSameAnswer ? "100% Match! Perfect harmony ✨" : "Both Answered! Compare answers 💬"}
+            {/* Match Status Banner */}
+            <div className={`flex items-center justify-between rounded-2xl p-3 border ${
+              isSameAnswer 
+                ? "bg-gradient-to-r from-rose-500/10 to-pink-500/10 border-rose-200/80 text-rose-800" 
+                : "bg-gradient-to-r from-purple-500/10 to-amber-500/10 border-purple-200/80 text-purple-900"
+            }`}>
+              <span className="text-xs font-black flex items-center gap-1.5">
+                <Heart className={`h-4 w-4 ${isSameAnswer ? "text-rose-500 fill-rose-500 animate-pulse" : "text-purple-500 fill-purple-500"}`} />
+                {isSameAnswer ? "You both answered the same! 🎉" : "Both Answered! See responses 💬"}
               </span>
-              <span className={`text-[10px] font-black px-2.5 py-1 rounded-full shadow-2xs ${
-                isSameAnswer ? "bg-rose-500 text-white" : "bg-purple-500 text-white"
+              <span className={`text-[10px] font-black px-2.5 py-1 rounded-full shadow-2xs text-white ${
+                isSameAnswer ? "bg-rose-500" : "bg-purple-500"
               }`}>
                 {isSameAnswer ? "100% Match" : "Synced"}
               </span>
             </div>
 
-            {/* Answer Comparison Grid */}
+            {/* Answer Comparison Cards */}
             <div className="grid grid-cols-2 gap-2 text-xs">
+              {/* Husband Box */}
               <div className="flex flex-col gap-1 p-3 rounded-2xl bg-white border border-amber-200/70 shadow-2xs">
-                <span className="text-[10px] font-black text-amber-700 uppercase tracking-wider">{husbandName}&apos;s Answer</span>
-                <span className="font-extrabold text-[#44342B] leading-snug">{currentEntry.husbandAnswer}</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-xs">👦</span>
+                  <span className="text-[10px] font-black text-amber-700 uppercase tracking-wider">{husbandName}</span>
+                </div>
+                <span className="font-extrabold text-[#44342B] leading-snug">&ldquo;{currentEntry.husbandAnswer}&rdquo;</span>
               </div>
+
+              {/* Wife Box */}
               <div className="flex flex-col gap-1 p-3 rounded-2xl bg-white border border-rose-200/70 shadow-2xs">
-                <span className="text-[10px] font-black text-rose-700 uppercase tracking-wider">{wifeName}&apos;s Answer</span>
-                <span className="font-extrabold text-[#44342B] leading-snug">{currentEntry.wifeAnswer}</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-xs">👧</span>
+                  <span className="text-[10px] font-black text-rose-700 uppercase tracking-wider">{wifeName}</span>
+                </div>
+                <span className="font-extrabold text-[#44342B] leading-snug">&ldquo;{currentEntry.wifeAnswer}&rdquo;</span>
               </div>
             </div>
+
+            {/* Change / Undo Button */}
+            <button
+              onClick={handleUndo}
+              className="self-end flex items-center gap-1 text-[10px] font-bold text-[#826F66] hover:text-rose-600 transition-colors pt-1"
+            >
+              <RotateCcw className="h-3 w-3" />
+              <span>Change my answer</span>
+            </button>
           </div>
-        ) : myAnswer ? (
+        ) : myAnswer && !isEditing ? (
           /* I have answered, waiting for partner */
-          <div className="flex flex-col gap-2 p-3 rounded-2xl bg-purple-50/80 border border-purple-200/70 shadow-2xs">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-              <span className="text-xs font-bold text-slate-800">
-                You answered: <strong className="text-purple-900 font-black">&ldquo;{myAnswer}&rdquo;</strong>
-              </span>
+          <div className="flex flex-col gap-2 p-3.5 rounded-2xl bg-purple-50/80 border border-purple-200/70 shadow-2xs animate-in fade-in">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-start gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold text-[#826F66]">You answered:</span>
+                  <span className="text-xs font-black text-purple-900 leading-snug">&ldquo;{myAnswer}&rdquo;</span>
+                </div>
+              </div>
+
+              <button
+                onClick={handleUndo}
+                className="flex items-center gap-1 text-[10px] font-extrabold text-rose-600 bg-white hover:bg-rose-50 px-2.5 py-1 rounded-xl border border-rose-200 shadow-2xs transition-all active:scale-95 shrink-0"
+              >
+                <RotateCcw className="h-3 w-3" />
+                <span>Undo</span>
+              </button>
             </div>
-            <div className="flex items-center gap-1.5 text-[10px] font-bold text-purple-700">
-              <Lock className="h-3.5 w-3.5" />
+
+            <div className="flex items-center gap-1.5 text-[10px] font-bold text-purple-700 pt-1 border-t border-purple-200/40">
+              <Lock className="h-3.5 w-3.5 shrink-0" />
               <span>Waiting for {partnerName} to answer to reveal match!</span>
             </div>
           </div>
         ) : (
-          /* Not answered yet: Option Choices */
+          /* Not answered yet or in Editing Mode: Option Choices */
           <div className="flex flex-col gap-2">
             {todayQuestion.options?.map((opt, i) => (
               <button
                 key={i}
                 onClick={() => handleAnswer(opt)}
-                className="w-full text-left p-3 rounded-2xl border border-[#FFE2D1] bg-white hover:border-rose-400 hover:bg-rose-50/60 text-xs font-bold text-[#44342B] transition-all active:scale-[0.99] shadow-2xs"
+                className="w-full text-left p-3 rounded-2xl border border-[#FFE2D1] bg-white hover:border-rose-400 hover:bg-rose-50/60 text-xs font-bold text-[#44342B] transition-all active:scale-[0.99] shadow-2xs flex items-center justify-between"
               >
-                {opt}
+                <span>{opt}</span>
               </button>
             ))}
           </div>

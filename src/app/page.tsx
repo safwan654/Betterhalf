@@ -10,7 +10,6 @@ import CoupleLoveHero from "@/components/dashboard/CoupleLoveHero";
 import CoupleQuestionWidget from "@/components/dashboard/CoupleQuestionWidget";
 import CareCard from "@/components/spiritual/CareCard";
 import { MOOD_CONFIGS } from "@/lib/journal";
-import { LOVE_TESTS, calculateTestSimilarity } from "@/lib/love-tests";
 import { 
   Heart, 
   Sparkles, 
@@ -43,8 +42,7 @@ export default function Dashboard() {
     globalSelectedDate,
     periodActive, 
     sharePeriodStatus,
-    journalEntries,
-    loveTestsData
+    journalEntries
   } = useGlobal();
 
   const todayStr = new Date().toISOString().split("T")[0];
@@ -155,55 +153,6 @@ export default function Dashboard() {
                     {bothWrote ? "Unlocked ✨" : (hasWife || hasHusband) ? "1 Waiting 🔒" : "Write Today ✍️"}
                   </span>
                 </div>
-              </div>
-            </section>
-          );
-        })()}
-
-        {/* 2c. View of Love & Spicy Chemistry Preview */}
-        {(() => {
-          const test = LOVE_TESTS[0];
-          const testState = loveTestsData[test.id] || { testId: test.id, answers: {}, discussions: [] };
-          const similarity = calculateTestSimilarity(test, testState.answers || {});
-
-          return (
-            <section className="glass-panel rounded-[28px] p-5 border border-[#FFE2D1] shadow-sm flex flex-col gap-3.5 transition-all hover:border-red-300">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-xl bg-red-500/10 text-red-500">
-                    <Flame className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-black text-[#44342B]">
-                      <span className="highlight-pink font-black">View of Love</span> &amp; Spicy Tests
-                    </h3>
-                    <p className="text-[10px] font-bold text-[#826F66]">Couple Compatibility &amp; Flirty Chemistry 🔥</p>
-                  </div>
-                </div>
-
-                <Link
-                  href="/view-of-love"
-                  className="text-[10px] font-extrabold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1 rounded-full border border-red-200/60 transition-colors flex items-center gap-1 shadow-2xs"
-                >
-                  <span>Open Tests</span>
-                  <ChevronRight className="h-3 w-3" />
-                </Link>
-              </div>
-
-              <div className="flex items-center justify-between rounded-2xl bg-gradient-to-r from-red-50/70 via-rose-50/60 to-amber-50/70 p-3.5 border border-red-100">
-                <div className="flex items-center gap-2.5">
-                  <div className="flex items-center justify-center h-10 w-10 rounded-2xl bg-white text-rose-500 border border-rose-200 shadow-2xs">
-                    <Heart className="h-5 w-5 fill-rose-500 animate-pulse" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-xs font-black text-[#44342B]">Romantic &amp; Spicy Score</span>
-                    <span className="text-[10px] font-bold text-[#826F66]">4 Tests Available • Discussions Active</span>
-                  </div>
-                </div>
-
-                <span className="text-xs font-black text-white bg-gradient-to-r from-red-500 to-rose-500 px-3 py-1 rounded-full shadow-2xs">
-                  {similarity}% Match 🔥
-                </span>
               </div>
             </section>
           );

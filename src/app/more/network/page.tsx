@@ -10,7 +10,7 @@ import { useGlobal } from "@/context/GlobalContext";
 import { format, parseISO, isSameDay } from "date-fns";
 
 export default function NetworkPage() {
-  const { callsByDate, setCallsByDate, globalSelectedDate } = useGlobal();
+  const { callsByDate, setCallsByDate, globalSelectedDate, sendInteraction } = useGlobal();
 
   const outreaches = callsByDate[globalSelectedDate] || [];
 
@@ -24,7 +24,7 @@ export default function NetworkPage() {
 
     const newLog = {
       id: Date.now(),
-      name: newName,
+      name: newName.trim(),
       relation: newRelation,
       lastContacted: "Never",
       frequency: parseInt(newFreq),
@@ -37,6 +37,7 @@ export default function NetworkPage() {
       [globalSelectedDate]: [...outreaches, newLog]
     });
     
+    sendInteraction("TASK_ALERT", `Scheduled family call: ${newName.trim()} (${newRelation}) 📞`);
     setNewName("");
   };
 
@@ -48,12 +49,16 @@ export default function NetworkPage() {
   };
 
   const markContacted = (id: number) => {
+    const target = outreaches.find(o => o.id === id);
     setCallsByDate({
       ...callsByDate,
       [globalSelectedDate]: outreaches.map(o => 
         o.id === id ? { ...o, lastContacted: "Just now", due: "Next week", status: "Active" } : o
       )
     });
+    if (target) {
+      sendInteraction("TASK_ALERT", `Completed family call with ${target.name} (${target.relation}) 📞✨`);
+    }
   };
 
   return (

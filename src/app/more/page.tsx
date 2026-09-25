@@ -2,12 +2,23 @@
 
 import Header from "@/components/layout/header";
 import BottomNavigation from "@/components/layout/bottom-navigation";
-import { ShoppingCart, Dumbbell, ShieldAlert, PhoneCall, ChevronRight, CheckSquare, Activity, BookHeart, Flame, Sparkles, Heart } from "lucide-react";
+import { ShoppingCart, Dumbbell, ShieldAlert, PhoneCall, ChevronRight, CheckSquare, Activity, BookHeart, Wallet } from "lucide-react";
 import Link from "next/link";
 import { useGlobal } from "@/context/GlobalContext";
 
 export default function MoreIndex() {
-  const { pantryItems, workoutsByDate, nutritionByDate, callsByDate, vaultRecords, tasks, globalSelectedDate, journalEntries } = useGlobal();
+  const { 
+    pantryItems, 
+    workoutsByDate, 
+    nutritionByDate, 
+    callsByDate, 
+    vaultRecords, 
+    tasks, 
+    globalSelectedDate, 
+    journalEntries,
+    liquidBalances,
+    currency
+  } = useGlobal();
 
   const currentWorkouts = workoutsByDate[globalSelectedDate] || [];
   const currentNutrition = nutritionByDate[globalSelectedDate] || { husband: { protein: 0, proteinGoal: 150 }, wife: { protein: 0, proteinGoal: 100 } };
@@ -31,8 +42,20 @@ export default function MoreIndex() {
         : `${activeTasks.length} active ${activeTasks.length === 1 ? "task" : "tasks"}`;
 
   const totalDiaries = Object.keys(journalEntries || {}).length;
+  const totalLiquid = (liquidBalances?.husband || 0) + (liquidBalances?.wife || 0);
 
   const modules = [
+    {
+      id: "finance",
+      title: "Shared Finances & Wealth",
+      desc: "Track shared pool, liquid balances & bills.",
+      status: `${currency}${totalLiquid.toLocaleString()} liquid`,
+      icon: Wallet,
+      color: "text-emerald-500",
+      bg: "bg-emerald-500/10",
+      tagColor: "text-emerald-600 bg-emerald-50 border-emerald-200",
+      href: "/finance"
+    },
     {
       id: "journal",
       title: "Shared Journal for Two 🍒",
@@ -43,17 +66,6 @@ export default function MoreIndex() {
       bg: "bg-rose-500/10",
       tagColor: "text-rose-600 bg-rose-50 border-rose-200",
       href: "/journal"
-    },
-    {
-      id: "view_of_love",
-      title: "View of Love & Spicy Chemistry 🔥",
-      desc: "Compatibility gauges, flirty tests & couple discussion threads.",
-      status: "4 tests active • 100% Match",
-      icon: Flame,
-      color: "text-red-500",
-      bg: "bg-red-500/10",
-      tagColor: "text-red-600 bg-red-50 border-red-200",
-      href: "/view-of-love"
     },
     {
       id: "tasks",

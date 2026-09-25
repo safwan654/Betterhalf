@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Sparkles, Activity, Wallet, Grip } from "lucide-react";
+import { Home, Sparkles, Activity, BookHeart, Grip } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function BottomNavigation() {
@@ -10,7 +10,7 @@ export default function BottomNavigation() {
 
   const navItems = [
     { label: "Home", href: "/", icon: Home },
-    { label: "Finance", href: "/finance", icon: Wallet },
+    { label: "Journal", href: "/journal", icon: BookHeart },
     { label: "Spiritual", href: "/spiritual", icon: Sparkles },
     { label: "Health", href: "/health", icon: Activity },
     { label: "More", href: "/more", icon: Grip },
