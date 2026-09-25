@@ -9,6 +9,8 @@ import EntryAnimation from "@/components/animations/EntryAnimation";
 import CoupleLoveHero from "@/components/dashboard/CoupleLoveHero";
 import CoupleQuestionWidget from "@/components/dashboard/CoupleQuestionWidget";
 import CareCard from "@/components/spiritual/CareCard";
+import { MOOD_CONFIGS } from "@/lib/journal";
+import { LOVE_TESTS, calculateTestSimilarity } from "@/lib/love-tests";
 import { 
   Heart, 
   Sparkles, 
@@ -18,7 +20,11 @@ import {
   Check, 
   Flame, 
   Gamepad2, 
-  CalendarClock
+  CalendarClock,
+  BookHeart,
+  Lock,
+  Pencil,
+  ChevronRight
 } from "lucide-react";
 import Link from "next/link";
 
@@ -36,7 +42,9 @@ export default function Dashboard() {
     currency, 
     globalSelectedDate,
     periodActive, 
-    sharePeriodStatus
+    sharePeriodStatus,
+    journalEntries,
+    loveTestsData
   } = useGlobal();
 
   const todayStr = new Date().toISOString().split("T")[0];
@@ -75,6 +83,131 @@ export default function Dashboard() {
 
         {/* 2. "Discover More About Each Other" Daily Couple Question */}
         <CoupleQuestionWidget />
+
+        {/* 2b. Shared Journal for Two (Today's Moods & Lock-Reveal Diary) */}
+        {(() => {
+          const todayEntry = journalEntries[todayStr];
+          const hasWife = !!todayEntry?.wife;
+          const hasHusband = !!todayEntry?.husband;
+          const bothWrote = hasWife && hasHusband;
+          const wifeMood = todayEntry?.wife?.mood ? MOOD_CONFIGS[todayEntry.wife.mood] : null;
+          const husbandMood = todayEntry?.husband?.mood ? MOOD_CONFIGS[todayEntry.husband.mood] : null;
+          const isSpicy = todayEntry?.wife?.mood === "SPICY" || todayEntry?.husband?.mood === "SPICY";
+
+          return (
+            <section className="glass-panel rounded-[28px] p-5 border border-[#FFE2D1] shadow-sm flex flex-col gap-3.5 transition-all hover:border-rose-300">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-xl bg-rose-500/10 text-rose-500">
+                    <BookHeart className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-black text-[#44342B]">
+                      <span className="highlight-pink font-black">Shared Journal</span> Just for Two
+                    </h3>
+                    <p className="text-[10px] font-bold text-[#826F66]">Today&apos;s Moods &amp; Private Diary 🍒</p>
+                  </div>
+                </div>
+
+                <Link
+                  href="/journal"
+                  className="text-[10px] font-extrabold text-rose-600 bg-rose-50 hover:bg-rose-100 px-3 py-1 rounded-full border border-rose-200/60 transition-colors flex items-center gap-1 shadow-2xs"
+                >
+                  <span>Calendar</span>
+                  <ChevronRight className="h-3 w-3" />
+                </Link>
+              </div>
+
+              {/* Mood Avatars & Status Banner */}
+              <div className="flex items-center justify-between rounded-2xl bg-[#FFF9F4] p-3.5 border border-[#FFE2D1]">
+                <div className="flex items-center gap-3">
+                  {/* Wife Avatar Pill */}
+                  <div className="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-xl border border-rose-100 shadow-2xs">
+                    <span className="text-base">{wifeMood?.emoji || "👧"}</span>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] font-black text-rose-700">{wifeName}</span>
+                      <span className="text-[8px] font-bold text-[#826F66]">{wifeMood ? wifeMood.label.split(" ")[0] : "Thinking..."}</span>
+                    </div>
+                  </div>
+
+                  {/* Heart / Flame Connection */}
+                  <span className="text-xs">{isSpicy ? "🔥" : "🤍"}</span>
+
+                  {/* Husband Avatar Pill */}
+                  <div className="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-xl border border-amber-100 shadow-2xs">
+                    <span className="text-base">{husbandMood?.emoji || "👦"}</span>
+                    <div className="flex flex-col">
+                      <span className="text-[9px] font-black text-amber-700">{husbandName}</span>
+                      <span className="text-[8px] font-bold text-[#826F66]">{husbandMood ? husbandMood.label.split(" ")[0] : "Thinking..."}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Status Pill */}
+                <div className="flex flex-col items-end">
+                  <span className={`text-[9px] font-black px-2.5 py-1 rounded-full border shadow-2xs ${
+                    bothWrote
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      : (hasWife || hasHusband)
+                      ? "bg-amber-50 text-amber-700 border-amber-200"
+                      : "bg-rose-50 text-rose-600 border-rose-200"
+                  }`}>
+                    {bothWrote ? "Unlocked ✨" : (hasWife || hasHusband) ? "1 Waiting 🔒" : "Write Today ✍️"}
+                  </span>
+                </div>
+              </div>
+            </section>
+          );
+        })()}
+
+        {/* 2c. View of Love & Spicy Chemistry Preview */}
+        {(() => {
+          const test = LOVE_TESTS[0];
+          const testState = loveTestsData[test.id] || { testId: test.id, answers: {}, discussions: [] };
+          const similarity = calculateTestSimilarity(test, testState.answers || {});
+
+          return (
+            <section className="glass-panel rounded-[28px] p-5 border border-[#FFE2D1] shadow-sm flex flex-col gap-3.5 transition-all hover:border-red-300">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-xl bg-red-500/10 text-red-500">
+                    <Flame className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-black text-[#44342B]">
+                      <span className="highlight-pink font-black">View of Love</span> &amp; Spicy Tests
+                    </h3>
+                    <p className="text-[10px] font-bold text-[#826F66]">Couple Compatibility &amp; Flirty Chemistry 🔥</p>
+                  </div>
+                </div>
+
+                <Link
+                  href="/view-of-love"
+                  className="text-[10px] font-extrabold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-1 rounded-full border border-red-200/60 transition-colors flex items-center gap-1 shadow-2xs"
+                >
+                  <span>Open Tests</span>
+                  <ChevronRight className="h-3 w-3" />
+                </Link>
+              </div>
+
+              <div className="flex items-center justify-between rounded-2xl bg-gradient-to-r from-red-50/70 via-rose-50/60 to-amber-50/70 p-3.5 border border-red-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex items-center justify-center h-10 w-10 rounded-2xl bg-white text-rose-500 border border-rose-200 shadow-2xs">
+                    <Heart className="h-5 w-5 fill-rose-500 animate-pulse" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-black text-[#44342B]">Romantic &amp; Spicy Score</span>
+                    <span className="text-[10px] font-bold text-[#826F66]">4 Tests Available • Discussions Active</span>
+                  </div>
+                </div>
+
+                <span className="text-xs font-black text-white bg-gradient-to-r from-red-500 to-rose-500 px-3 py-1 rounded-full shadow-2xs">
+                  {similarity}% Match 🔥
+                </span>
+              </div>
+            </section>
+          );
+        })()}
 
         {/* 3. Weekly Timeline */}
         <section className="glass-panel rounded-[28px] p-5 shadow-sm border border-[#FFE2D1]">

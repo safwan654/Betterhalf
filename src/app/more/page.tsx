@@ -2,12 +2,12 @@
 
 import Header from "@/components/layout/header";
 import BottomNavigation from "@/components/layout/bottom-navigation";
-import { ShoppingCart, Dumbbell, ShieldAlert, PhoneCall, ChevronRight, CheckSquare, Activity } from "lucide-react";
+import { ShoppingCart, Dumbbell, ShieldAlert, PhoneCall, ChevronRight, CheckSquare, Activity, BookHeart, Flame, Sparkles, Heart } from "lucide-react";
 import Link from "next/link";
 import { useGlobal } from "@/context/GlobalContext";
 
 export default function MoreIndex() {
-  const { pantryItems, workoutsByDate, nutritionByDate, callsByDate, vaultRecords, tasks, globalSelectedDate } = useGlobal();
+  const { pantryItems, workoutsByDate, nutritionByDate, callsByDate, vaultRecords, tasks, globalSelectedDate, journalEntries } = useGlobal();
 
   const currentWorkouts = workoutsByDate[globalSelectedDate] || [];
   const currentNutrition = nutritionByDate[globalSelectedDate] || { husband: { protein: 0, proteinGoal: 150 }, wife: { protein: 0, proteinGoal: 100 } };
@@ -30,7 +30,31 @@ export default function MoreIndex() {
         ? `${highPriorityActive} high priority` 
         : `${activeTasks.length} active ${activeTasks.length === 1 ? "task" : "tasks"}`;
 
+  const totalDiaries = Object.keys(journalEntries || {}).length;
+
   const modules = [
+    {
+      id: "journal",
+      title: "Shared Journal for Two 🍒",
+      desc: "Daily mood avatars, private diary notes & lock-reveal entries.",
+      status: `${totalDiaries} memories logged`,
+      icon: BookHeart,
+      color: "text-rose-500",
+      bg: "bg-rose-500/10",
+      tagColor: "text-rose-600 bg-rose-50 border-rose-200",
+      href: "/journal"
+    },
+    {
+      id: "view_of_love",
+      title: "View of Love & Spicy Chemistry 🔥",
+      desc: "Compatibility gauges, flirty tests & couple discussion threads.",
+      status: "4 tests active • 100% Match",
+      icon: Flame,
+      color: "text-red-500",
+      bg: "bg-red-500/10",
+      tagColor: "text-red-600 bg-red-50 border-red-200",
+      href: "/view-of-love"
+    },
     {
       id: "tasks",
       title: "Shared Tasks & Chores",

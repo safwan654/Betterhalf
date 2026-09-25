@@ -5,6 +5,8 @@ import { format } from "date-fns";
 import { db } from "@/lib/firebase";
 import { doc, onSnapshot, setDoc, getDoc } from "firebase/firestore";
 import { UserLocation, CITY_PRESETS } from "@/lib/prayer-times";
+import { JournalDayEntry, SingleJournalEntry, INITIAL_JOURNAL_ENTRIES } from "@/lib/journal";
+import { LoveTestDataState, INITIAL_TEST_DATA, DiscussionMessage, TestAnswerEntry } from "@/lib/love-tests";
 
 export type PrayerStatus = "ON_TIME" | "LATE" | "QADA" | "EXEMPT" | "MISSED" | null;
 export interface Prayer { id: string; name: string; time: string; husband: PrayerStatus; wife: PrayerStatus; }
@@ -77,6 +79,16 @@ interface GlobalContextType {
   setRelationshipStartDate: (date: string) => void;
   coupleDailyAnswers: Record<string, CoupleDailyAnswer>;
   submitCoupleDailyAnswer: (questionId: string, answer: string) => void;
+  
+  // Shared Journal Just for Two
+  journalEntries: Record<string, JournalDayEntry>;
+  saveJournalEntry: (date: string, entry: Partial<SingleJournalEntry>) => void;
+  reactToJournalEntry: (date: string, reactionEmoji: string) => void;
+
+  // View of Love Tests & Discussion
+  loveTestsData: Record<string, LoveTestDataState>;
+  submitLoveTestAnswer: (testId: string, questionId: string, answer: string) => void;
+  addTestDiscussionMessage: (testId: string, text: string, isSpicy?: boolean) => void;
   
   husbandTimezone: string;
   setHusbandTimezone: (tz: string) => void;
@@ -189,6 +201,8 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
   const [relationshipMode, setRelationshipModeState] = useState<"TOGETHER" | "DISTANCE">("TOGETHER");
   const [relationshipStartDate, setRelationshipStartDateState] = useState<string>("2024-05-20");
   const [coupleDailyAnswers, setCoupleDailyAnswersState] = useState<Record<string, CoupleDailyAnswer>>({});
+  const [journalEntries, setJournalEntriesState] = useState<Record<string, JournalDayEntry>>(INITIAL_JOURNAL_ENTRIES);
+  const [loveTestsData, setLoveTestsDataState] = useState<Record<string, LoveTestDataState>>(INITIAL_TEST_DATA);
   const [husbandTimezone, setHusbandTimezoneState] = useState("America/New_York");
   const [wifeTimezone, setWifeTimezoneState] = useState("America/Los_Angeles");
   const [husbandName, setHusbandNameState] = useState("Husband");
@@ -280,6 +294,12 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
 
     const savedCoupleAnswers = localStorage.getItem("bh_couple_answers");
     if (savedCoupleAnswers) try { setCoupleDailyAnswersState(JSON.parse(savedCoupleAnswers)); } catch (e) {}
+
+    const savedJournal = localStorage.getItem("bh_journal_entries");
+    if (savedJournal) try { setJournalEntriesState(JSON.parse(savedJournal)); } catch (e) {}
+
+    const savedLoveTests = localStorage.getItem("bh_love_tests");
+    if (savedLoveTests) try { setLoveTestsDataState(JSON.parse(savedLoveTests)); } catch (e) {}
   }, []);
 
   // 2. Firebase Sync - Subscribe to Household Document
@@ -293,6 +313,10 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
       if (snapshot.exists()) {
         const data = snapshot.data();
         if (data.relationshipMode) setRelationshipModeState(data.relationshipMode);
+        if (data.relationshipStartDate) setRelationshipStartDateState(data.relationshipStartDate);
+        if (data.coupleDailyAnswers) setCoupleDailyAnswersState(data.coupleDailyAnswers);
+        if (data.journalEntries) setJournalEntriesState(data.journalEntries);
+        if (data.loveTestsData) setLoveTestsDataState(data.loveTestsData);
         if (data.husbandTimezone) setHusbandTimezoneState(data.husbandTimezone);
         if (data.wifeTimezone) setWifeTimezoneState(data.wifeTimezone);
         if (data.husbandName) setHusbandNameState(data.husbandName);
@@ -846,6 +870,114 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     updateFirebase({ coupleDailyAnswers: updated });
   };
 
+  const saveJournalEntry = (date: string, entry: Partial<SingleJournalEntry>) => {
+    const isHusband = activeUserRef.current === "HUSBAND";
+    const dayEntry = journalEntries[date] || { date };
+    const existingUserEntry = isHusband ? dayEntry.husband : dayEntry.wife;
+    const updatedUserEntry: SingleJournalEntry = {
+      mood: entry.mood || existingUserEntry?.mood || "IN_LOVE",
+      text: entry.text !== undefined ? entry.text : (existingUserEntry?.text || ""),
+      timestamp: Date.now(),
+      tags: entry.tags || existingUserEntry?.tags || [],
+      photo: entry.photo !== undefined ? entry.photo : existingUserEntry?.photo,
+      spicyScore: entry.spicyScore !== undefined ? entry.spicyScore : existingUserEntry?.spicyScore,
+    };
+
+    const updatedDay: JournalDayEntry = {
+      ...dayEntry,
+      [isHusband ? "husband" : "wife"]: updatedUserEntry,
+    };
+
+    const updatedAll = {
+      ...journalEntries,
+      [date]: updatedDay
+    };
+
+    setJournalEntriesState(updatedAll);
+    try { localStorage.setItem("bh_journal_entries", JSON.stringify(updatedAll)); } catch (e) {}
+    updateFirebase({ journalEntries: updatedAll });
+    sendInteraction(entry.mood === "SPICY" ? "KISS" : "CARE_NOTE", `Wrote a shared diary note for ${date} 💌`, "PARTNER");
+  };
+
+  const reactToJournalEntry = (date: string, reactionEmoji: string) => {
+    const isHusband = activeUserRef.current === "HUSBAND";
+    const dayEntry = journalEntries[date] || { date };
+    const currentReactions = dayEntry.reactions || {};
+    const updatedDay: JournalDayEntry = {
+      ...dayEntry,
+      reactions: {
+        ...currentReactions,
+        [isHusband ? "husband" : "wife"]: reactionEmoji
+      }
+    };
+    const updatedAll = {
+      ...journalEntries,
+      [date]: updatedDay
+    };
+    setJournalEntriesState(updatedAll);
+    try { localStorage.setItem("bh_journal_entries", JSON.stringify(updatedAll)); } catch (e) {}
+    updateFirebase({ journalEntries: updatedAll });
+    sendInteraction("KISS", `Reacted ${reactionEmoji} to your diary entry!`, "PARTNER");
+  };
+
+  const submitLoveTestAnswer = (testId: string, questionId: string, answer: string) => {
+    const isHusband = activeUserRef.current === "HUSBAND";
+    const testState = loveTestsData[testId] || { testId, answers: {}, discussions: [] };
+    const qAnswer = testState.answers[questionId] || { questionId };
+
+    const updatedQAnswer: TestAnswerEntry = {
+      ...qAnswer,
+      [isHusband ? "husbandAnswer" : "wifeAnswer"]: answer,
+      [isHusband ? "husbandTimestamp" : "wifeTimestamp"]: Date.now()
+    };
+
+    const updatedState: LoveTestDataState = {
+      ...testState,
+      answers: {
+        ...testState.answers,
+        [questionId]: updatedQAnswer
+      }
+    };
+
+    const updatedAll = {
+      ...loveTestsData,
+      [testId]: updatedState
+    };
+
+    setLoveTestsDataState(updatedAll);
+    try { localStorage.setItem("bh_love_tests", JSON.stringify(updatedAll)); } catch (e) {}
+    updateFirebase({ loveTestsData: updatedAll });
+    sendInteraction("CARE_NOTE", `Answered a question in "${testId.replace(/_/g, ' ')}" test! ✨`, "PARTNER");
+  };
+
+  const addTestDiscussionMessage = (testId: string, text: string, isSpicy?: boolean) => {
+    const isHusband = activeUserRef.current === "HUSBAND";
+    const testState = loveTestsData[testId] || { testId, answers: {}, discussions: [] };
+    const newMessage: DiscussionMessage = {
+      id: `msg_${Date.now()}`,
+      sender: isHusband ? "HUSBAND" : "WIFE",
+      senderName: isHusband ? husbandName : wifeName,
+      text,
+      timestamp: Date.now(),
+      isSpicy: !!isSpicy
+    };
+
+    const updatedState: LoveTestDataState = {
+      ...testState,
+      discussions: [...(testState.discussions || []), newMessage]
+    };
+
+    const updatedAll = {
+      ...loveTestsData,
+      [testId]: updatedState
+    };
+
+    setLoveTestsDataState(updatedAll);
+    try { localStorage.setItem("bh_love_tests", JSON.stringify(updatedAll)); } catch (e) {}
+    updateFirebase({ loveTestsData: updatedAll });
+    sendInteraction(isSpicy ? "KISS" : "CARE_NOTE", `${isHusband ? husbandName : wifeName}: "${text}" 💬`, "PARTNER");
+  };
+
   if (!isMounted) return null;
 
   return (
@@ -855,6 +987,8 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
       relationshipMode, setRelationshipMode,
       relationshipStartDate, setRelationshipStartDate,
       coupleDailyAnswers, submitCoupleDailyAnswer,
+      journalEntries, saveJournalEntry, reactToJournalEntry,
+      loveTestsData, submitLoveTestAnswer, addTestDiscussionMessage,
       husbandTimezone, setHusbandTimezone,
       wifeTimezone, setWifeTimezone,
       husbandLocation, setHusbandLocation,
