@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useGlobal, PeriodCycle } from "@/context/GlobalContext";
+import { useGlobal, PeriodCycle, OvulationLog, CycleSettings } from "@/context/GlobalContext";
+import { calculateCyclePhases, CyclePhaseInfo } from "@/lib/cycle-calculator";
 import { 
   format, 
   parseISO, 
@@ -10,7 +11,8 @@ import {
   addDays, 
   startOfDay, 
   isBefore, 
-  isAfter 
+  isAfter, 
+  isSameDay 
 } from "date-fns";
 import { 
   Moon as MoonIcon, 
@@ -32,8 +34,15 @@ import {
   CalendarPlus as CalendarPlusIcon,
   Flower2 as Flower2Icon,
   Send as SendIcon,
-  Coffee as CoffeeIcon,
-  Smile as SmileIcon
+  Smile as SmileIcon,
+  Flame as FlameIcon,
+  Baby as BabyIcon,
+  Thermometer as ThermometerIcon,
+  Activity as ActivityIcon,
+  Info as InfoIcon,
+  SlidersHorizontal as SlidersIcon,
+  Sun as SunIcon,
+  Zap as ZapIcon
 } from "lucide-react";
 
 export default function CycleTracker() {
@@ -43,7 +52,13 @@ export default function CycleTracker() {
     husbandName,
     periodActive, 
     periodStartDate, 
+    periodEndDate, 
     periodCycles, 
+    cycleSettings,
+    setCycleSettings,
+    ovulationLogs,
+    logDailyFertility,
+    deleteDailyFertility,
     markPeriodStart, 
     markPeriodEnd, 
     updatePeriodCycle,
@@ -51,7 +66,8 @@ export default function CycleTracker() {
     addPastPeriodCycle,
     sharePeriodStatus, 
     setSharePeriodStatus,
-    sendCareNote
+    sendCareNote,
+    globalSelectedDate
   } = useGlobal();
 
   const [mounted, setMounted] = useState(false);
@@ -81,24 +97,48 @@ export default function CycleTracker() {
   const [pastEndDate, setPastEndDate] = useState(format(addDays(new Date(), -25), "yyyy-MM-dd"));
   const [pastEndTime, setPastEndTime] = useState("");
 
-  const cycleDay = periodStartDate 
-    ? Math.max(1, differenceInDays(new Date(), parseISO(periodStartDate)) + 1)
-    : 1;
+  // Cycle & Ovulation Settings Modal
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [tempCycleLength, setTempCycleLength] = useState(cycleSettings?.cycleLength || 28);
+  const [tempPeriodDuration, setTempPeriodDuration] = useState(cycleSettings?.periodDuration || 5);
+  const [tempLutealLength, setTempLutealLength] = useState(cycleSettings?.lutealLength || 14);
 
-  // Average duration
+  // Daily Fertility & Ovulation Symptom Log Modal
+  const [showLogModal, setShowLogModal] = useState(false);
+  const [logModalDate, setLogModalDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [tempLhTest, setTempLhTest] = useState<"NOT_TESTED" | "LOW" | "HIGH" | "PEAK">("NOT_TESTED");
+  const [tempCervicalMucus, setTempCervicalMucus] = useState<"DRY" | "STICKY" | "CREAMY" | "WATERY" | "EGG_WHITE">("DRY");
+  const [tempBbt, setTempBbt] = useState("");
+  const [tempSymptoms, setTempSymptoms] = useState<string[]>([]);
+  const [tempIntimacy, setTempIntimacy] = useState(false);
+  const [tempNotes, setTempNotes] = useState("");
+
+  // Selected Day in Interactive Cycle Map
+  const [selectedMapDay, setSelectedMapDay] = useState<number | null>(null);
+
+  // Calculate historical average duration if available
   const completedCycles = periodCycles.filter(c => c.durationDays);
-  const avgDuration = completedCycles.length > 0
+  const avgHistoricalDuration = completedCycles.length > 0
     ? Math.round(completedCycles.reduce((acc, c) => acc + (c.durationDays || 5), 0) / completedCycles.length)
-    : 5;
+    : (cycleSettings?.periodDuration || 5);
 
   const hasLoggedCycles = periodCycles.length > 0;
+  const latestCycle = periodCycles[0];
+  const activeOrLatestStart = periodStartDate || latestCycle?.startDate;
 
-  // Calculate estimated next period date
-  const lastCycle = periodCycles[0];
-  const lastStartDate = lastCycle?.startDate || periodStartDate;
-  const baseDate = lastStartDate ? parseISO(lastStartDate) : new Date();
-  const nextEstimatedDate = addDays(baseDate, 28);
-  const daysUntilNext = differenceInDays(nextEstimatedDate, new Date());
+  // Calculate full cycle phase and ovulation info
+  const cycleInfo: CyclePhaseInfo | null = calculateCyclePhases({
+    startDateStr: activeOrLatestStart,
+    periodActive,
+    cycleLength: cycleSettings?.cycleLength || 28,
+    periodDuration: cycleSettings?.periodDuration || avgHistoricalDuration || 5,
+    lutealLength: cycleSettings?.lutealLength || 14,
+    currentDate: new Date()
+  });
+
+  // Cycle Day & Stats
+  const currentCycleDay = cycleInfo?.cycleDay || 1;
+  const totalDays = cycleSettings?.cycleLength || 28;
 
   // Handle Start / End Cycle
   const openStartModal = () => {
@@ -211,6 +251,56 @@ export default function CycleTracker() {
     }
   };
 
+  // Handle Cycle Settings Save
+  const handleSaveSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    setCycleSettings({
+      cycleLength: Number(tempCycleLength),
+      periodDuration: Number(tempPeriodDuration),
+      lutealLength: Number(tempLutealLength)
+    });
+    setShowSettingsModal(false);
+    setConfirmToast("Cycle settings saved! ⚙️");
+    setTimeout(() => setConfirmToast(null), 3000);
+  };
+
+  // Handle Daily Fertility Log Modal Open
+  const openDailyLogModal = (dateStr: string = format(new Date(), "yyyy-MM-dd")) => {
+    setLogModalDate(dateStr);
+    const existing = ovulationLogs[dateStr] || {};
+    setTempLhTest(existing.lhTest || "NOT_TESTED");
+    setTempCervicalMucus(existing.cervicalMucus || "DRY");
+    setTempBbt(existing.bbt || "");
+    setTempSymptoms(existing.symptoms || []);
+    setTempIntimacy(!!existing.intimacy);
+    setTempNotes(existing.notes || "");
+    setShowLogModal(true);
+  };
+
+  const handleSaveDailyLog = (e: React.FormEvent) => {
+    e.preventDefault();
+    logDailyFertility(logModalDate, {
+      date: logModalDate,
+      lhTest: tempLhTest,
+      cervicalMucus: tempCervicalMucus,
+      bbt: tempBbt || undefined,
+      symptoms: tempSymptoms,
+      intimacy: tempIntimacy,
+      notes: tempNotes || undefined
+    });
+    setShowLogModal(false);
+    setConfirmToast("Daily fertility symptoms logged! 🌸");
+    setTimeout(() => setConfirmToast(null), 3000);
+  };
+
+  const toggleSymptom = (sym: string) => {
+    if (tempSymptoms.includes(sym)) {
+      setTempSymptoms(tempSymptoms.filter(s => s !== sym));
+    } else {
+      setTempSymptoms([...tempSymptoms, sym]);
+    }
+  };
+
   const handleDispatchCareNote = (text: string) => {
     sendCareNote(text);
     setShowHusbandCareSheet(false);
@@ -219,38 +309,36 @@ export default function CycleTracker() {
     setTimeout(() => setConfirmToast(null), 3500);
   };
 
-  // Contextual advice for Husband
-  const getHusbandContextualAdvice = () => {
-    if (periodActive) {
-      if (cycleDay <= 2) {
-        return "She might be experiencing cramps and fatigue today. Extra warmth, rest, or warm tea will help 🤍";
-      } else if (cycleDay <= 4) {
-        return "Mid-cycle check-in: Ask how she's feeling or offer a favorite comfort snack 🍵";
-      } else {
-        return "Cycle is easing up: Send a sweet love note and check if she needs anything ✨";
-      }
-    } else {
-      if (daysUntilNext <= 3 && hasLoggedCycles) {
-        return "Cycle approaching in a few days — gentle reminder to hydrate & take it easy 💧";
-      } else {
-        return "Pre-cycle wellness: Keeping her healthy, hydrated & rested ✨";
-      }
-    }
-  };
+  const SYMPTOM_OPTIONS = [
+    "Mild Cramping",
+    "Tender Breasts",
+    "High Energy",
+    "Libido Spike",
+    "Bloating",
+    "Headache",
+    "Mood Shift",
+    "Acne / Skin Glow",
+    "Fatigue",
+    "Nausea"
+  ];
 
   // ==========================================
-  // 1. HUSBAND VIEW (Scoped Insights & Multi-Action Care)
+  // 1. HUSBAND VIEW (Scoped Insights, Ovulation Awareness & Care)
   // ==========================================
   if (activeUser === "HUSBAND") {
     if (!sharePeriodStatus) {
       return null;
     }
 
+    const isFertileNow = cycleInfo?.phase === "FERTILE_WINDOW" || cycleInfo?.phase === "OVULATION_DAY";
+
     return (
       <div className={`glass-panel p-5 rounded-3xl transition-all duration-300 flex flex-col gap-3.5 shadow-sm ${
         periodActive 
           ? "border border-rose-300 dark:border-rose-900/60 bg-gradient-to-br from-rose-50 via-pink-50/50 to-white dark:from-rose-950/30 dark:via-zinc-900 dark:to-zinc-900 shadow-md shadow-rose-500/5"
-          : "border border-purple-200/60 dark:border-purple-900/40 bg-gradient-to-br from-purple-50/50 via-white to-slate-50 dark:from-purple-950/20 dark:via-zinc-900 dark:to-zinc-900"
+          : isFertileNow
+          ? "border border-purple-300 dark:border-purple-900/60 bg-gradient-to-br from-purple-50 via-pink-50/30 to-white dark:from-purple-950/30 dark:via-zinc-900 dark:to-zinc-900 shadow-md shadow-purple-500/5"
+          : "border border-slate-200/60 dark:border-zinc-800 bg-gradient-to-br from-slate-50/50 via-white to-purple-50/20 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-900"
       }`}>
         
         {/* Header with Clear Current State Indicator */}
@@ -259,52 +347,83 @@ export default function CycleTracker() {
             <div className={`p-2.5 rounded-2xl shadow-sm ${
               periodActive 
                 ? "bg-rose-500 text-white shadow-rose-500/20" 
+                : isFertileNow
+                ? "bg-purple-600 text-white shadow-purple-500/20"
                 : "bg-purple-500/10 text-purple-600 dark:text-purple-400"
             }`}>
-              {periodActive ? <Flower2Icon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
+              {periodActive ? (
+                <Flower2Icon className="h-5 w-5" />
+              ) : isFertileNow ? (
+                <SparklesIcon className="h-5 w-5" />
+              ) : (
+                <MoonIcon className="h-5 w-5" />
+              )}
             </div>
             <div className="flex flex-col">
               <span className={`text-[10px] font-black uppercase tracking-wider ${
-                periodActive ? "text-rose-500" : "text-purple-600 dark:text-purple-400"
+                periodActive 
+                  ? "text-rose-500" 
+                  : isFertileNow 
+                  ? "text-purple-600 dark:text-purple-400" 
+                  : "text-slate-500 dark:text-zinc-400"
               }`}>
-                {periodActive ? `${wifeName}'s Cycle Status` : "Women's Health Insights"}
+                {wifeName}&apos;s Cycle &amp; Fertility
               </span>
               <h4 className="text-sm font-black text-slate-800 dark:text-zinc-100">
-                {periodActive ? `🌸 Cycle Active · Day ${cycleDay}` : `${wifeName}'s Cycle Preview`}
+                {periodActive 
+                  ? `🌸 Period Active · Day ${currentCycleDay}` 
+                  : cycleInfo 
+                  ? `${cycleInfo.phaseTitle} · Day ${currentCycleDay}` 
+                  : `${wifeName}&apos;s Cycle Preview`}
               </h4>
             </div>
           </div>
 
-          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
+          <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full ${
             periodActive 
               ? "text-rose-600 bg-rose-500/10 border border-rose-200 dark:border-rose-900/40" 
-              : "text-purple-700 dark:text-purple-300 bg-purple-500/10"
+              : isFertileNow
+              ? "text-purple-700 bg-purple-500/10 border border-purple-200 dark:border-purple-900/40 font-black"
+              : "text-slate-600 dark:text-zinc-300 bg-slate-100 dark:bg-zinc-800"
           }`}>
-            {periodActive ? "Resting (Exempt)" : (hasLoggedCycles ? (daysUntilNext > 0 ? `In ~${daysUntilNext} days` : "Approaching") : "Awaiting data")}
+            {periodActive 
+              ? "Resting (Exempt)" 
+              : cycleInfo 
+              ? cycleInfo.fertilityBadge 
+              : (hasLoggedCycles ? "Tracking" : "Awaiting data")}
           </span>
         </div>
 
-        {/* Contextual Dynamic Caption */}
-        <div className="p-3 rounded-2xl bg-white/70 dark:bg-zinc-900/70 border border-slate-100 dark:border-zinc-800 flex items-center justify-between text-xs">
-          <p className="text-[11px] text-slate-600 dark:text-zinc-300 leading-relaxed">
-            {getHusbandContextualAdvice()}
+        {/* Dynamic Contextual Guidance for Husband */}
+        <div className="p-3 rounded-2xl bg-white/80 dark:bg-zinc-900/80 border border-slate-100 dark:border-zinc-800 flex flex-col gap-1 text-xs">
+          <p className="text-[11px] text-slate-600 dark:text-zinc-300 leading-relaxed font-medium">
+            {cycleInfo?.husbandAdvice || "Keeping her supported, healthy & loved throughout her cycle ✨"}
           </p>
+          
+          {/* Quick Upcoming Forecast for Husband */}
+          {cycleInfo && !periodActive && (
+            <div className="flex items-center gap-3 pt-1 text-[10px] text-slate-500 dark:text-zinc-400 border-t border-slate-100/60 dark:border-zinc-800/60">
+              <span>🌟 Next Ovulation: <strong>{cycleInfo.daysUntilOvulation > 0 ? `In ~${cycleInfo.daysUntilOvulation} days (${format(cycleInfo.ovulationDate, "MMM d")})` : "Today"}</strong></span>
+              <span>•</span>
+              <span>🌸 Next Period: <strong>{cycleInfo.daysUntilNextPeriod > 0 ? `In ~${cycleInfo.daysUntilNextPeriod} days` : "Due soon"}</strong></span>
+            </div>
+          )}
         </div>
 
         {/* Care Action Header & Multi-Option Trigger */}
         <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-zinc-800">
           <span className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400 flex items-center gap-1.5">
-            <HeartIcon className="h-3.5 w-3.5 text-rose-500 fill-rose-500" /> Send attentiveness & care
+            <HeartIcon className="h-3.5 w-3.5 text-rose-500 fill-rose-500" /> Send attentiveness &amp; care
           </span>
           <button
             onClick={() => setShowHusbandCareSheet(true)}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold text-white shadow-sm transition-all active:scale-95 flex items-center gap-1.5 ${
               periodActive 
                 ? "bg-rose-500 hover:bg-rose-600 shadow-rose-500/20" 
-                : "bg-purple-500 hover:bg-purple-600 shadow-purple-500/20"
+                : "bg-purple-600 hover:bg-purple-700 shadow-purple-500/20"
             }`}
           >
-            <SparklesIcon className="h-3.5 w-3.5" /> Send Care
+            <SparklesIcon className="h-3.5 w-3.5" /> Send Care Note
           </button>
         </div>
 
@@ -314,13 +433,13 @@ export default function CycleTracker() {
           </span>
         )}
 
-        {/* Husband Multi-Option Care Modal / Sheet */}
+        {/* Husband Multi-Option Care Modal */}
         {mounted && showHusbandCareSheet && createPortal(
           <div className="fixed inset-0 z-[9999] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
             <div className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 w-full max-w-sm max-h-[85vh] overflow-y-auto my-auto rounded-3xl p-5 shadow-2xl border border-slate-200 dark:border-zinc-800 flex flex-col gap-3.5 animate-in fade-in zoom-in-95 duration-200">
               <div className="sticky -top-5 bg-white dark:bg-zinc-900 pt-1 pb-2.5 z-10 flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 -mx-1 px-1">
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-rose-500">Love & Care</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-rose-500">Love &amp; Care</span>
                   <h3 className="text-base font-extrabold text-slate-800 dark:text-zinc-100">
                     Send Care Note to {wifeName}
                   </h3>
@@ -342,7 +461,7 @@ export default function CycleTracker() {
                   <span className="text-lg">💌</span>
                   <div className="flex flex-col">
                     <span className="text-xs font-bold text-rose-900 dark:text-rose-200">Send Love Note</span>
-                    <span className="text-[10px] text-rose-600 dark:text-rose-400">"Hope you're resting comfortably my love 🤍"</span>
+                    <span className="text-[10px] text-rose-600 dark:text-rose-400">&ldquo;Hope you&apos;re resting comfortably my love 🤍&rdquo;</span>
                   </div>
                 </button>
 
@@ -352,8 +471,8 @@ export default function CycleTracker() {
                 >
                   <span className="text-lg">🍵</span>
                   <div className="flex flex-col">
-                    <span className="text-xs font-bold text-amber-900 dark:text-amber-200">Warm Tea & Rest Check-in</span>
-                    <span className="text-[10px] text-amber-600 dark:text-amber-400">"Drink some warm tea and take it easy ✨"</span>
+                    <span className="text-xs font-bold text-amber-900 dark:text-amber-200">Warm Tea &amp; Rest Check-in</span>
+                    <span className="text-[10px] text-amber-600 dark:text-amber-400">&ldquo;Drink some warm tea and take it easy ✨&rdquo;</span>
                   </div>
                 </button>
 
@@ -364,7 +483,7 @@ export default function CycleTracker() {
                   <span className="text-lg">🍫</span>
                   <div className="flex flex-col">
                     <span className="text-xs font-bold text-purple-900 dark:text-purple-200">Offer Comfort Food / Treats</span>
-                    <span className="text-[10px] text-purple-600 dark:text-purple-400">"Would you like me to order your favorite treats? 🍓"</span>
+                    <span className="text-[10px] text-purple-600 dark:text-purple-400">&ldquo;Would you like me to order your favorite treats? 🍓&rdquo;</span>
                   </div>
                 </button>
 
@@ -375,7 +494,7 @@ export default function CycleTracker() {
                   <span className="text-lg">💧</span>
                   <div className="flex flex-col">
                     <span className="text-xs font-bold text-blue-900 dark:text-blue-200">Stay Hydrated Reminder</span>
-                    <span className="text-[10px] text-blue-600 dark:text-blue-400">"Stay healthy, hydrated & rest well 💧🤍"</span>
+                    <span className="text-[10px] text-blue-600 dark:text-blue-400">&ldquo;Stay healthy, hydrated &amp; rest well 💧🤍&rdquo;</span>
                   </div>
                 </button>
               </div>
@@ -409,69 +528,91 @@ export default function CycleTracker() {
   }
 
   // ==========================================
-  // 2. WIFE VIEW (Full Management & Tracking)
+  // 2. WIFE VIEW (Full Ovulation & Period Engine)
   // ==========================================
+  const currentLoggedFertility = ovulationLogs[globalSelectedDate] || ovulationLogs[format(new Date(), "yyyy-MM-dd")];
+
   return (
     <div className={`glass-panel p-5 rounded-3xl transition-all duration-300 flex flex-col gap-4 shadow-sm ${
       periodActive 
         ? "border border-rose-300 dark:border-rose-800/60 bg-gradient-to-br from-rose-50/90 via-pink-50/40 to-white dark:from-rose-950/30 dark:via-zinc-900 dark:to-zinc-900 ring-1 ring-rose-400/20 shadow-md shadow-rose-500/5"
+        : cycleInfo?.phase === "FERTILE_WINDOW" || cycleInfo?.phase === "OVULATION_DAY"
+        ? "border border-purple-300 dark:border-purple-800/60 bg-gradient-to-br from-purple-50/90 via-pink-50/30 to-white dark:from-purple-950/30 dark:via-zinc-900 dark:to-zinc-900 shadow-md shadow-purple-500/5"
         : "border border-slate-200/80 dark:border-zinc-800 bg-gradient-to-br from-slate-50/70 via-white to-purple-50/30 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-900"
     }`}>
       
-      {/* Header with Explicit Current State Confirmation */}
+      {/* 1. Header with Live Phase Title & Quick Primary Actions */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className={`p-2.5 rounded-2xl shadow-sm transition-all ${
             periodActive 
               ? "bg-rose-500 text-white shadow-rose-500/30 animate-pulse" 
+              : cycleInfo?.phase === "OVULATION_DAY"
+              ? "bg-amber-500 text-white shadow-amber-500/30 animate-bounce"
+              : cycleInfo?.phase === "FERTILE_WINDOW"
+              ? "bg-purple-600 text-white shadow-purple-500/30"
               : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
           }`}>
-            {periodActive ? <Flower2Icon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
+            {periodActive ? (
+              <Flower2Icon className="h-5 w-5" />
+            ) : cycleInfo?.phase === "OVULATION_DAY" ? (
+              <FlameIcon className="h-5 w-5" />
+            ) : cycleInfo?.phase === "FERTILE_WINDOW" ? (
+              <SparklesIcon className="h-5 w-5" />
+            ) : (
+              <MoonIcon className="h-5 w-5" />
+            )}
           </div>
+          
           <div className="flex flex-col">
             <span className={`text-[10px] font-black uppercase tracking-wider flex items-center gap-1 ${
-              periodActive ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"
+              periodActive 
+                ? "text-rose-600 dark:text-rose-400" 
+                : cycleInfo?.phase === "FERTILE_WINDOW" || cycleInfo?.phase === "OVULATION_DAY"
+                ? "text-purple-600 dark:text-purple-400"
+                : "text-emerald-600 dark:text-emerald-400"
             }`}>
-              {periodActive ? "Menstrual Cycle Active" : "🌿 Clean / Taharah Window"}
+              {periodActive ? "Menstrual Cycle Active" : "🌿 Taharah (Clean) Window"}
             </span>
-            <h4 className="text-sm font-black text-slate-800 dark:text-zinc-100">
-              {periodActive ? `🌸 Period Active · Day ${cycleDay}` : "Menstrual Cycle Tracker"}
+            <h4 className="text-sm font-black text-slate-800 dark:text-zinc-100 flex items-center gap-1.5">
+              {periodActive 
+                ? `🌸 Period Active · Day ${currentCycleDay}` 
+                : cycleInfo 
+                ? `${cycleInfo.phaseTitle}` 
+                : "Cycle & Ovulation Tracker"}
             </h4>
           </div>
         </div>
 
-        {/* Primary Action Button (Swaps based on active state) */}
-        {periodActive ? (
-          <div className="flex items-center gap-1.5">
-            {periodCycles[0] && (
-              <button
-                onClick={() => openEditModal(periodCycles[0])}
-                title="Edit Start Date/Time"
-                className="p-2 rounded-xl bg-white dark:bg-zinc-800 hover:bg-slate-100 text-slate-700 dark:text-zinc-200 border border-slate-200 dark:border-zinc-700 transition-all active:scale-95 shadow-xs"
-              >
-                <Edit3Icon className="h-3.5 w-3.5" />
-              </button>
-            )}
+        {/* Primary Action Button (Start / End Period or Cycle Settings) */}
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setShowSettingsModal(true)}
+            title="Cycle Length & Ovulation Settings"
+            className="p-2 rounded-xl bg-white dark:bg-zinc-800 hover:bg-slate-100 text-slate-600 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 transition-all active:scale-95 shadow-xs"
+          >
+            <SlidersIcon className="h-3.5 w-3.5" />
+          </button>
+
+          {periodActive ? (
             <button
               onClick={openEndModal}
-              className="px-3.5 py-2 rounded-xl text-xs font-extrabold bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:text-zinc-900 transition-all shadow-md active:scale-95 flex items-center gap-1.5"
+              className="px-3 py-2 rounded-xl text-xs font-extrabold bg-slate-900 hover:bg-black text-white dark:bg-zinc-100 dark:text-zinc-900 transition-all shadow-md active:scale-95 flex items-center gap-1.5"
             >
-              <CheckCircle2Icon className="h-3.5 w-3.5 text-emerald-400" /> Mark Period End
+              <CheckCircle2Icon className="h-3.5 w-3.5 text-emerald-400" /> End Period
             </button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-1.5">
+          ) : (
             <button
               onClick={openStartModal}
-              className="px-4 py-2.5 rounded-2xl text-xs font-black bg-rose-500 hover:bg-rose-600 text-white shadow-md shadow-rose-500/25 transition-all active:scale-95 flex items-center gap-1.5"
+              className="px-3.5 py-2 rounded-xl text-xs font-black bg-rose-500 hover:bg-rose-600 text-white shadow-md shadow-rose-500/25 transition-all active:scale-95 flex items-center gap-1.5"
             >
               <SparklesIcon className="h-3.5 w-3.5 fill-white/30" /> Mark Period Start
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      {/* State Banner */}
+      {/* 2. Islamic Prayer Exemption Banner (During Period) OR Ovulation Forecast Cards (Outside Period) */}
       {periodActive ? (
         <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-200 dark:border-rose-900/50 flex flex-col gap-1.5 animate-in fade-in duration-200">
           <div className="flex items-center justify-between">
@@ -488,7 +629,7 @@ export default function CycleTracker() {
                     onClick={() => openEditModal(periodCycles[0])}
                     className="text-[10px] text-rose-700 dark:text-rose-300 underline font-bold"
                   >
-                    Change date
+                    Edit
                   </button>
                 )}
               </div>
@@ -499,47 +640,242 @@ export default function CycleTracker() {
           </p>
         </div>
       ) : (
-        /* Not on Period: Prediction Card with Honest 0-Cycle Empty State */
-        <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-zinc-850/50 border border-slate-100 dark:border-zinc-800 flex items-center justify-between">
-          <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              {hasLoggedCycles ? "Next Estimated Period" : "Cycle Insights"}
-            </span>
+        /* Ovulation & Fertility Forecast Cards */
+        <div className="grid grid-cols-2 gap-2.5">
+          {/* Ovulation Forecast Card */}
+          <div className="p-3 rounded-2xl bg-white/80 dark:bg-zinc-850/80 border border-purple-100 dark:border-purple-900/30 flex flex-col gap-1 shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 flex items-center gap-1">
+                <FlameIcon className="h-3 w-3" /> Ovulation Forecast
+              </span>
+              <span className="text-[9px] font-black px-1.5 py-0.5 rounded-md bg-purple-500/10 text-purple-700 dark:text-purple-300">
+                {cycleInfo ? cycleInfo.fertilityBadge : "—"}
+              </span>
+            </div>
             <span className="text-xs font-extrabold text-slate-800 dark:text-zinc-100">
-              {hasLoggedCycles ? `~${format(nextEstimatedDate, "MMMM d, yyyy")}` : "Add your first cycle to unlock predictions"}
+              {cycleInfo ? format(cycleInfo.ovulationDate, "MMMM d, yyyy") : "Add cycle data"}
+            </span>
+            <span className="text-[10px] font-semibold text-slate-500 dark:text-zinc-400">
+              {cycleInfo 
+                ? cycleInfo.daysUntilOvulation > 0 
+                  ? `Estimated in ~${cycleInfo.daysUntilOvulation} days` 
+                  : cycleInfo.daysUntilOvulation === 0 
+                  ? "🌟 Peak Ovulation Today!" 
+                  : `Passed ${Math.abs(cycleInfo.daysUntilOvulation)} days ago`
+                : "Needs 1 period start date"}
             </span>
           </div>
-          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg ${
-            hasLoggedCycles 
-              ? "text-purple-600 dark:text-purple-400 bg-purple-500/10" 
-              : "text-slate-500 bg-slate-200/60 dark:bg-zinc-800"
-          }`}>
-            {hasLoggedCycles ? (daysUntilNext > 0 ? `In ~${daysUntilNext} days` : "Approaching") : "Needs 1 cycle"}
-          </span>
+
+          {/* Fertile Window Card */}
+          <div className="p-3 rounded-2xl bg-white/80 dark:bg-zinc-850/80 border border-slate-100 dark:border-zinc-800 flex flex-col gap-1 shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                <BabyIcon className="h-3 w-3 text-rose-400" /> Fertile Window
+              </span>
+              <span className="text-[9px] font-bold text-slate-500 dark:text-zinc-400">
+                6-Day Window
+              </span>
+            </div>
+            <span className="text-xs font-extrabold text-slate-800 dark:text-zinc-100">
+              {cycleInfo ? cycleInfo.fertileWindowStr : "—"}
+            </span>
+            <span className="text-[10px] font-semibold text-slate-500 dark:text-zinc-400">
+              {cycleInfo ? `Next Period: ~${format(cycleInfo.nextPeriodDate, "MMM d")}` : "Set in preferences"}
+            </span>
+          </div>
         </div>
       )}
 
-      {/* Cycle Stats */}
-      <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100 dark:border-zinc-800 text-[11px]">
-        <div className="flex flex-col p-2.5 rounded-2xl bg-slate-50 dark:bg-zinc-850/60 border border-slate-100 dark:border-zinc-800">
-          <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Avg Duration</span>
-          <span className="font-extrabold text-slate-700 dark:text-zinc-200">
-            {hasLoggedCycles ? `${avgDuration} days` : "—"}
-          </span>
+      {/* 3. Interactive Visual 28-Day Cycle & Ovulation Map */}
+      <div className="flex flex-col gap-2 p-3.5 rounded-2xl bg-slate-50/90 dark:bg-zinc-850/60 border border-slate-100 dark:border-zinc-800">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 flex items-center gap-1">
+              <ActivityIcon className="h-3.5 w-3.5 text-amber-500" />
+              Cycle Map (Day {currentCycleDay} of {totalDays})
+            </span>
+          </div>
+
+          {/* Legend indicator */}
+          <div className="flex items-center gap-2 text-[9px] font-bold">
+            <span className="flex items-center gap-1 text-rose-500">
+              <span className="h-1.5 w-1.5 rounded-full bg-rose-500" /> Period
+            </span>
+            <span className="flex items-center gap-1 text-purple-600 dark:text-purple-400">
+              <span className="h-1.5 w-1.5 rounded-full bg-purple-500" /> Fertile
+            </span>
+            <span className="flex items-center gap-1 text-amber-500">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" /> Peak
+            </span>
+          </div>
         </div>
-        <div className="flex flex-col p-2.5 rounded-2xl bg-slate-50 dark:bg-zinc-850/60 border border-slate-100 dark:border-zinc-800">
-          <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Cycle Length</span>
-          <span className="font-extrabold text-slate-700 dark:text-zinc-200">
-            {hasLoggedCycles ? "~28 days" : "—"}
-          </span>
+
+        {/* 28-Day Visual Progression Bar & Pills */}
+        <div className="flex items-center gap-1 overflow-x-auto pb-1.5 pt-1 scrollbar-hide">
+          {Array.from({ length: totalDays }).map((_, idx) => {
+            const dayNum = idx + 1;
+            const isPeriodDay = dayNum <= (cycleSettings?.periodDuration || avgHistoricalDuration || 5);
+            const ovulationOffset = Math.max(1, totalDays - (cycleSettings?.lutealLength || 14));
+            const isOvulationDay = dayNum === ovulationOffset + 1;
+            const isFertileDay = dayNum >= ovulationOffset - 4 && dayNum <= ovulationOffset + 1;
+            const isCurrentDay = dayNum === currentCycleDay;
+            const isSelected = selectedMapDay === dayNum;
+
+            return (
+              <button
+                key={dayNum}
+                type="button"
+                onClick={() => setSelectedMapDay(isSelected ? null : dayNum)}
+                className={`flex flex-col items-center justify-center min-w-[28px] h-10 rounded-xl transition-all relative ${
+                  isCurrentDay 
+                    ? "ring-2 ring-amber-500 ring-offset-1 scale-105 z-10 font-black shadow-sm" 
+                    : ""
+                } ${
+                  isPeriodDay 
+                    ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-300 dark:border-rose-900/50" 
+                    : isOvulationDay
+                    ? "bg-amber-500 text-white font-black shadow-xs"
+                    : isFertileDay 
+                    ? "bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-300 dark:border-purple-800/40" 
+                    : "bg-white dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 border border-slate-100 dark:border-zinc-700/60"
+                }`}
+                title={`Day ${dayNum}: ${isPeriodDay ? "Period" : isOvulationDay ? "Ovulation Peak" : isFertileDay ? "Fertile Window" : "Luteal / Follicular"}`}
+              >
+                <span className="text-[10px] font-bold leading-none">{dayNum}</span>
+                {isOvulationDay && <span className="text-[8px] leading-none">🌟</span>}
+                {isPeriodDay && !isOvulationDay && <span className="text-[8px] leading-none">🌸</span>}
+                {isFertileDay && !isOvulationDay && <span className="text-[8px] leading-none">✨</span>}
+                
+                {isCurrentDay && (
+                  <span className="absolute -bottom-1 h-1 w-1 rounded-full bg-amber-500 animate-ping" />
+                )}
+              </button>
+            );
+          })}
         </div>
-        <div className="flex flex-col p-2.5 rounded-2xl bg-slate-50 dark:bg-zinc-850/60 border border-slate-100 dark:border-zinc-800">
-          <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">History</span>
-          <span className="font-extrabold text-slate-700 dark:text-zinc-200">{periodCycles.length} logged</span>
-        </div>
+
+        {/* Selected Day Info Popup */}
+        {selectedMapDay && (
+          <div className="p-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-xs flex items-center justify-between animate-in fade-in">
+            <div className="flex flex-col">
+              <span className="font-bold text-slate-800 dark:text-zinc-100">
+                Cycle Day {selectedMapDay} Analysis
+              </span>
+              <span className="text-[11px] text-slate-500 dark:text-zinc-400">
+                {selectedMapDay <= (cycleSettings?.periodDuration || 5) 
+                  ? "🌸 Menstrual Phase · Exemption Active" 
+                  : selectedMapDay === (totalDays - (cycleSettings?.lutealLength || 14) + 1)
+                  ? "🌟 Peak Ovulation Day · Highest chance of conception"
+                  : selectedMapDay >= (totalDays - (cycleSettings?.lutealLength || 14) - 4) && selectedMapDay <= (totalDays - (cycleSettings?.lutealLength || 14) + 1)
+                  ? "✨ Fertile Window · Conception window open"
+                  : selectedMapDay < (totalDays - (cycleSettings?.lutealLength || 14) - 4)
+                  ? "🌿 Follicular Phase · Estrogen building"
+                  : "🌙 Luteal Phase · Progesterone dominant"}
+              </span>
+            </div>
+            <button
+              onClick={() => setSelectedMapDay(null)}
+              className="p-1 rounded-lg text-slate-400 hover:text-slate-600"
+            >
+              <XIcon className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Privacy Setting */}
+      {/* 4. Daily Ovulation & Fertility Symptom Quick Logger */}
+      <div className="p-3.5 rounded-2xl bg-white/90 dark:bg-zinc-900/90 border border-slate-100 dark:border-zinc-800 flex flex-col gap-2.5 shadow-xs">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <ThermometerIcon className="h-4 w-4 text-purple-500" />
+            <span className="text-xs font-black text-slate-800 dark:text-zinc-100">
+              Daily Fertility &amp; Ovulation Log
+            </span>
+          </div>
+          <button
+            onClick={() => openDailyLogModal(globalSelectedDate || format(new Date(), "yyyy-MM-dd"))}
+            className="px-2.5 py-1 rounded-xl text-[10px] font-bold bg-purple-500 hover:bg-purple-600 text-white shadow-xs active:scale-95 transition-all flex items-center gap-1"
+          >
+            <PlusIcon className="h-3 w-3" /> Log Today
+          </button>
+        </div>
+
+        {/* Current Logged Status Display */}
+        {currentLoggedFertility ? (
+          <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
+            {currentLoggedFertility.lhTest && currentLoggedFertility.lhTest !== "NOT_TESTED" && (
+              <span className={`px-2 py-0.5 rounded-md font-bold ${
+                currentLoggedFertility.lhTest === "PEAK" 
+                  ? "bg-rose-500 text-white" 
+                  : currentLoggedFertility.lhTest === "HIGH" 
+                  ? "bg-purple-500 text-white" 
+                  : "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300"
+              }`}>
+                LH Test: {currentLoggedFertility.lhTest}
+              </span>
+            )}
+
+            {currentLoggedFertility.cervicalMucus && (
+              <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold">
+                Fluid: {currentLoggedFertility.cervicalMucus.replace("_", "-")}
+              </span>
+            )}
+
+            {currentLoggedFertility.bbt && (
+              <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300 font-bold">
+                BBT: {currentLoggedFertility.bbt}°
+              </span>
+            )}
+
+            {currentLoggedFertility.symptoms && currentLoggedFertility.symptoms.length > 0 && (
+              <span className="px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-700 dark:text-rose-300 font-bold">
+                {currentLoggedFertility.symptoms.length} symptoms logged
+              </span>
+            )}
+
+            {currentLoggedFertility.intimacy && (
+              <span className="px-2 py-0.5 rounded-md bg-pink-500/10 text-pink-600 dark:text-pink-400 font-bold flex items-center gap-1">
+                <HeartIcon className="h-2.5 w-2.5 fill-pink-500" /> Intimacy
+              </span>
+            )}
+          </div>
+        ) : (
+          <p className="text-[11px] text-slate-400 dark:text-zinc-500">
+            No symptoms or ovulation test logged for this date. Tap &ldquo;Log Today&rdquo; to track LH surge, cervical fluid, BBT, or cramps.
+          </p>
+        )}
+      </div>
+
+      {/* 5. Phase-Specific Wellness Guidance (Physical, Nutrition & Spiritual) */}
+      {cycleInfo && (
+        <div className="p-3.5 rounded-2xl bg-gradient-to-br from-purple-50/50 via-slate-50/50 to-white dark:from-zinc-900 dark:to-zinc-850 border border-slate-100 dark:border-zinc-800 flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black uppercase tracking-wider text-purple-600 dark:text-purple-400 flex items-center gap-1">
+              <SunIcon className="h-3.5 w-3.5" /> Phase Guidance &amp; Nutrition
+            </span>
+            <span className="text-[10px] font-bold text-slate-500">
+              {cycleInfo.phaseSubtitle}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 text-[10px]">
+            <div className="p-2 rounded-xl bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700 flex flex-col gap-0.5">
+              <span className="font-extrabold text-slate-700 dark:text-zinc-200">⚡ Physical</span>
+              <p className="text-slate-500 dark:text-zinc-400 leading-tight line-clamp-3">{cycleInfo.tips.physical}</p>
+            </div>
+            <div className="p-2 rounded-xl bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700 flex flex-col gap-0.5">
+              <span className="font-extrabold text-slate-700 dark:text-zinc-200">🥗 Nutrition</span>
+              <p className="text-slate-500 dark:text-zinc-400 leading-tight line-clamp-3">{cycleInfo.tips.nutrition}</p>
+            </div>
+            <div className="p-2 rounded-xl bg-white dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700 flex flex-col gap-0.5">
+              <span className="font-extrabold text-slate-700 dark:text-zinc-200">🤲 Spiritual</span>
+              <p className="text-slate-500 dark:text-zinc-400 leading-tight line-clamp-3">{cycleInfo.tips.spiritual}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6. Privacy & Sync Toggle */}
       <div className="flex items-center justify-between pt-1">
         <label className="text-[11px] font-bold text-slate-600 dark:text-zinc-300 flex items-center gap-1.5 cursor-pointer">
           <ShieldIcon className="h-3.5 w-3.5 text-slate-400" /> Share status with Husband for Care Mode
@@ -552,7 +888,7 @@ export default function CycleTracker() {
         />
       </div>
 
-      {/* Cycle History Section & Differentiated Secondary "Add Past Period" Action */}
+      {/* 7. Cycle History Dropdown & Add Past Period Backfill */}
       <div className="flex flex-col gap-2 pt-2 border-t border-slate-100 dark:border-zinc-800">
         <div className="flex items-center justify-between">
           <button
@@ -564,7 +900,6 @@ export default function CycleTracker() {
             {showHistory ? <ChevronUpIcon className="h-3.5 w-3.5 text-slate-400" /> : <ChevronDownIcon className="h-3.5 w-3.5 text-slate-400" />}
           </button>
 
-          {/* Secondary Historical Backfill Button */}
           <button
             onClick={() => setShowAddPastModal(true)}
             className="border border-dashed border-slate-300 dark:border-zinc-700 hover:border-rose-400 bg-slate-50/70 hover:bg-rose-50/50 dark:bg-zinc-850 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:text-rose-600 text-[10px] font-bold px-2.5 py-1 rounded-xl transition-all flex items-center gap-1 shadow-2xs active:scale-95"
@@ -578,7 +913,7 @@ export default function CycleTracker() {
           <div className="flex flex-col gap-2 mt-1 animate-in fade-in">
             {periodCycles.length === 0 ? (
               <span className="text-[11px] text-slate-400 italic text-center py-2">
-                No past cycles recorded. Tap "Add Past Period" to backfill historical dates.
+                No past cycles recorded. Tap &ldquo;Add Past Period&rdquo; to backfill historical dates.
               </span>
             ) : (
               periodCycles.map((cycle) => {
@@ -725,7 +1060,7 @@ export default function CycleTracker() {
       )}
 
       {/* ========================================================= */}
-      {/* 2. EDIT CYCLE MODAL (Change Start/End Dates & Times) */}
+      {/* 2. EDIT CYCLE MODAL */}
       {/* ========================================================= */}
       {mounted && editingCycle && createPortal(
         <div className="fixed inset-0 z-[9999] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
@@ -746,9 +1081,8 @@ export default function CycleTracker() {
             </div>
 
             <form onSubmit={handleSaveEditCycle} className="flex flex-col gap-3">
-              {/* Start Date & Time */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-zinc-300">Period Start Date & Time</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-zinc-300">Period Start Date &amp; Time</label>
                 <div className="grid grid-cols-2 gap-2">
                   <input
                     type="date"
@@ -767,10 +1101,9 @@ export default function CycleTracker() {
                 </div>
               </div>
 
-              {/* End Date & Time */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-bold text-slate-700 dark:text-zinc-300">
-                  Period End Date & Time <span className="text-[10px] font-normal text-slate-400">(Leave empty if active)</span>
+                  Period End Date &amp; Time <span className="text-[10px] font-normal text-slate-400">(Leave empty if active)</span>
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <input
@@ -811,7 +1144,7 @@ export default function CycleTracker() {
       )}
 
       {/* ========================================================= */}
-      {/* 3. ADD PAST PERIOD MODAL (Historical Backfill) */}
+      {/* 3. ADD PAST PERIOD MODAL */}
       {/* ========================================================= */}
       {mounted && showAddPastModal && createPortal(
         <div className="fixed inset-0 z-[9999] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
@@ -832,9 +1165,8 @@ export default function CycleTracker() {
             </div>
 
             <form onSubmit={handleSaveAddPast} className="flex flex-col gap-3">
-              {/* Start Date & Time */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-zinc-300">Period Start Date & Time</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-zinc-300">Period Start Date &amp; Time</label>
                 <div className="grid grid-cols-2 gap-2">
                   <input
                     type="date"
@@ -853,9 +1185,8 @@ export default function CycleTracker() {
                 </div>
               </div>
 
-              {/* End Date & Time */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-zinc-300">Period End Date & Time</label>
+                <label className="text-xs font-bold text-slate-700 dark:text-zinc-300">Period End Date &amp; Time</label>
                 <div className="grid grid-cols-2 gap-2">
                   <input
                     type="date"
@@ -887,6 +1218,275 @@ export default function CycleTracker() {
                   className="flex-1 py-2.5 text-xs font-bold rounded-xl bg-slate-900 hover:bg-black text-white dark:bg-white dark:text-zinc-900 shadow-md transition-all flex items-center justify-center gap-1.5"
                 >
                   <CheckIcon className="h-4 w-4" /> Save Record
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ========================================================= */}
+      {/* 4. CYCLE & OVULATION SETTINGS MODAL */}
+      {/* ========================================================= */}
+      {mounted && showSettingsModal && createPortal(
+        <div className="fixed inset-0 z-[9999] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 w-full max-w-sm max-h-[85vh] overflow-y-auto my-auto rounded-3xl p-5 shadow-2xl border border-slate-200 dark:border-zinc-800 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className="sticky -top-5 bg-white dark:bg-zinc-900 pt-1 pb-3 z-10 flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 -mx-1 px-1">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">Settings</span>
+                <h3 className="text-base font-extrabold text-slate-800 dark:text-zinc-100 flex items-center gap-1.5">
+                  <SlidersIcon className="h-4 w-4 text-purple-500" /> Cycle &amp; Ovulation Preferences
+                </h3>
+              </div>
+              <button 
+                onClick={() => setShowSettingsModal(false)}
+                className="p-1.5 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <XIcon className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveSettings} className="flex flex-col gap-3.5">
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-700 dark:text-zinc-300">Average Cycle Length</label>
+                  <span className="text-xs font-black text-purple-600 dark:text-purple-400">{tempCycleLength} days</span>
+                </div>
+                <input
+                  type="range"
+                  min="21"
+                  max="40"
+                  value={tempCycleLength}
+                  onChange={(e) => setTempCycleLength(parseInt(e.target.value))}
+                  className="w-full accent-purple-600 h-2 bg-slate-100 dark:bg-zinc-800 rounded-lg cursor-pointer"
+                />
+                <span className="text-[10px] text-slate-400">Typical range: 24 to 35 days (default: 28 days)</span>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-700 dark:text-zinc-300">Average Period Duration</label>
+                  <span className="text-xs font-black text-rose-500">{tempPeriodDuration} days</span>
+                </div>
+                <input
+                  type="range"
+                  min="3"
+                  max="10"
+                  value={tempPeriodDuration}
+                  onChange={(e) => setTempPeriodDuration(parseInt(e.target.value))}
+                  className="w-full accent-rose-500 h-2 bg-slate-100 dark:bg-zinc-800 rounded-lg cursor-pointer"
+                />
+                <span className="text-[10px] text-slate-400">Typical duration: 4 to 7 days (default: 5 days)</span>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-700 dark:text-zinc-300">Luteal Phase Length</label>
+                  <span className="text-xs font-black text-amber-500">{tempLutealLength} days</span>
+                </div>
+                <input
+                  type="range"
+                  min="10"
+                  max="16"
+                  value={tempLutealLength}
+                  onChange={(e) => setTempLutealLength(parseInt(e.target.value))}
+                  className="w-full accent-amber-500 h-2 bg-slate-100 dark:bg-zinc-800 rounded-lg cursor-pointer"
+                />
+                <span className="text-[10px] text-slate-400">Time from ovulation to period (standard: 14 days)</span>
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowSettingsModal(false)}
+                  className="flex-1 py-2.5 text-xs font-bold rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:bg-slate-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 text-xs font-bold rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-md transition-all flex items-center justify-center gap-1.5"
+                >
+                  <CheckIcon className="h-4 w-4" /> Save Preferences
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ========================================================= */}
+      {/* 5. DAILY FERTILITY & OVULATION SYMPTOMS LOG MODAL */}
+      {/* ========================================================= */}
+      {mounted && showLogModal && createPortal(
+        <div className="fixed inset-0 z-[9999] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-zinc-900 text-slate-800 dark:text-zinc-100 w-full max-w-sm max-h-[88vh] overflow-y-auto my-auto rounded-3xl p-5 shadow-2xl border border-slate-200 dark:border-zinc-800 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className="sticky -top-5 bg-white dark:bg-zinc-900 pt-1 pb-3 z-10 flex items-center justify-between border-b border-slate-100 dark:border-zinc-800 -mx-1 px-1">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">Daily Health Check-in</span>
+                <h3 className="text-base font-extrabold text-slate-800 dark:text-zinc-100 flex items-center gap-1.5">
+                  <ThermometerIcon className="h-4 w-4 text-purple-500" /> Log Fertility &amp; Symptoms
+                </h3>
+              </div>
+              <button 
+                onClick={() => setShowLogModal(false)}
+                className="p-1.5 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <XIcon className="h-4 w-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveDailyLog} className="flex flex-col gap-3.5">
+              
+              {/* Log Date */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-bold text-slate-700 dark:text-zinc-300">Log Date</label>
+                <input
+                  type="date"
+                  value={logModalDate}
+                  onChange={(e) => setLogModalDate(e.target.value)}
+                  className="bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 dark:text-zinc-100 focus:outline-none"
+                />
+              </div>
+
+              {/* LH Ovulation Test Strip (OPK) */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-zinc-300 flex items-center gap-1">
+                  <ZapIcon className="h-3.5 w-3.5 text-amber-500" /> Ovulation LH Test Strip
+                </label>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {[
+                    { key: "NOT_TESTED", label: "None" },
+                    { key: "LOW", label: "Low ⚪" },
+                    { key: "HIGH", label: "High 🟢" },
+                    { key: "PEAK", label: "Peak 🟣" }
+                  ].map(opt => (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => setTempLhTest(opt.key as any)}
+                      className={`py-2 rounded-xl text-[10px] font-bold border transition-all ${
+                        tempLhTest === opt.key 
+                          ? "bg-purple-600 text-white border-purple-600 shadow-xs scale-102" 
+                          : "bg-slate-50 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Cervical Fluid / Mucus */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-zinc-300 flex items-center gap-1">
+                  <DropletsIcon className="h-3.5 w-3.5 text-blue-500" /> Cervical Fluid (Fertility Sign)
+                </label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {[
+                    { key: "DRY", label: "Dry / None" },
+                    { key: "STICKY", label: "Sticky" },
+                    { key: "CREAMY", label: "Creamy" },
+                    { key: "WATERY", label: "Watery ✨" },
+                    { key: "EGG_WHITE", label: "Egg-White 🌟 (Peak)" }
+                  ].map(opt => (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => setTempCervicalMucus(opt.key as any)}
+                      className={`py-2 px-1 rounded-xl text-[10px] font-bold border transition-all ${
+                        tempCervicalMucus === opt.key 
+                          ? "bg-blue-600 text-white border-blue-600 shadow-xs" 
+                          : "bg-slate-50 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* BBT & Intimacy */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] font-bold text-slate-700 dark:text-zinc-300 flex items-center gap-1">
+                    <ThermometerIcon className="h-3 w-3 text-amber-500" /> BBT Temp (°C/°F)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 36.6"
+                    value={tempBbt}
+                    onChange={(e) => setTempBbt(e.target.value)}
+                    className="bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-bold focus:outline-none"
+                  />
+                </div>
+
+                <div className="flex flex-col justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setTempIntimacy(!tempIntimacy)}
+                    className={`py-2 px-3 rounded-xl text-xs font-bold border flex items-center justify-center gap-1.5 transition-all ${
+                      tempIntimacy 
+                        ? "bg-pink-500 text-white border-pink-500 shadow-xs" 
+                        : "bg-slate-50 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400"
+                    }`}
+                  >
+                    <HeartIcon className={`h-3.5 w-3.5 ${tempIntimacy ? "fill-white" : ""}`} /> Intimacy
+                  </button>
+                </div>
+              </div>
+
+              {/* Symptoms Selector */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-zinc-300">Symptoms &amp; Body Sensations</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {SYMPTOM_OPTIONS.map(sym => {
+                    const isSelected = tempSymptoms.includes(sym);
+                    return (
+                      <button
+                        key={sym}
+                        type="button"
+                        onClick={() => toggleSymptom(sym)}
+                        className={`px-2.5 py-1 rounded-xl text-[10px] font-bold border transition-all ${
+                          isSelected 
+                            ? "bg-rose-500 text-white border-rose-500 shadow-xs" 
+                            : "bg-slate-50 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400"
+                        }`}
+                      >
+                        {sym}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Private Notes */}
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-bold text-slate-700 dark:text-zinc-300">Daily Notes</label>
+                <input
+                  type="text"
+                  placeholder="e.g. High energy, drank raspberry leaf tea..."
+                  value={tempNotes}
+                  onChange={(e) => setTempNotes(e.target.value)}
+                  className="bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 text-xs font-medium focus:outline-none"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowLogModal(false)}
+                  className="flex-1 py-2.5 text-xs font-bold rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 hover:bg-slate-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 text-xs font-bold rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-md transition-all flex items-center justify-center gap-1.5"
+                >
+                  <CheckIcon className="h-4 w-4" /> Save Log
                 </button>
               </div>
             </form>

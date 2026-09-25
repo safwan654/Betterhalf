@@ -41,6 +41,22 @@ export interface PeriodCycle {
   durationDays?: number;
 }
 
+export interface CycleSettings {
+  cycleLength: number; // default 28 (days)
+  periodDuration: number; // default 5 (days)
+  lutealLength: number; // default 14 (days)
+}
+
+export interface OvulationLog {
+  date: string; // yyyy-MM-dd
+  lhTest?: "NOT_TESTED" | "LOW" | "HIGH" | "PEAK";
+  cervicalMucus?: "DRY" | "STICKY" | "CREAMY" | "WATERY" | "EGG_WHITE";
+  bbt?: string;
+  symptoms?: string[];
+  intimacy?: boolean;
+  notes?: string;
+}
+
 interface GlobalContextType {
   isAuthenticated: boolean;
   login: (pin: string, user: "HUSBAND" | "WIFE") => boolean;
@@ -89,6 +105,11 @@ interface GlobalContextType {
   periodEndDate: string | null;
   periodCycles: PeriodCycle[];
   setPeriodCycles: (cycles: PeriodCycle[]) => void;
+  cycleSettings: CycleSettings;
+  setCycleSettings: (settings: CycleSettings) => void;
+  ovulationLogs: Record<string, OvulationLog>;
+  logDailyFertility: (date: string, log: Partial<OvulationLog>) => void;
+  deleteDailyFertility: (date: string) => void;
   sharePeriodStatus: boolean;
   markPeriodStart: (dateStr?: string, timeStr?: string) => void;
   markPeriodEnd: (dateStr?: string, timeStr?: string) => void;
@@ -175,12 +196,18 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
   const [husbandLocation, setHusbandLocationState] = useState<UserLocation>(CITY_PRESETS["Dubai, UAE"]);
   const [wifeLocation, setWifeLocationState] = useState<UserLocation>(CITY_PRESETS["Mumbai, India"]);
 
-  // Menstrual Cycle & Care Tracking
+  // Menstrual Cycle, Ovulation & Care Tracking
   const [periodActive, setPeriodActiveState] = useState<boolean>(false);
   const [periodStartDate, setPeriodStartDateState] = useState<string | null>(null);
   const [periodEndDate, setPeriodEndDateState] = useState<string | null>(null);
   const [periodCycles, setPeriodCyclesState] = useState<PeriodCycle[]>([]);
   const [sharePeriodStatus, setSharePeriodStatusState] = useState<boolean>(true);
+  const [cycleSettings, setCycleSettingsState] = useState<CycleSettings>({
+    cycleLength: 28,
+    periodDuration: 5,
+    lutealLength: 14
+  });
+  const [ovulationLogs, setOvulationLogsState] = useState<Record<string, OvulationLog>>({});
   
   const [globalSelectedDate, setGlobalSelectedDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
   const [prayersByDate, setPrayersByDateState] = useState<Record<string, Prayer[]>>({});
@@ -228,6 +255,12 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
 
     const savedMadhhab = localStorage.getItem("bh_madhhab") as "STANDARD" | "HANAFI" | null;
     if (savedMadhhab) setMadhhabState(savedMadhhab);
+
+    const savedCycleSettings = localStorage.getItem("bh_cycle_settings");
+    if (savedCycleSettings) try { setCycleSettingsState(JSON.parse(savedCycleSettings)); } catch (e) {}
+
+    const savedOvulationLogs = localStorage.getItem("bh_ovulation_logs");
+    if (savedOvulationLogs) try { setOvulationLogsState(JSON.parse(savedOvulationLogs)); } catch (e) {}
   }, []);
 
   // 2. Firebase Sync - Subscribe to Household Document
@@ -263,6 +296,8 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
         if (data.periodEndDate !== undefined) setPeriodEndDateState(data.periodEndDate);
         if (data.periodCycles) setPeriodCyclesState(data.periodCycles);
         if (data.sharePeriodStatus !== undefined) setSharePeriodStatusState(data.sharePeriodStatus);
+        if (data.cycleSettings) setCycleSettingsState(data.cycleSettings);
+        if (data.ovulationLogs) setOvulationLogsState(data.ovulationLogs);
         setHasHusbandPush(!!data.husbandPushSubscription);
         setHasWifePush(!!data.wifePushSubscription);
         
@@ -745,6 +780,31 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     updateFirebase({ liquidBalances: balances });
   };
 
+  const setCycleSettings = (settings: CycleSettings) => {
+    setCycleSettingsState(settings);
+    try { localStorage.setItem("bh_cycle_settings", JSON.stringify(settings)); } catch (e) {}
+    updateFirebase({ cycleSettings: settings });
+  };
+
+  const logDailyFertility = (date: string, log: Partial<OvulationLog>) => {
+    const current = ovulationLogs[date] || { date };
+    const updated = {
+      ...ovulationLogs,
+      [date]: { ...current, ...log }
+    };
+    setOvulationLogsState(updated);
+    try { localStorage.setItem("bh_ovulation_logs", JSON.stringify(updated)); } catch (e) {}
+    updateFirebase({ ovulationLogs: updated });
+  };
+
+  const deleteDailyFertility = (date: string) => {
+    const updated = { ...ovulationLogs };
+    delete updated[date];
+    setOvulationLogsState(updated);
+    try { localStorage.setItem("bh_ovulation_logs", JSON.stringify(updated)); } catch (e) {}
+    updateFirebase({ ovulationLogs: updated });
+  };
+
   if (!isMounted) return null;
 
   return (
@@ -765,6 +825,8 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
       reminderTone, setReminderTone,
       madhhab, setMadhhab,
       periodActive, periodStartDate, periodEndDate, periodCycles, setPeriodCycles, sharePeriodStatus,
+      cycleSettings, setCycleSettings,
+      ovulationLogs, logDailyFertility, deleteDailyFertility,
       markPeriodStart, markPeriodEnd, updatePeriodCycle, deletePeriodCycle, addPastPeriodCycle, setSharePeriodStatus, sendCareNote,
       currency, setCurrency,
       householdPin,
