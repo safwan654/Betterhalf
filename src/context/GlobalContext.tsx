@@ -57,6 +57,13 @@ export interface OvulationLog {
   notes?: string;
 }
 
+export interface CoupleDailyAnswer {
+  questionId: string;
+  husbandAnswer?: string;
+  wifeAnswer?: string;
+  timestamp?: number;
+}
+
 interface GlobalContextType {
   isAuthenticated: boolean;
   login: (pin: string, user: "HUSBAND" | "WIFE") => boolean;
@@ -66,6 +73,10 @@ interface GlobalContextType {
   
   relationshipMode: "TOGETHER" | "DISTANCE";
   setRelationshipMode: (mode: "TOGETHER" | "DISTANCE") => void;
+  relationshipStartDate: string;
+  setRelationshipStartDate: (date: string) => void;
+  coupleDailyAnswers: Record<string, CoupleDailyAnswer>;
+  submitCoupleDailyAnswer: (questionId: string, answer: string) => void;
   
   husbandTimezone: string;
   setHusbandTimezone: (tz: string) => void;
@@ -176,6 +187,8 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
 
   // Shared state default values
   const [relationshipMode, setRelationshipModeState] = useState<"TOGETHER" | "DISTANCE">("TOGETHER");
+  const [relationshipStartDate, setRelationshipStartDateState] = useState<string>("2024-05-20");
+  const [coupleDailyAnswers, setCoupleDailyAnswersState] = useState<Record<string, CoupleDailyAnswer>>({});
   const [husbandTimezone, setHusbandTimezoneState] = useState("America/New_York");
   const [wifeTimezone, setWifeTimezoneState] = useState("America/Los_Angeles");
   const [husbandName, setHusbandNameState] = useState("Husband");
@@ -261,6 +274,12 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
 
     const savedOvulationLogs = localStorage.getItem("bh_ovulation_logs");
     if (savedOvulationLogs) try { setOvulationLogsState(JSON.parse(savedOvulationLogs)); } catch (e) {}
+
+    const savedRelStart = localStorage.getItem("bh_relationship_start");
+    if (savedRelStart) setRelationshipStartDateState(savedRelStart);
+
+    const savedCoupleAnswers = localStorage.getItem("bh_couple_answers");
+    if (savedCoupleAnswers) try { setCoupleDailyAnswersState(JSON.parse(savedCoupleAnswers)); } catch (e) {}
   }, []);
 
   // 2. Firebase Sync - Subscribe to Household Document
@@ -805,6 +824,28 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     updateFirebase({ ovulationLogs: updated });
   };
 
+  const setRelationshipStartDate = (date: string) => {
+    setRelationshipStartDateState(date);
+    try { localStorage.setItem("bh_relationship_start", date); } catch (e) {}
+    updateFirebase({ relationshipStartDate: date });
+  };
+
+  const submitCoupleDailyAnswer = (questionId: string, answer: string) => {
+    const existing = coupleDailyAnswers[questionId] || { questionId };
+    const isHusband = activeUserRef.current === "HUSBAND";
+    const updated = {
+      ...coupleDailyAnswers,
+      [questionId]: {
+        ...existing,
+        [isHusband ? "husbandAnswer" : "wifeAnswer"]: answer,
+        timestamp: Date.now()
+      }
+    };
+    setCoupleDailyAnswersState(updated);
+    try { localStorage.setItem("bh_couple_answers", JSON.stringify(updated)); } catch (e) {}
+    updateFirebase({ coupleDailyAnswers: updated });
+  };
+
   if (!isMounted) return null;
 
   return (
@@ -812,6 +853,8 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
       isAuthenticated, login, logout,
       activeUser, setActiveUser,
       relationshipMode, setRelationshipMode,
+      relationshipStartDate, setRelationshipStartDate,
+      coupleDailyAnswers, submitCoupleDailyAnswer,
       husbandTimezone, setHusbandTimezone,
       wifeTimezone, setWifeTimezone,
       husbandLocation, setHusbandLocation,

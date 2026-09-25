@@ -4,62 +4,62 @@
 
 @layer base {
   :root {
-    --background: 36 33% 98%;
-    --foreground: 20 14% 4%;
+    --background: 28 80% 98%;      /* #FFF8F2 soft warm butter cream */
+    --foreground: 20 25% 20%;       /* #44342B deep warm espresso */
 
-    --card: 0 0% 100%;
-    --card-foreground: 20 14% 4%;
+    --card: 0 0% 100%;             /* White with warm peachy tone */
+    --card-foreground: 20 25% 20%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 20 14% 4%;
+    --popover-foreground: 20 25% 20%;
 
-    --primary: 350 89% 60%;
+    --primary: 345 100% 68%;       /* #FF5C8A strawberry coral rose */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 35 92% 50%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 42 100% 55%;      /* #FFB703 warm honey golden */
+    --secondary-foreground: 20 25% 20%;
 
-    --muted: 20 10% 95%;
-    --muted-foreground: 20 10% 45%;
+    --muted: 24 50% 95%;           /* #FFF0E5 soft peach */
+    --muted-foreground: 20 12% 48%; /* #826F66 warm mocha */
 
-    --accent: 350 89% 96%;
-    --accent-foreground: 350 89% 40%;
+    --accent: 345 100% 95%;        /* #FFE6EE soft blush */
+    --accent-foreground: 345 90% 50%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 20 10% 90%;
-    --input: 20 10% 90%;
-    --ring: 350 89% 60%;
+    --border: 24 60% 91%;          /* #FFE2D1 warm soft border */
+    --input: 24 60% 91%;
+    --ring: 345 100% 68%;
 
-    --radius: 1rem;
+    --radius: 1.5rem;              /* 24px pillow rounded */
   }
 
   .dark {
-    --background: 20 20% 8%;
-    --foreground: 20 10% 95%;
+    --background: 20 20% 10%;
+    --foreground: 30 20% 94%;
 
-    --card: 20 20% 11%;
-    --card-foreground: 20 10% 95%;
+    --card: 20 18% 13%;
+    --card-foreground: 30 20% 94%;
 
-    --popover: 20 20% 11%;
-    --popover-foreground: 20 10% 95%;
+    --popover: 20 18% 13%;
+    --popover-foreground: 30 20% 94%;
 
-    --primary: 350 89% 65%;
-    --primary-foreground: 20 20% 8%;
+    --primary: 345 95% 72%;
+    --primary-foreground: 20 20% 10%;
 
-    --secondary: 35 92% 55%;
-    --secondary-foreground: 20 20% 8%;
+    --secondary: 42 95% 60%;
+    --secondary-foreground: 20 20% 10%;
 
     --muted: 20 15% 18%;
-    --muted-foreground: 20 10% 65%;
+    --muted-foreground: 30 10% 65%;
 
-    --accent: 350 40% 18%;
-    --accent-foreground: 350 89% 80%;
+    --accent: 345 40% 20%;
+    --accent-foreground: 345 95% 82%;
 
-    --border: 20 15% 18%;
-    --input: 20 15% 18%;
-    --ring: 350 89% 65%;
+    --border: 20 15% 20%;
+    --input: 20 15% 20%;
+    --ring: 345 95% 72%;
   }
 }
 
@@ -70,34 +70,140 @@
   body {
     @apply bg-background text-foreground antialiased selection:bg-rose-100 dark:selection:bg-rose-900/30;
     font-feature-settings: "rlig" 1, "calt" 1;
+    background-color: #FFF8F3;
+    background-image: radial-gradient(at 0% 0%, rgba(255, 235, 225, 0.7) 0px, transparent 50%),
+                      radial-gradient(at 100% 0%, rgba(255, 245, 220, 0.7) 0px, transparent 50%),
+                      radial-gradient(at 50% 100%, rgba(255, 230, 240, 0.5) 0px, transparent 50%);
+    background-attachment: fixed;
   }
 }
 
-/* Custom Scrollbars for horizontal timeline */
-.no-scrollbar::-webkit-scrollbar {
+/* Custom Scrollbars */
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
-.no-scrollbar {
+.no-scrollbar,
+.scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
-/* Smooth transitions */
-.transition-all-custom {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Glassmorphism utility */
+/* Cozy Glassmorphic Panels */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(255, 228, 214, 0.85);
+  box-shadow: 0 8px 24px -4px rgba(255, 138, 138, 0.07), 0 2px 6px rgba(0, 0, 0, 0.02);
 }
 
 .dark .glass-panel {
-  background: rgba(28, 25, 23, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(32, 28, 26, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(65, 52, 46, 0.6);
+  box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.3);
+}
+
+/* Cozy Pastel Highlighter Marker Styles */
+.highlight-pink {
+  position: relative;
+  display: inline-block;
+  padding: 0 4px;
+}
+.highlight-pink::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 2px;
+  height: 38%;
+  background-color: rgba(255, 143, 171, 0.4);
+  border-radius: 4px;
+  z-index: 0;
+  transform: rotate(-1deg);
+}
+
+.highlight-yellow {
+  position: relative;
+  display: inline-block;
+  padding: 0 4px;
+}
+.highlight-yellow::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 2px;
+  height: 38%;
+  background-color: rgba(255, 214, 102, 0.5);
+  border-radius: 4px;
+  z-index: 0;
+  transform: rotate(-1deg);
+}
+
+.highlight-blue {
+  position: relative;
+  display: inline-block;
+  padding: 0 4px;
+}
+.highlight-blue::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 2px;
+  height: 38%;
+  background-color: rgba(160, 196, 255, 0.45);
+  border-radius: 4px;
+  z-index: 0;
+  transform: rotate(-1deg);
+}
+
+.highlight-mint {
+  position: relative;
+  display: inline-block;
+  padding: 0 4px;
+}
+.highlight-mint::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 2px;
+  height: 38%;
+  background-color: rgba(168, 230, 207, 0.5);
+  border-radius: 4px;
+  z-index: 0;
+  transform: rotate(-1deg);
+}
+
+/* Wavy Heartbeat Pulse Animation */
+@keyframes heartbeat-dash {
+  0% {
+    stroke-dashoffset: 200;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.heartbeat-pulse {
+  stroke-dasharray: 200;
+  animation: heartbeat-dash 2.5s ease-in-out infinite;
+}
+
+/* Cute Floating Bobbing Animation */
+@keyframes gentle-bob {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.animate-gentle-bob {
+  animation: gentle-bob 3s ease-in-out infinite;
 }

@@ -219,7 +219,7 @@ export default function SpiritualTracker() {
   const wifeCompleted = currentPrayers.filter(p => (p.wife && p.wife !== "MISSED") || isWifePrayerExempt(todayDateObj)).length;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 pb-28 text-slate-900 dark:text-zinc-100 transition-colors">
+    <div className="min-h-screen pb-32 text-[#44342B] dark:text-zinc-100 transition-colors duration-300">
       <Header />
 
       <main className="mx-auto max-w-md px-4 pt-4 flex flex-col gap-4">

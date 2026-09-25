@@ -27,6 +27,7 @@ export default function Settings() {
   const [localHusbandLocation, setLocalHusbandLocation] = useState<UserLocation>(CITY_PRESETS["Dubai, UAE"]);
   const [localWifeLocation, setLocalWifeLocation] = useState<UserLocation>(CITY_PRESETS["Mumbai, India"]);
   const [localCurrency, setLocalCurrency] = useState("$");
+  const [localRelationshipStartDate, setLocalRelationshipStartDate] = useState("2024-01-01");
   const [localReminderTone, setLocalReminderTone] = useState<"GENTLE" | "DIRECT" | "PLAYFUL">("GENTLE");
   const [localMadhhab, setLocalMadhhab] = useState<"STANDARD" | "HANAFI">("STANDARD");
   const [isSaving, setIsSaving] = useState(false);
@@ -77,6 +78,7 @@ export default function Settings() {
     setLocalHusbandPhoto(globalContext.husbandPhoto);
     setLocalWifePhoto(globalContext.wifePhoto);
     setLocalRelationshipMode(globalContext.relationshipMode);
+    setLocalRelationshipStartDate(globalContext.relationshipStartDate || "2024-01-01");
     setLocalHusbandTimezone(globalContext.husbandTimezone);
     setLocalWifeTimezone(globalContext.wifeTimezone);
     setLocalCurrency(globalContext.currency || "$");
@@ -87,9 +89,9 @@ export default function Settings() {
     setMounted(true);
   }, [
     globalContext.husbandName, globalContext.wifeName, globalContext.husbandPhoto, 
-    globalContext.wifePhoto, globalContext.relationshipMode, globalContext.husbandTimezone, 
-    globalContext.wifeTimezone, globalContext.currency, globalContext.reminderTone, globalContext.madhhab,
-    globalContext.husbandLocation, globalContext.wifeLocation
+    globalContext.wifePhoto, globalContext.relationshipMode, globalContext.relationshipStartDate,
+    globalContext.husbandTimezone, globalContext.wifeTimezone, globalContext.currency, 
+    globalContext.reminderTone, globalContext.madhhab, globalContext.husbandLocation, globalContext.wifeLocation
   ]);
 
   const handleLogout = () => {
@@ -148,6 +150,7 @@ export default function Settings() {
     globalContext.setHusbandPhoto(localHusbandPhoto);
     globalContext.setWifePhoto(localWifePhoto);
     globalContext.setRelationshipMode(localRelationshipMode);
+    globalContext.setRelationshipStartDate(localRelationshipStartDate);
     globalContext.setHusbandTimezone(localHusbandTimezone);
     globalContext.setWifeTimezone(localWifeTimezone);
     globalContext.setHusbandLocation(localHusbandLocation);
@@ -384,6 +387,22 @@ export default function Settings() {
                   ✈️ LDR
                 </button>
               </div>
+            </div>
+
+            {/* Anniversary / Relationship Start Date */}
+            <div className="flex flex-col gap-2 pt-3 border-t border-slate-100 dark:border-zinc-800">
+              <label className="text-xs font-bold text-slate-700 dark:text-zinc-200 flex items-center gap-1.5">
+                <Sparkles className="h-4 w-4 text-amber-500" /> Anniversary / Love Journey Start Date
+              </label>
+              <p className="text-[10px] text-slate-400 dark:text-zinc-500">
+                This date powers the live milestone counter ("Days Together") on your home dashboard.
+              </p>
+              <input
+                type="date"
+                value={localRelationshipStartDate}
+                onChange={(e) => setLocalRelationshipStartDate(e.target.value)}
+                className="bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-xs rounded-xl px-3 py-2 font-bold focus:outline-none focus:border-rose-400 transition-colors"
+              />
             </div>
 
             {/* Timezone Setup - ONLY SHOW IF LDR */}
