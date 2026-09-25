@@ -219,38 +219,38 @@ export default function SpiritualTracker() {
   const wifeCompleted = currentPrayers.filter(p => (p.wife && p.wife !== "MISSED") || isWifePrayerExempt(todayDateObj)).length;
 
   return (
-    <div className="min-h-screen pb-32 text-[#44342B] dark:text-zinc-100 transition-colors duration-300">
+    <div className="min-h-screen pb-36 text-[#44342B] dark:text-zinc-100 transition-colors duration-300">
       <Header />
 
-      <main className="mx-auto max-w-md px-4 pt-4 flex flex-col gap-4">
+      <main className="mx-auto max-w-md px-4 pt-4 flex flex-col gap-5">
         
         {/* View Switcher: Checklist vs Calendar */}
-        <div className="flex items-center justify-between bg-slate-200/70 dark:bg-zinc-900 p-1 rounded-2xl border border-slate-300/40 dark:border-zinc-800">
+        <div className="flex items-center justify-between bg-white/90 dark:bg-zinc-900 p-1.5 rounded-[22px] border border-[#FFE2D1] shadow-2xs">
           <button
             onClick={() => setActiveTab("CHECKLIST")}
-            className={`flex-1 py-2 text-xs font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-2.5 text-xs font-black rounded-2xl transition-all flex items-center justify-center gap-1.5 ${
               activeTab === "CHECKLIST"
-                ? "bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 shadow-sm"
-                : "text-slate-500 dark:text-zinc-400 hover:text-slate-700"
+                ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-sm shadow-emerald-500/20"
+                : "text-[#826F66] dark:text-zinc-400 hover:text-[#44342B]"
             }`}
           >
-            <CheckSquare className="h-4 w-4 text-emerald-500" /> Daily Checklist
+            <CheckSquare className="h-4 w-4" /> Daily Checklist
           </button>
           <button
             onClick={() => setActiveTab("CALENDAR")}
-            className={`flex-1 py-2 text-xs font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-2.5 text-xs font-black rounded-2xl transition-all flex items-center justify-center gap-1.5 ${
               activeTab === "CALENDAR"
-                ? "bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 shadow-sm"
-                : "text-slate-500 dark:text-zinc-400 hover:text-slate-700"
+                ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm shadow-amber-500/20"
+                : "text-[#826F66] dark:text-zinc-400 hover:text-[#44342B]"
             }`}
           >
-            <CalendarIcon className="h-4 w-4 text-amber-500" /> Monthly Calendar
+            <CalendarIcon className="h-4 w-4" /> Monthly Calendar
           </button>
         </div>
 
         {/* Makruh Window Alert Banner */}
         {makruhCheck.isMakruh && (
-          <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-2.5 text-amber-700 dark:text-amber-400 animate-in fade-in">
+          <div className="p-3.5 rounded-[22px] bg-amber-500/10 border border-amber-500/30 flex items-center gap-2.5 text-amber-800 dark:text-amber-400 animate-in fade-in">
             <ShieldAlert className="h-5 w-5 shrink-0 text-amber-500" />
             <div className="flex flex-col">
               <span className="text-[10px] font-black uppercase tracking-wider">Makruh Window Active</span>
@@ -265,36 +265,38 @@ export default function SpiritualTracker() {
         ) : (
           <>
             {/* Timezone Locations & Isha Midnight Summary */}
-            <div className="glass-panel p-3.5 rounded-3xl border border-slate-100/60 dark:border-zinc-850 flex items-center justify-between text-[11px] shadow-sm">
+            <div className="glass-panel p-4 rounded-[26px] border border-[#FFE2D1] flex items-center justify-between text-[11px] shadow-sm">
               <div className="flex flex-col">
-                <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">Him ({husbandLocation?.city || "Dubai"})</span>
-                <span className="font-bold text-slate-700 dark:text-zinc-200">{husbandPrayerTimes.tzAbbr} · {husbandLocation?.timezone}</span>
+                <span className="text-[9px] font-black uppercase tracking-wider text-[#826F66]">Him ({husbandLocation?.city || "Dubai"})</span>
+                <span className="font-extrabold text-[#44342B] dark:text-zinc-200">{husbandPrayerTimes.tzAbbr} · {husbandLocation?.timezone}</span>
               </div>
-              <div className="h-6 w-[1px] bg-slate-200 dark:bg-zinc-800" />
+              <div className="h-6 w-[1px] bg-[#FFE2D1] dark:bg-zinc-800" />
               <div className="flex flex-col text-right">
-                <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">Her ({wifeLocation?.city || "Mumbai"})</span>
-                <span className="font-bold text-slate-700 dark:text-zinc-200">{wifePrayerTimes.tzAbbr} · {wifeLocation?.timezone}</span>
+                <span className="text-[9px] font-black uppercase tracking-wider text-[#826F66]">Her ({wifeLocation?.city || "Mumbai"})</span>
+                <span className="font-extrabold text-[#44342B] dark:text-zinc-200">{wifePrayerTimes.tzAbbr} · {wifeLocation?.timezone}</span>
               </div>
             </div>
 
             {/* WhatsApp Share Button */}
             <button
               onClick={handleWhatsAppShare}
-              className="w-full flex items-center justify-center gap-2 bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#25D366] font-bold py-3.5 rounded-2xl border border-[#25D366]/30 transition-all active:scale-95 text-sm"
+              className="w-full flex items-center justify-center gap-2 bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#25D366] font-black py-3.5 rounded-[22px] border border-[#25D366]/30 transition-all active:scale-95 text-xs shadow-2xs"
             >
               <Share2 className="h-4 w-4" /> Share Update via WhatsApp
             </button>
 
             {/* Daily Checklist Table */}
-            <section className="glass-panel rounded-3xl p-4 shadow-sm border border-slate-100/50 dark:border-zinc-850 flex flex-col gap-2">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-zinc-800 px-1">
+            <section className="glass-panel rounded-[28px] p-5 shadow-sm border border-[#FFE2D1] flex flex-col gap-3">
+              <div className="flex items-center justify-between pb-2.5 border-b border-[#FFE2D1]/70 dark:border-zinc-800 px-1">
                 <div className="flex flex-col">
-                  <h3 className="text-sm font-extrabold text-slate-800 dark:text-zinc-100">Daily Checklist</h3>
-                  <span className="text-[10px] text-slate-400">Today · {format(todayDateObj, "EEEE, MMMM d, yyyy")}</span>
+                  <h3 className="text-xs font-black text-[#44342B] dark:text-zinc-100">
+                    <span className="highlight-pink font-black">Daily Checklist</span>
+                  </h3>
+                  <span className="text-[10px] font-bold text-[#826F66]">Today · {format(todayDateObj, "EEEE, MMMM d, yyyy")}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   {madhhab === "HANAFI" && (
-                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                    <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 border border-amber-200">
                       Hanafi Asr
                     </span>
                   )}

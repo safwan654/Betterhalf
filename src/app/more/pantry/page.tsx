@@ -44,57 +44,59 @@ export default function PantryPage() {
   const checkedItems = pantryItems.filter(item => item.checked);
 
   return (
-    <div className="min-h-screen bg-background pb-24 text-slate-800 dark:text-zinc-100 transition-colors duration-300">
+    <div className="min-h-screen pb-36 text-[#44342B] dark:text-zinc-100 transition-colors duration-300">
       <Header />
       
-      <main className="mx-auto max-w-md px-4 pt-4 flex flex-col gap-6">
+      <main className="mx-auto max-w-md px-4 pt-4 flex flex-col gap-5">
         
         {/* Back Link */}
         <div className="flex items-center gap-2">
-          <Link href="/more" className="p-1.5 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg text-slate-500 transition-colors">
+          <Link href="/more" className="p-1.5 hover:bg-rose-50 rounded-xl text-[#826F66] transition-colors">
             <ArrowLeft className="h-4 w-4" />
           </Link>
-          <span className="text-sm font-black text-slate-700 dark:text-zinc-200">Pantry & Grocery Sync</span>
+          <span className="text-sm font-black text-[#44342B] dark:text-zinc-100">
+            <span className="highlight-yellow font-black">Pantry &amp; Grocery</span> Sync
+          </span>
         </div>
 
         {/* Quick Add Form */}
-        <section className="glass-panel rounded-2xl p-4 border border-slate-100/50 shadow-sm flex flex-col gap-3">
-          <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+        <section className="glass-panel rounded-[28px] p-5 border border-[#FFE2D1] shadow-sm flex flex-col gap-3.5">
+          <h3 className="text-[10px] font-black uppercase tracking-wider text-[#826F66]">
             Quick Add Grocery
           </h3>
           <form onSubmit={handleAddItem} className="flex gap-2">
             <input
               type="text"
-              placeholder="Apples..."
+              placeholder="Apples, Milk, Bread..."
               value={newItemName}
               onChange={(e) => setNewItemName(e.target.value)}
-              className="flex-[2] text-xs font-medium px-3 py-2.5 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-rose-500"
+              className="flex-[2] text-xs font-bold px-3.5 py-2.5 bg-[#FFF9F4] dark:bg-zinc-900 border border-[#FFE2D1] dark:border-zinc-800 rounded-2xl focus:outline-none focus:border-rose-400 text-[#44342B]"
             />
             <input
               type="text"
               placeholder="Qty (e.g. 5x)"
               value={newItemQty}
               onChange={(e) => setNewItemQty(e.target.value)}
-              className="flex-1 text-xs font-medium px-3 py-2.5 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-rose-500"
+              className="flex-1 text-xs font-bold px-3.5 py-2.5 bg-[#FFF9F4] dark:bg-zinc-900 border border-[#FFE2D1] dark:border-zinc-800 rounded-2xl focus:outline-none focus:border-rose-400 text-[#44342B]"
             />
             <button
               type="submit"
-              className="p-3 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-xl shadow-sm flex items-center justify-center"
+              className="p-3 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-2xl shadow-sm flex items-center justify-center active:scale-95 transition-all"
             >
               <Plus className="h-4 w-4" />
             </button>
           </form>
-          <div className="flex gap-2.5">
+          <div className="flex gap-2">
             {["Produce", "Dairy", "Pantry", "Household"].map((cat) => (
               <button
                 key={cat}
                 type="button"
                 onClick={() => setNewItemCat(cat)}
                 className={cn(
-                  "px-3 py-1.5 text-[9px] font-extrabold rounded-lg uppercase tracking-wider border transition-all-custom",
+                  "px-3 py-1.5 text-[9px] font-black rounded-xl uppercase tracking-wider border transition-all shadow-2xs active:scale-95",
                   newItemCat === cat 
-                    ? "bg-rose-500/10 border-rose-500 text-rose-500 dark:bg-rose-500/20" 
-                    : "bg-slate-50 dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 text-slate-450 dark:text-zinc-400"
+                    ? "bg-rose-500 text-white border-rose-500" 
+                    : "bg-[#FFF9F4] dark:bg-zinc-900 border-[#FFE2D1] text-[#826F66]"
                 )}
               >
                 {cat}
@@ -105,15 +107,15 @@ export default function PantryPage() {
 
         {/* Unchecked List */}
         <section className="flex flex-col gap-3">
-          <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+          <h3 className="text-[10px] font-black uppercase tracking-wider text-[#826F66]">
             Needed Items ({uncheckedItems.length})
           </h3>
           <div className="flex flex-col gap-2">
             {uncheckedItems.length === 0 ? (
-              <p className="text-xs text-center text-slate-450 dark:text-zinc-500 py-6">No items needed. Pantry is fully stocked!</p>
+              <p className="text-xs font-bold text-center text-[#826F66] py-6 glass-panel rounded-[26px] border border-[#FFE2D1]">No items needed. Pantry is fully stocked! ✨</p>
             ) : (
               uncheckedItems.map((item) => (
-                <div key={item.id} className="flex items-center justify-between p-3.5 bg-white dark:bg-zinc-900/80 rounded-2xl border border-slate-100 dark:border-zinc-800 shadow-sm">
+                <div key={item.id} className="flex items-center justify-between p-3.5 bg-white/95 dark:bg-zinc-900/80 rounded-[22px] border border-[#FFE2D1] shadow-2xs">
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => toggleItemChecked(item.id)}

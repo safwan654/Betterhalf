@@ -57,37 +57,39 @@ export default function NetworkPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24 text-slate-800 dark:text-zinc-100 transition-colors duration-300">
+    <div className="min-h-screen pb-36 text-[#44342B] dark:text-zinc-100 transition-colors duration-300">
       <Header />
       
-      <main className="mx-auto max-w-md px-4 pt-4 flex flex-col gap-6">
+      <main className="mx-auto max-w-md px-4 pt-4 flex flex-col gap-5">
         
         {/* Back Link */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Link href="/more" className="p-1.5 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg text-slate-500 transition-colors">
+            <Link href="/more" className="p-1.5 hover:bg-rose-50 rounded-xl text-[#826F66] transition-colors">
               <ArrowLeft className="h-4 w-4" />
             </Link>
-            <span className="text-sm font-black text-slate-700 dark:text-zinc-200">Family & Network Log</span>
+            <span className="text-sm font-black text-[#44342B] dark:text-zinc-100">
+              <span className="highlight-blue font-black">Family &amp; Network</span> Log
+            </span>
           </div>
-          <span className="text-[10px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-widest">
+          <span className="text-[10px] font-extrabold text-[#826F66]">
             {isSameDay(parseISO(globalSelectedDate), new Date()) ? "Today" : format(parseISO(globalSelectedDate), "MMM d, yyyy")}
           </span>
         </div>
 
         {/* Motivation outreach call */}
-        <section className="bg-gradient-to-br from-rose-500 to-amber-500 text-white rounded-2xl p-5 shadow-lg shadow-rose-500/10 flex flex-col gap-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-rose-100 flex items-center gap-1.5">
+        <section className="bg-gradient-to-br from-rose-500 to-amber-500 text-white rounded-[28px] p-5 shadow-lg shadow-rose-500/10 flex flex-col gap-2">
+          <span className="text-xs font-black uppercase tracking-wider text-rose-100 flex items-center gap-1.5">
             <Heart className="h-4 w-4 text-white fill-white" /> Family outreach Sync
           </span>
           <p className="text-xs font-medium leading-relaxed mt-1">
-            "Family is not an important thing. It's everything." BetterHalf reminds you to stay in close contact with your parents, siblings, and loved ones.
+            &ldquo;Family is not an important thing. It&apos;s everything.&rdquo; BetterHalf reminds you to stay in close contact with your parents, siblings, and loved ones.
           </p>
         </section>
 
         {/* Log Outreach Form */}
-        <section className="glass-panel rounded-2xl p-4 border border-slate-100/50 shadow-sm flex flex-col gap-3">
-          <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+        <section className="glass-panel rounded-[28px] p-5 border border-[#FFE2D1] shadow-sm flex flex-col gap-3.5">
+          <h3 className="text-[10px] font-black uppercase tracking-wider text-[#826F66]">
             Add Family Reminder
           </h3>
           <form onSubmit={handleAddOutreach} className="flex flex-col gap-3">

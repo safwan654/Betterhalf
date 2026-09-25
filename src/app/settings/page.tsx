@@ -222,27 +222,29 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24 text-slate-800 dark:text-zinc-100 transition-colors duration-300">
+    <div className="min-h-screen pb-36 text-[#44342B] dark:text-zinc-100 transition-colors duration-300">
       
-      <header className="sticky top-0 z-40 w-full border-b border-slate-200/50 bg-white/70 backdrop-blur-md dark:border-zinc-800/50 dark:bg-zinc-950/70">
+      <header className="sticky top-0 z-40 w-full border-b border-[#FFE2D1]/80 bg-[#FFF8F3]/90 backdrop-blur-md dark:border-zinc-800/50 dark:bg-zinc-950/80">
         <div className="mx-auto flex h-14 max-w-md items-center px-4 gap-3">
-          <button onClick={() => router.back()} className="text-sm font-bold text-slate-400 hover:text-slate-700 dark:hover:text-zinc-300">
+          <button onClick={() => router.back()} className="text-xs font-black text-[#826F66] hover:text-[#44342B] dark:hover:text-zinc-300 p-1 rounded-lg hover:bg-rose-50">
             ← Back
           </button>
-          <h1 className="text-sm font-bold tracking-tight text-slate-800 dark:text-zinc-100">Profile & Settings</h1>
+          <h1 className="text-sm font-black tracking-tight text-[#44342B] dark:text-zinc-100">
+            <span className="highlight-pink font-black">Profile &amp; Settings</span>
+          </h1>
         </div>
       </header>
       
-      <main className="mx-auto max-w-md px-4 pt-6 flex flex-col gap-6">
+      <main className="mx-auto max-w-md px-4 pt-4 flex flex-col gap-5">
         
         {/* Dual Profile DP Cards & Name Editors */}
         <section className="flex flex-col gap-3">
           <div className="flex items-center justify-between px-1">
-            <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-              Profile Display Pictures (DP) & Names
+            <h3 className="text-[10px] font-black uppercase tracking-wider text-[#826F66]">
+              Profile Display Pictures (DP) &amp; Names
             </h3>
             {photoToast && (
-              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full animate-in fade-in">
+              <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 animate-in fade-in">
                 {photoToast}
               </span>
             )}
@@ -250,7 +252,7 @@ export default function Settings() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {/* 1. Husband DP Card */}
-            <div className="glass-panel rounded-3xl p-4 shadow-sm border border-slate-100/60 dark:border-zinc-850 flex items-center gap-3.5 bg-gradient-to-br from-amber-50/40 via-white to-slate-50 dark:from-amber-950/10 dark:via-zinc-900 dark:to-zinc-900">
+            <div className="glass-panel rounded-[26px] p-4 shadow-sm border border-[#FFE2D1] flex items-center gap-3.5 bg-gradient-to-br from-amber-50/50 via-white to-[#FFF9F4]">
               <div className="relative group shrink-0">
                 <div className="h-16 w-16 rounded-full overflow-hidden bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center shadow-md shadow-amber-500/20 text-2xl font-black text-white relative border-2 border-white dark:border-zinc-800">
                   {localHusbandPhoto ? (

@@ -164,7 +164,7 @@ export default function HealthPage() {
   const wifeProteinPercent = Math.min(100, Math.round((nutrition.wife.protein / nutrition.wife.proteinGoal) * 100));
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 pb-28 text-slate-900 dark:text-zinc-100 transition-colors duration-300">
+    <div className="min-h-screen pb-36 text-[#44342B] dark:text-zinc-100 transition-colors duration-300">
       <Header />
       
       <main className="mx-auto max-w-md px-4 pt-4 flex flex-col gap-5">
@@ -173,13 +173,14 @@ export default function HealthPage() {
         <div className="flex items-center justify-between">
           <div className="flex flex-col">
             <span className="text-[10px] font-black uppercase tracking-wider text-rose-500">
-              Wellness & Vitality
+              Wellness &amp; Vitality
             </span>
-            <h2 className="text-lg font-black text-slate-900 dark:text-zinc-100 flex items-center gap-2">
-              <Activity className="h-5 w-5 text-rose-500" /> Health & Fitness Hub
+            <h2 className="text-lg font-black text-[#44342B] dark:text-zinc-100 flex items-center gap-2">
+              <Activity className="h-5 w-5 text-rose-500" />
+              <span className="highlight-pink font-black">Health &amp; Fitness Hub</span>
             </h2>
           </div>
-          <span className="text-xs font-bold text-slate-400">
+          <span className="text-xs font-extrabold text-[#826F66]">
             {format(parseISO(globalSelectedDate), "MMM d, yyyy")}
           </span>
         </div>
@@ -188,17 +189,18 @@ export default function HealthPage() {
         <CycleTracker />
 
         {/* 2. Daily Protein & Nutrition Targets */}
-        <section className="glass-panel p-5 rounded-3xl border border-slate-100/60 dark:border-zinc-850 flex flex-col gap-4 shadow-sm">
+        <section className="glass-panel p-5 rounded-[28px] border border-[#FFE2D1] flex flex-col gap-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-extrabold flex items-center gap-2 text-slate-800 dark:text-zinc-100">
-              <Sparkles className="h-4 w-4 text-amber-500" /> Daily Protein Targets
+            <h3 className="text-xs font-black flex items-center gap-2 text-[#44342B] dark:text-zinc-100">
+              <Sparkles className="h-4 w-4 text-amber-500" />
+              <span className="highlight-yellow font-black">Daily Protein</span> Targets
             </h3>
-            <span className="text-[10px] font-bold text-slate-400">Goal Tracking</span>
+            <span className="text-[10px] font-bold text-[#826F66]">Goal Tracking</span>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             {/* Husband Protein */}
-            <div className="flex flex-col p-3.5 rounded-2xl bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800 gap-2 shadow-xs">
+            <div className="flex flex-col p-3.5 rounded-2xl bg-[#FFF9F4] dark:bg-zinc-900 border border-[#FFE2D1] gap-2 shadow-2xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 min-w-0">
                   <div className="h-6 w-6 rounded-full overflow-hidden bg-amber-500 text-white flex items-center justify-center text-[10px] font-black shrink-0 border border-white dark:border-zinc-700">

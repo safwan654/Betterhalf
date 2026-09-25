@@ -5,7 +5,6 @@ import { useGlobal, initialPrayers, Task } from "@/context/GlobalContext";
 import Header from "@/components/layout/header";
 import BottomNavigation from "@/components/layout/bottom-navigation";
 import WeeklyTimeline from "@/components/dashboard/weekly-timeline";
-import QuickActions from "@/components/dashboard/quick-actions";
 import EntryAnimation from "@/components/animations/EntryAnimation";
 import CoupleLoveHero from "@/components/dashboard/CoupleLoveHero";
 import CoupleQuestionWidget from "@/components/dashboard/CoupleQuestionWidget";
@@ -66,10 +65,10 @@ export default function Dashboard() {
   const totalLiquid = liquidBalances.husband + liquidBalances.wife;
 
   return (
-    <div className="min-h-screen pb-32 text-[#44342B] dark:text-zinc-100 transition-colors duration-300">
+    <div className="min-h-screen pb-36 text-[#44342B] dark:text-zinc-100 transition-colors duration-300">
       <Header />
       
-      <main className="mx-auto max-w-md px-4 pt-4 flex flex-col gap-4.5">
+      <main className="mx-auto max-w-md px-4 pt-4 pb-12 flex flex-col gap-5">
         
         {/* 1. Signature Couple² Love, Days Together & Heartbeat Hero */}
         <CoupleLoveHero />
@@ -78,7 +77,7 @@ export default function Dashboard() {
         <CoupleQuestionWidget />
 
         {/* 3. Weekly Timeline */}
-        <section className="glass-panel rounded-[28px] p-4 shadow-sm">
+        <section className="glass-panel rounded-[28px] p-5 shadow-sm border border-[#FFE2D1]">
           <WeeklyTimeline />
         </section>
 
@@ -88,7 +87,7 @@ export default function Dashboard() {
         )}
 
         {/* 5. Spiritual & Prayer Rhythm Card */}
-        <section className="glass-panel rounded-[28px] p-4.5 border border-[#FFE2D1] shadow-sm flex flex-col gap-3">
+        <section className="glass-panel rounded-[28px] p-5 border border-[#FFE2D1] shadow-sm flex flex-col gap-3.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="p-1.5 rounded-xl bg-rose-500/10 text-rose-500">
@@ -159,7 +158,7 @@ export default function Dashboard() {
         </section>
 
         {/* 6. Shared Tasks & Chores Widget */}
-        <section className="glass-panel rounded-[28px] p-4.5 border border-[#FFE2D1] shadow-sm flex flex-col gap-3">
+        <section className="glass-panel rounded-[28px] p-5 border border-[#FFE2D1] shadow-sm flex flex-col gap-3.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="p-1.5 rounded-xl bg-amber-500/10 text-amber-600">
@@ -193,7 +192,7 @@ export default function Dashboard() {
           ) : (
             <div className="flex flex-col gap-2">
               {currentTasks.map((task) => (
-                <div key={task.id || task.title} className="flex items-start justify-between p-2.5 rounded-2xl bg-white/90 dark:bg-zinc-900/60 border border-[#FFE2D1]/70 hover:border-amber-300 transition-colors shadow-2xs">
+                <div key={task.id || task.title} className="flex items-start justify-between p-3 rounded-2xl bg-white/95 dark:bg-zinc-900/60 border border-[#FFE2D1]/80 hover:border-amber-300 transition-colors shadow-2xs">
                   <div className="flex items-start gap-2.5 max-w-[70%]">
                     <button
                       onClick={() => toggleTaskComplete(task.id)}
@@ -234,7 +233,7 @@ export default function Dashboard() {
         </section>
 
         {/* 7. Finance & Liquid Wealth Card */}
-        <section className="glass-panel rounded-[28px] p-4.5 border border-[#FFE2D1] shadow-sm flex flex-col gap-3">
+        <section className="glass-panel rounded-[28px] p-5 border border-[#FFE2D1] shadow-sm flex flex-col gap-3.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="p-1.5 rounded-xl bg-emerald-500/10 text-emerald-600">
@@ -252,7 +251,7 @@ export default function Dashboard() {
             </Link>
           </div>
 
-          <div className="flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50/50 border border-emerald-100">
+          <div className="flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50/50 border border-emerald-100">
             <div className="flex flex-col">
               <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-700">Combined Liquid Balance</span>
               <span className="text-lg font-black text-emerald-900">{currency}{totalLiquid.toLocaleString()}</span>
@@ -264,7 +263,7 @@ export default function Dashboard() {
         </section>
 
         {/* 8. Virtual Dates & Activities Widget (when in LDR or relaxing) */}
-        <section className="glass-panel rounded-[28px] p-4.5 border border-[#FFE2D1] shadow-sm flex flex-col gap-3">
+        <section className="glass-panel rounded-[28px] p-5 border border-[#FFE2D1] shadow-sm flex flex-col gap-3.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="p-1.5 rounded-xl bg-purple-500/10 text-purple-600">
@@ -277,22 +276,22 @@ export default function Dashboard() {
           </div>
           
           <div className="grid grid-cols-4 gap-2">
-            <a href="https://skribbl.io" target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-white/90 border border-[#FFE2D1] hover:border-purple-300 transition-all active:scale-95 group shadow-2xs">
+            <a href="https://skribbl.io" target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-white/95 border border-[#FFE2D1] hover:border-purple-300 transition-all active:scale-95 group shadow-2xs">
               <span className="text-xl mb-0.5 group-hover:scale-110 transition-transform">🎨</span>
               <span className="text-[9px] font-black text-[#44342B]">Draw</span>
             </a>
             
-            <a href="https://www.chess.com/play/online/friends" target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-white/90 border border-[#FFE2D1] hover:border-purple-300 transition-all active:scale-95 group shadow-2xs">
+            <a href="https://www.chess.com/play/online/friends" target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-white/95 border border-[#FFE2D1] hover:border-purple-300 transition-all active:scale-95 group shadow-2xs">
               <span className="text-xl mb-0.5 group-hover:scale-110 transition-transform">♟️</span>
               <span className="text-[9px] font-black text-[#44342B]">Chess</span>
             </a>
 
-            <a href="https://playingcards.io/" target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-white/90 border border-[#FFE2D1] hover:border-purple-300 transition-all active:scale-95 group shadow-2xs">
+            <a href="https://playingcards.io/" target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-white/95 border border-[#FFE2D1] hover:border-purple-300 transition-all active:scale-95 group shadow-2xs">
               <span className="text-xl mb-0.5 group-hover:scale-110 transition-transform">🃏</span>
               <span className="text-[9px] font-black text-[#44342B]">Cards</span>
             </a>
 
-            <a href="https://codenames.game/" target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-white/90 border border-[#FFE2D1] hover:border-purple-300 transition-all active:scale-95 group shadow-2xs">
+            <a href="https://codenames.game/" target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-white/95 border border-[#FFE2D1] hover:border-purple-300 transition-all active:scale-95 group shadow-2xs">
               <span className="text-xl mb-0.5 group-hover:scale-110 transition-transform">🕵️</span>
               <span className="text-[9px] font-black text-[#44342B]">Words</span>
             </a>
@@ -301,7 +300,6 @@ export default function Dashboard() {
 
       </main>
 
-      <QuickActions />
       <BottomNavigation />
       <EntryAnimation />
     </div>

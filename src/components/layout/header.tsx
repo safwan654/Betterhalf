@@ -63,22 +63,22 @@ export default function Header() {
               BetterHalf <span className="text-[10px] text-rose-500 font-extrabold">²</span>
             </h1>
             {relationshipMode === "TOGETHER" ? (
-              <p className="text-[9px] font-bold text-[#826F66] dark:text-zinc-400">{today}</p>
+              <p className="text-[10px] font-bold text-[#826F66] dark:text-zinc-400">{today}</p>
             ) : (
-              <div className="flex items-center gap-1.5 text-[8px] font-bold text-[#826F66] dark:text-zinc-400">
-                <span className="text-amber-600">{husbandName.charAt(0)}: {timeNY}</span>
-                <span>•</span>
-                <span className="text-rose-500">{wifeName.charAt(0)}: {timeDubai}</span>
+              <div className="flex items-center gap-1.5 text-[9px] font-extrabold tracking-tight">
+                <span className="text-amber-600">{husbandName}: {timeNY}</span>
+                <span className="text-[#826F66]/50">•</span>
+                <span className="text-rose-500">{wifeName}: {timeDubai}</span>
               </div>
             )}
           </div>
         </Link>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {/* Relationship Mode Pill */}
           <button
             onClick={() => setRelationshipMode(relationshipMode === "TOGETHER" ? "DISTANCE" : "TOGETHER")}
-            className="flex items-center gap-1 rounded-full border border-[#FFE2D1] bg-white/90 px-2.5 py-1 text-[10px] font-extrabold text-[#44342B] shadow-2xs transition-all hover:bg-rose-50/60 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 active:scale-95"
+            className="flex items-center gap-1 rounded-full border border-[#FFE2D1] bg-white/95 px-2.5 py-1 text-[10px] font-black text-[#44342B] shadow-2xs transition-all hover:bg-rose-50/60 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 active:scale-95"
           >
             <span>{relationshipMode === "TOGETHER" ? "🏠 Together" : "✈️ LDR"}</span>
           </button>
@@ -87,7 +87,7 @@ export default function Header() {
           <Link
             href="/settings"
             title={`Logged in as ${activeUser === "HUSBAND" ? husbandName : wifeName}`}
-            className="flex items-center gap-1.5 rounded-full border border-[#FFE2D1] bg-white/90 p-0.5 pr-2.5 text-[10px] font-extrabold text-[#44342B] shadow-2xs transition-all hover:bg-rose-50/60 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 active:scale-95"
+            className="flex items-center gap-1.5 rounded-full border border-[#FFE2D1] bg-white/95 p-0.5 pr-2.5 text-[10px] font-black text-[#44342B] shadow-2xs transition-all hover:bg-rose-50/60 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 active:scale-95"
           >
             <div className={cn(
               "h-6 w-6 rounded-full flex items-center justify-center text-[10px] text-white font-black transition-all overflow-hidden shrink-0 border border-white dark:border-zinc-700 shadow-xs",
@@ -101,13 +101,13 @@ export default function Header() {
                 currentInitial.toUpperCase()
               )}
             </div>
-            <span className="truncate max-w-[70px]">{activeUser === "HUSBAND" ? husbandName : wifeName}</span>
+            <span className="truncate max-w-[65px]">{activeUser === "HUSBAND" ? husbandName : wifeName}</span>
           </Link>
 
           {/* Settings Icon */}
           <Link
             href="/settings"
-            className="flex h-7 w-7 items-center justify-center rounded-full border border-[#FFE2D1] bg-white/80 text-[#826F66] transition-all hover:bg-rose-50/70 hover:text-rose-500 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900"
+            className="flex h-7 w-7 items-center justify-center rounded-full border border-[#FFE2D1] bg-white/90 text-[#826F66] transition-all hover:bg-rose-50/70 hover:text-rose-500 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 shadow-2xs active:scale-95"
           >
             <SettingsIcon className="h-3.5 w-3.5" />
           </Link>

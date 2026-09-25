@@ -166,73 +166,74 @@ export default function TasksEngine() {
   const CATEGORY_PRESETS = ["Home", "Groceries", "Bills", "Health", "Errands", "Family", "Spiritual"];
 
   return (
-    <div className="min-h-screen bg-background pb-32 text-slate-800 dark:text-zinc-100 transition-colors duration-300">
+    <div className="min-h-screen pb-36 text-[#44342B] dark:text-zinc-100 transition-colors duration-300">
       <Header />
       
-      <main className="mx-auto max-w-md px-4 pt-6 flex flex-col gap-5 relative">
+      <main className="mx-auto max-w-md px-4 pt-4 flex flex-col gap-5 relative">
         
         {/* Top Header & New Task Trigger */}
         <div className="flex items-center justify-between">
           <div className="flex flex-col">
-            <h2 className="text-xl font-black tracking-tight flex items-center gap-2">
-              Shared To-Dos
-              <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold">
+            <span className="text-[10px] font-black uppercase tracking-wider text-amber-600">
+              Household Chores
+            </span>
+            <h2 className="text-lg font-black text-[#44342B] dark:text-zinc-100 flex items-center gap-2">
+              <CheckSquare className="h-5 w-5 text-amber-500" />
+              <span className="highlight-yellow font-black">Shared To-Dos</span>
+              <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-700 font-extrabold border border-amber-200">
                 {activeTasks.length} active
               </span>
             </h2>
-            <span className="text-[11px] font-semibold text-slate-400 dark:text-zinc-500">
-              Coordinated household chore & reminder list
-            </span>
           </div>
           <button 
             onClick={openAddModal}
-            className="h-11 w-11 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/25 transition-all"
+            className="h-10 w-10 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-2xl flex items-center justify-center shadow-md shadow-amber-500/25 transition-all"
             aria-label="Add new task"
           >
-            <Plus className="h-6 w-6 stroke-[2.5]" />
+            <Plus className="h-5 w-5 stroke-[2.5]" />
           </button>
         </div>
 
         {/* Filter Navigation Tabs */}
-        <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 dark:bg-zinc-900 rounded-2xl border border-slate-200/60 dark:border-zinc-800">
+        <div className="grid grid-cols-3 gap-1.5 p-1.5 bg-white/95 dark:bg-zinc-900 rounded-[22px] border border-[#FFE2D1] shadow-2xs">
           <button
             onClick={() => setActiveTab("ALL_ACTIVE")}
-            className={`py-2 px-1 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+            className={`py-2 px-1 text-xs font-black rounded-2xl transition-all flex items-center justify-center gap-1.5 ${
               activeTab === "ALL_ACTIVE"
-                ? "bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 shadow-sm"
-                : "text-slate-500 hover:text-slate-700 dark:text-zinc-400"
+                ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm shadow-amber-500/20"
+                : "text-[#826F66] hover:text-[#44342B] dark:text-zinc-400"
             }`}
           >
             <span>All Active</span>
-            <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${activeTab === "ALL_ACTIVE" ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" : "bg-slate-200 dark:bg-zinc-700"}`}>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${activeTab === "ALL_ACTIVE" ? "bg-white/20 text-white" : "bg-amber-50 text-amber-700"}`}>
               {activeTasks.length}
             </span>
           </button>
 
           <button
             onClick={() => setActiveTab("TODAY")}
-            className={`py-2 px-1 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+            className={`py-2 px-1 text-xs font-black rounded-2xl transition-all flex items-center justify-center gap-1.5 ${
               activeTab === "TODAY"
-                ? "bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 shadow-sm"
-                : "text-slate-500 hover:text-slate-700 dark:text-zinc-400"
+                ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm shadow-amber-500/20"
+                : "text-[#826F66] hover:text-[#44342B] dark:text-zinc-400"
             }`}
           >
             <span>Date View</span>
-            <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${activeTab === "TODAY" ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" : "bg-slate-200 dark:bg-zinc-700"}`}>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${activeTab === "TODAY" ? "bg-white/20 text-white" : "bg-amber-50 text-amber-700"}`}>
               {selectedDateTasks.length}
             </span>
           </button>
 
           <button
             onClick={() => setActiveTab("COMPLETED")}
-            className={`py-2 px-1 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+            className={`py-2 px-1 text-xs font-black rounded-2xl transition-all flex items-center justify-center gap-1.5 ${
               activeTab === "COMPLETED"
-                ? "bg-white dark:bg-zinc-800 text-slate-800 dark:text-zinc-100 shadow-sm"
-                : "text-slate-500 hover:text-slate-700 dark:text-zinc-400"
+                ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-sm shadow-emerald-500/20"
+                : "text-[#826F66] hover:text-[#44342B] dark:text-zinc-400"
             }`}
           >
             <span>Done</span>
-            <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${activeTab === "COMPLETED" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-slate-200 dark:bg-zinc-700"}`}>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${activeTab === "COMPLETED" ? "bg-white/20 text-white" : "bg-emerald-50 text-emerald-700"}`}>
               {completedTasks.length}
             </span>
           </button>

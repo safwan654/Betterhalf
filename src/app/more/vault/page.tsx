@@ -48,50 +48,52 @@ export default function VaultPage() {
   );
 
   return (
-    <div className="min-h-screen bg-background pb-24 text-slate-800 dark:text-zinc-100 transition-colors duration-300">
+    <div className="min-h-screen pb-36 text-[#44342B] dark:text-zinc-100 transition-colors duration-300">
       <Header />
       
-      <main className="mx-auto max-w-md px-4 pt-4 flex flex-col gap-6">
+      <main className="mx-auto max-w-md px-4 pt-4 flex flex-col gap-5">
         
         {/* Back Link */}
         <div className="flex items-center gap-2">
-          <Link href="/more" className="p-1.5 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg text-slate-500 transition-colors">
+          <Link href="/more" className="p-1.5 hover:bg-rose-50 rounded-xl text-[#826F66] transition-colors">
             <ArrowLeft className="h-4 w-4" />
           </Link>
-          <span className="text-sm font-black text-slate-700 dark:text-zinc-200">Secure Vault Index</span>
+          <span className="text-sm font-black text-[#44342B] dark:text-zinc-100">
+            <span className="highlight-pink font-black">Secure Vault</span> Physical Index
+          </span>
         </div>
 
         {/* Info Box */}
-        <section className="bg-slate-50/80 dark:bg-zinc-900/60 p-4 rounded-2xl border border-slate-150/10 flex gap-3">
+        <section className="bg-[#FFF9F4] dark:bg-zinc-900/60 p-4.5 rounded-[26px] border border-[#FFE2D1] flex gap-3 shadow-2xs">
           <Key className="h-5 w-5 text-rose-500 flex-shrink-0 mt-0.5" />
           <div className="flex flex-col gap-0.5">
-            <span className="text-[10px] font-black uppercase text-slate-400 dark:text-zinc-500 tracking-wide">Security Notice</span>
-            <p className="text-[11px] text-slate-500 dark:text-zinc-400 font-medium leading-relaxed">
-              This index references physical locations of key papers inside the house. No scanned document files are stored in the cloud for privacy and maximum security.
+            <span className="text-[10px] font-black uppercase text-[#826F66] tracking-wider">Privacy &amp; Security</span>
+            <p className="text-[11px] text-[#826F66] dark:text-zinc-400 font-semibold leading-relaxed">
+              This index references physical cabinet locations of key documents in your home. No physical scans are uploaded to cloud servers.
             </p>
           </div>
         </section>
 
         {/* Add Record Form */}
-        <section className="glass-panel rounded-2xl p-4 border border-slate-100/50 shadow-sm flex flex-col gap-3">
-          <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+        <section className="glass-panel rounded-[28px] p-5 border border-[#FFE2D1] shadow-sm flex flex-col gap-3.5">
+          <h3 className="text-[10px] font-black uppercase tracking-wider text-[#826F66]">
             Index New Document
           </h3>
           <form onSubmit={handleAddDocument} className="flex flex-col gap-3">
             <input
               type="text"
-              placeholder="Document Name (e.g. Passport copy)"
+              placeholder="Document Name (e.g. Marriage Certificate, Passports)"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              className="text-xs font-medium px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-rose-500"
+              className="text-xs font-bold px-3.5 py-2.5 bg-[#FFF9F4] dark:bg-zinc-900 border border-[#FFE2D1] dark:border-zinc-800 rounded-2xl focus:outline-none focus:border-rose-400 text-[#44342B]"
             />
             <div className="flex gap-2">
               <input
                 type="text"
-                placeholder="Physical Location"
+                placeholder="Physical Location (e.g. Master Bedroom Safe #2)"
                 value={newLocation}
                 onChange={(e) => setNewLocation(e.target.value)}
-                className="flex-[2] text-xs font-medium px-3.5 py-2.5 bg-slate-50 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-rose-500"
+                className="flex-[2] text-xs font-bold px-3.5 py-2.5 bg-[#FFF9F4] dark:bg-zinc-900 border border-[#FFE2D1] dark:border-zinc-800 rounded-2xl focus:outline-none focus:border-rose-400 text-[#44342B]"
               />
               <input
                 type="text"

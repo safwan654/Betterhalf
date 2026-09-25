@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useGlobal } from "@/context/GlobalContext";
 import { differenceInDays, parseISO, format, addDays } from "date-fns";
 import { 
@@ -41,8 +42,10 @@ export default function CoupleLoveHero() {
   const [noteSent, setNoteSent] = useState(false);
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [noteText, setNoteText] = useState("");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const updateTime = () => {
       try {
         const h = new Date().toLocaleTimeString("en-US", { timeZone: husbandTimezone || "Asia/Dubai", hour: "2-digit", minute: "2-digit" });
@@ -101,16 +104,16 @@ export default function CoupleLoveHero() {
       <div className="pointer-events-none absolute -left-10 -bottom-10 h-40 w-40 rounded-full bg-amber-200/40 blur-3xl" />
 
       {/* 1. Top Milestone & Days Together Pill */}
-      <div className="relative z-10 mb-4 flex items-center justify-between">
-        <div className="flex items-center gap-2 rounded-full border border-rose-200/80 bg-white/90 px-3.5 py-1 shadow-xs">
+      <div className="relative z-10 mb-4 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 rounded-full border border-rose-200/80 bg-white/95 px-3.5 py-1.5 shadow-xs">
           <CalendarHeart className="h-3.5 w-3.5 text-rose-500 fill-rose-100" />
           <span className="text-xs font-black text-[#44342B]">
             <span className="text-rose-500 font-extrabold">{daysTogether}</span> Days Together 💕
           </span>
         </div>
 
-        <span className="rounded-full border border-amber-200/70 bg-amber-50/80 px-2.5 py-0.5 text-[10px] font-bold text-amber-700">
-          Next: {nextMilestone}d in {daysToNextMilestone}d
+        <span className="rounded-full border border-amber-200/80 bg-amber-50/90 px-3 py-1 text-[10px] font-extrabold text-amber-700 shadow-2xs">
+          {daysToNextMilestone}d to {nextMilestone}d 🎯
         </span>
       </div>
 
@@ -241,14 +244,14 @@ export default function CoupleLoveHero() {
       </div>
 
       {/* Love Note Modal */}
-      {showNoteModal && (
+      {mounted && showNoteModal && typeof document !== "undefined" && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="w-full max-w-sm rounded-[28px] border border-rose-200 bg-white p-5 shadow-2xl flex flex-col gap-3">
+          <div className="w-full max-w-sm rounded-[28px] border border-rose-200 bg-white p-5 shadow-2xl flex flex-col gap-3 animate-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <span className="text-xs font-black text-[#44342B] flex items-center gap-1.5">
                 💌 Send a Sweet Love Note to {partnerName}
               </span>
-              <button onClick={() => setShowNoteModal(false)} className="text-slate-400 hover:text-slate-600">✕</button>
+              <button onClick={() => setShowNoteModal(false)} className="text-slate-400 hover:text-slate-600 font-bold p-1">✕</button>
             </div>
             <textarea
               value={noteText}
@@ -260,20 +263,21 @@ export default function CoupleLoveHero() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowNoteModal(false)}
-                className="flex-1 py-2 text-xs font-bold rounded-xl bg-slate-100 text-slate-600"
+                className="flex-1 py-2 text-xs font-bold rounded-xl bg-slate-100 text-slate-600 active:scale-95 transition-all"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSendNote}
                 disabled={!noteText.trim()}
-                className="flex-1 py-2 text-xs font-bold rounded-xl bg-rose-500 hover:bg-rose-600 disabled:opacity-40 text-white shadow-md shadow-rose-500/20"
+                className="flex-1 py-2 text-xs font-bold rounded-xl bg-rose-500 hover:bg-rose-600 disabled:opacity-40 text-white shadow-md shadow-rose-500/20 active:scale-95 transition-all"
               >
                 Send 💌
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>
